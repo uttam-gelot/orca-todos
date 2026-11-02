@@ -6,8 +6,30 @@
   "name": "ToDos",
   "version": "0.1.0",
   "description": "Personal to-dos with custom states, tags, priorities, markdown notes, and list and board views.",
+  "author": {
+    "name": "Uttam Gelot",
+    "url": "https://github.com/uttam-gelot"
+  },
+  "repository": "https://github.com/uttam-gelot/orca-todos",
+  "homepage": "https://github.com/uttam-gelot/orca-todos#readme",
   "license": "MIT",
   "icon": "images/icon.png",
+  "cover": {
+    "path": "images/cover.png",
+    "alt": "The ToDos board in dark mode, with one column for each state"
+  },
+  "screenshots": [
+    {
+      "path": "images/screenshot-board.png",
+      "alt": "The board view in light mode: cards in Backlog, ToDo, In Progress and Done columns",
+      "caption": "Board view"
+    },
+    {
+      "path": "images/screenshot-list.png",
+      "alt": "The list view in dark mode: to-dos grouped by state, with the details pane open",
+      "caption": "List view with details"
+    }
+  ],
   "engines": {
     "orca": ">=1.4.246"
   },
