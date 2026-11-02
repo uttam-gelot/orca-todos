@@ -1,0 +1,20 @@
+# Created by Payo — git hooks that enforce the generated guardrail skills.
+#
+# Requires the lefthook binary. Install it once with any of:
+#   brew install lefthook            # macOS / Linux (Homebrew)
+#   npm  install -D lefthook         # Node projects
+#   go   install github.com/evilmartians/lefthook@latest
+# Then wire it into this repo:
+#   lefthook install
+# Docs: https://github.com/evilmartians/lefthook
+
+pre-push:
+  commands:
+    payo-secret-scan:
+      run: gitleaks detect --redact  # payo:payo-secret-scan
+    payo-verify:
+      run: bun run test  # payo:payo-verify
+    payo-lint:
+      run: bunx eslint .  # payo:payo-lint
+    payo-format:
+      run: bunx prettier --check .  # payo:payo-format
