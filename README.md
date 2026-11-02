@@ -1,5 +1,7 @@
 # ToDos for Orca
 
+[![CI](https://github.com/uttam-gelot/orca-todos/actions/workflows/ci.yml/badge.svg)](https://github.com/uttam-gelot/orca-todos/actions/workflows/ci.yml)
+
 A personal to-do list inside [Orca](https://github.com/stablyai/orca), the agent-orchestrator IDE.
 
 The plugin has two views of the same to-dos:
@@ -118,6 +120,8 @@ lefthook install
 | `bun run format`           | Format the code with Prettier                       |
 | `bun run format:check`     | Check the format, but do not change files           |
 | `bun run pack`             | Build and write an installable copy to `release/`   |
+
+GitHub Actions (`.github/workflows/ci.yml`) runs the type check, ESLint, the Prettier check, the tests, a secret scan, and a check that `dist/` matches the source. It runs on each push to `main` and on each pull request.
 
 Before each push, `lefthook` runs a secret scan (gitleaks), the tests, ESLint, and a Prettier check. If one check fails, the push stops.
 
