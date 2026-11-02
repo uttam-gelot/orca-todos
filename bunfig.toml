@@ -1,0 +1,4 @@
+# Test runner config. `bun test` (or `bun run test`) runs every suite; see tests/setup.ts.
+[test]
+root = "./tests"
+preload = ["./tests/setup.ts"]
