@@ -1,0 +1,9 @@
+dist/
+release/
+node_modules/
+bun.lock
+.impeccable/
+.agents/
+.claude/
+.codex/
+lefthook.yml
