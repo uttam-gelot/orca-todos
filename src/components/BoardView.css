@@ -1,0 +1,111 @@
+/* Board view: one column per state, draggable cards. */
+
+.board {
+  display: flex;
+  gap: var(--space-3);
+  align-items: flex-start;
+  min-height: 100%;
+}
+
+.column {
+  flex: 0 0 280px;
+  display: flex;
+  flex-direction: column;
+  max-height: 100%;
+  border-radius: var(--radius);
+  background: color-mix(in oklab, var(--muted) 45%, var(--bg));
+  border: 1px solid transparent;
+  transition:
+    border-color var(--duration-fast) var(--ease),
+    background-color var(--duration-fast) var(--ease);
+}
+.column--over {
+  border-color: var(--ring);
+  background: color-mix(in oklab, var(--muted) 70%, var(--bg));
+}
+.column__head {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  height: 40px;
+  padding: 0 var(--space-2) 0 var(--space-3);
+  flex: none;
+}
+.column__name {
+  font-weight: var(--weight-semibold);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.column__add {
+  margin-left: auto;
+  opacity: 0;
+  transition: opacity var(--duration-fast) var(--ease);
+}
+.column__head:hover .column__add,
+.column__add:focus-visible {
+  opacity: 1;
+}
+@media (hover: none) {
+  .column__add {
+    opacity: 1;
+  }
+}
+.column__cards {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-1-5);
+  padding: 0 var(--space-2) var(--space-2);
+  overflow: auto;
+  min-height: 48px;
+}
+
+/* ---------- card ---------- */
+
+.card {
+  position: relative;
+  padding: var(--space-2) var(--space-2-5);
+  border-radius: var(--radius-md);
+  background: var(--card);
+  border: var(--hairline);
+  box-shadow: var(--shadow-xs);
+  cursor: grab;
+  transition:
+    border-color var(--duration-fast) var(--ease),
+    opacity var(--duration-fast) var(--ease);
+}
+.card:hover {
+  border-color: color-mix(in oklab, var(--fg) 22%, var(--border));
+}
+.card[aria-selected='true'] {
+  border-color: var(--ring);
+  box-shadow: 0 0 0 1px var(--ring);
+}
+.card--dragging {
+  opacity: 0.4;
+}
+/* Drop target: a line above the card the dragged one will land before. */
+.card--over::before {
+  content: '';
+  position: absolute;
+  left: var(--space-1);
+  right: var(--space-1);
+  top: -5px;
+  height: var(--space-0-5);
+  border-radius: 1px;
+  background: var(--ring);
+}
+.card__title {
+  overflow-wrap: anywhere;
+}
+.card__meta {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: var(--space-1-5);
+  margin-top: var(--space-1-5);
+}
+.card__note {
+  --icon-size: var(--icon-sm);
+  --icon-color: var(--muted-fg);
+}

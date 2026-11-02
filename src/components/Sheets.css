@@ -1,0 +1,81 @@
+/* Sheet contents: the state editor and the keyboard shortcut list. */
+
+.state-editor__list {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-1-5);
+}
+.state-editor__row {
+  display: flex;
+  align-items: center;
+  gap: var(--space-1-5);
+  flex-wrap: wrap;
+}
+.state-editor__swatch {
+  width: var(--control-sm);
+  height: var(--control-sm);
+  padding: 3px;
+  border: 1px solid var(--input);
+  border-radius: var(--radius-md);
+  background: none;
+  cursor: pointer;
+  flex: none;
+}
+.state-editor__swatch::-webkit-color-swatch-wrapper {
+  padding: 0;
+}
+.state-editor__swatch::-webkit-color-swatch {
+  border: 0;
+  border-radius: var(--radius-xs);
+}
+.state-editor__name {
+  flex: 1;
+  min-width: 0;
+}
+.state-editor__closed {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-1-5);
+  font-size: var(--text-sm);
+  color: var(--muted-fg);
+  padding: 0 var(--space-1);
+  cursor: pointer;
+}
+.state-editor__closed-box {
+  accent-color: var(--primary);
+  margin: 0;
+}
+.state-editor__confirm {
+  display: inline-flex;
+  gap: var(--space-1);
+  width: 100%;
+  justify-content: flex-end;
+}
+.state-editor__add {
+  display: flex;
+  gap: var(--space-1-5);
+}
+
+/* ---------- shortcuts ---------- */
+
+.shortcuts__section + .shortcuts__section {
+  margin-top: var(--space-1);
+}
+.shortcuts__heading {
+  margin-bottom: var(--space-1-5);
+}
+.shortcuts__item {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-3);
+  height: 30px;
+  border-bottom: var(--hairline);
+}
+.shortcuts__item:last-child {
+  border-bottom: 0;
+}
+.shortcuts__keys {
+  display: flex;
+  gap: var(--space-1);
+}

@@ -1,0 +1,122 @@
+/* List view: state groups (collapsible headers) and to-do rows. */
+
+.group {
+  margin-top: var(--space-1);
+}
+.group__head {
+  display: flex;
+  align-items: center;
+  gap: var(--space-1);
+  height: var(--control-md);
+  padding-right: var(--space-1);
+  position: sticky;
+  top: 0;
+  background: var(--bg);
+  z-index: 1;
+}
+.group__toggle {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  height: var(--control-sm);
+  padding: 0 var(--space-2) 0 var(--space-1);
+  border-radius: var(--radius-md);
+  flex: 1;
+  min-width: 0;
+  text-align: left;
+}
+.group__toggle:hover {
+  background: var(--accent);
+}
+.group__chevron {
+  --icon-size: var(--icon-sm);
+  --icon-color: var(--muted-fg);
+  transition: transform var(--duration-fast) var(--ease);
+}
+.group__toggle[aria-expanded='true'] .group__chevron {
+  transform: rotate(90deg);
+}
+.group__name {
+  font-weight: var(--weight-semibold);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.group__add {
+  opacity: 0;
+  transition: opacity var(--duration-fast) var(--ease);
+}
+.group__head:hover .group__add,
+.group__add:focus-visible {
+  opacity: 1;
+}
+@media (hover: none) {
+  .group__add {
+    opacity: 1;
+  }
+}
+.group__rows {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-px);
+}
+
+/* ---------- row ---------- */
+
+.row {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  height: var(--row-h);
+  padding: 0 var(--space-2) 0 var(--space-3);
+  border-radius: var(--radius-md);
+  cursor: default;
+  transition: background-color var(--duration-fast) var(--ease);
+}
+.row:hover {
+  background: var(--hover-tint);
+}
+.row[aria-selected='true'] {
+  background: var(--accent);
+  color: var(--accent-fg);
+}
+.row--closed .row__title {
+  color: var(--muted-fg);
+}
+.row__toggle {
+  display: inline-flex;
+  padding: var(--space-0-5);
+  margin: calc(-1 * var(--space-0-5));
+  border-radius: 50%;
+}
+.row__toggle:hover {
+  --icon-scale: 1.12;
+}
+.row__title {
+  flex: 1 1 auto;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.row__note {
+  --icon-size: var(--icon-sm);
+  --icon-color: var(--muted-fg);
+}
+.row__tags {
+  display: flex;
+  gap: var(--space-1-5);
+  overflow: hidden;
+  flex: 0 1 auto;
+  min-width: 0;
+}
+.row__age {
+  width: 30px;
+  text-align: right;
+  flex: none;
+}
+@media (max-width: 420px) {
+  .row__tags {
+    display: none;
+  }
+}

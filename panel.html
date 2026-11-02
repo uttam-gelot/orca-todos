@@ -1,0 +1,29 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>ToDos</title>
+    <style>
+      @font-face {
+        font-family: 'Geist';
+        src: url('dist/Geist-Variable.woff2') format('woff2');
+        font-weight: 100 900;
+        font-display: swap;
+      }
+    </style>
+    <link rel="stylesheet" href="dist/app.css" />
+  </head>
+  <body data-mode="panel">
+    <!--
+      THESIS: a to-do list that reads as one more Orca pane: navigator, list, details.
+      OWN-WORLD: Orca's own tokens, Geist, Lucide, shadcn sizes; color only marks state.
+      STORY: glance at the rail counts, pick a scope, J/K through rows, change state with 1-9.
+      FIRST VIEWPORT: rail of states with counts, grouped rows, details on the right when selected.
+      FORM: seed 5e8a3e9f, three-pane navigator; collapses to select + sheet below 760px / 1040px.
+      FINISH: 13px rows, 11px section labels, hairlines, tabular numbers, 150-250ms state motion.
+    -->
+    <div id="root"></div>
+    <script type="module" src="dist/app.js"></script>
+  </body>
+</html>

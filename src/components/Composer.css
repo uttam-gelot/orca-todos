@@ -1,0 +1,32 @@
+/* Inline capture field, as a list row or as a board card. */
+
+.composer {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  height: var(--row-h);
+  padding: 0 var(--space-1-5) 0 36px;
+  border: 1px solid var(--input);
+  border-radius: var(--radius-md);
+  background: var(--bg);
+  transition:
+    border-color var(--duration-fast) var(--ease),
+    box-shadow var(--duration-fast) var(--ease);
+  animation: fade-in var(--duration-fast) var(--ease);
+}
+.composer:focus-within {
+  border-color: var(--ring);
+  box-shadow: var(--focus-ring);
+}
+.composer--card {
+  padding: 0 var(--space-1-5) 0 var(--space-2-5);
+  height: 38px;
+}
+.composer__input {
+  flex: 1;
+  min-width: 0;
+  border: 0;
+  background: none;
+  outline: none;
+  height: 100%;
+}

@@ -1,0 +1,230 @@
+/* Global entry: design tokens, resets and keyframes. Component styles live next to each component
+   (BEM blocks) and are imported by it.
+   Orca-native: colors come only from Orca's frame variables (light and dark follow Orca). The
+   fallbacks after each var() are for previewing in a plain browser. Monochrome; color is for state.
+   Geist (Orca's UI font) is declared in the HTML so the file loads from dist/, not as a data URL. */
+
+:root {
+  --fb-bg: oklch(1 0 0);
+  --fb-fg: oklch(0.145 0 0);
+  --fb-card: oklch(1 0 0);
+  --fb-muted: oklch(0.97 0 0);
+  --fb-muted-fg: oklch(0.556 0 0);
+  --fb-border: oklch(0.922 0 0);
+  --fb-primary: oklch(0.205 0 0);
+  --fb-primary-fg: oklch(0.985 0 0);
+  --fb-destructive: oklch(0.577 0.245 27.325);
+  --fb-ring: oklch(0.708 0 0);
+  color-scheme: light dark;
+}
+@media (prefers-color-scheme: dark) {
+  :root {
+    --fb-bg: oklch(0.145 0 0);
+    --fb-fg: oklch(0.985 0 0);
+    --fb-card: oklch(0.205 0 0);
+    --fb-muted: oklch(0.269 0 0);
+    --fb-muted-fg: oklch(0.708 0 0);
+    --fb-border: oklch(1 0 0 / 10%);
+    --fb-primary: oklch(0.922 0 0);
+    --fb-primary-fg: oklch(0.205 0 0);
+    --fb-destructive: oklch(0.704 0.191 22.216);
+    --fb-ring: oklch(0.556 0 0);
+  }
+}
+
+:root {
+  /* color */
+  --bg: var(--orca-background, var(--fb-bg));
+  --fg: var(--orca-foreground, var(--fb-fg));
+  --card: var(--orca-card, var(--fb-card));
+  --popover: var(--orca-popover, var(--card));
+  --popover-fg: var(--orca-popover-foreground, var(--fg));
+  --muted: var(--orca-muted, var(--fb-muted));
+  --muted-fg: var(--orca-muted-foreground, var(--fb-muted-fg));
+  --accent: var(--orca-accent, var(--muted));
+  --accent-fg: var(--orca-accent-foreground, var(--fg));
+  --border: var(--orca-border, var(--fb-border));
+  --input: var(--orca-input, var(--border));
+  --primary: var(--orca-primary, var(--fb-primary));
+  --primary-fg: var(--orca-primary-foreground, var(--fb-primary-fg));
+  --destructive: var(--orca-destructive, var(--fb-destructive));
+  --ring: var(--orca-ring, var(--fb-ring));
+  --hover-tint: color-mix(in oklab, var(--accent) 60%, transparent);
+  --scrim: rgb(0 0 0 / 0.32);
+
+  /* shape and elevation */
+  --radius: var(--orca-radius, 0.625rem);
+  --radius-md: calc(var(--radius) - 2px);
+  --radius-sm: calc(var(--radius) - 4px);
+  --radius-xs: 4px;
+  --radius-full: 999px;
+  --hairline: 1px solid var(--border);
+  --shadow-xs: 0 1px 2px 0 rgb(0 0 0 / 0.05);
+  --shadow-floating: 0 10px 24px rgb(0 0 0 / 0.18);
+  --focus-ring: 0 0 0 3px color-mix(in oklab, var(--ring) 25%, transparent);
+
+  /* spacing */
+  --space-px: 1px;
+  --space-0-5: 2px;
+  --space-1: 4px;
+  --space-1-5: 6px;
+  --space-2: 8px;
+  --space-2-5: 10px;
+  --space-3: 12px;
+  --space-4: 16px;
+  --space-5: 20px;
+  --space-6: 24px;
+
+  /* type */
+  --font-sans: Geist, ui-sans-serif, system-ui, -apple-system, sans-serif;
+  --font-mono: ui-monospace, 'SF Mono', Menlo, monospace;
+  --text-xs: 11px;
+  --text-sm: 12px;
+  --text-base: 13px;
+  --text-md: 14px;
+  --text-lg: 18px;
+  --weight-medium: 500;
+  --weight-semibold: 600;
+  --tracking-label: 0.05em;
+
+  /* sizes (shadcn control heights, as in Orca) */
+  --control-xs: 24px;
+  --control-sm: 28px;
+  --control-md: 32px;
+  --control-lg: 36px;
+  --row-h: 34px;
+  --bar-h: 49px;
+  --icon-sm: 14px;
+  --icon-md: 16px;
+  --rail-w: 220px;
+  --detail-w: 400px;
+
+  /* motion */
+  --ease: cubic-bezier(0.2, 0, 0, 1);
+  --duration-fast: 150ms;
+  --duration: 200ms;
+  --duration-slow: 250ms;
+}
+
+/* ---------- resets (the only element selectors in the project) ---------- */
+
+* {
+  box-sizing: border-box;
+  scrollbar-width: thin;
+  scrollbar-color: color-mix(in oklab, var(--fg) 18%, transparent) transparent;
+}
+html,
+body {
+  margin: 0;
+  height: 100%;
+}
+body {
+  background: var(--bg);
+  color: var(--fg);
+  font: 400 var(--text-base) / 1.45 var(--font-sans);
+  font-feature-settings: 'tnum' 0;
+  -webkit-font-smoothing: antialiased;
+  overflow: hidden;
+}
+button,
+input,
+select,
+textarea {
+  font: inherit;
+  color: inherit;
+  margin: 0;
+}
+button {
+  cursor: pointer;
+  background: none;
+  border: 0;
+  padding: 0;
+}
+button:disabled {
+  cursor: default;
+  opacity: 0.5;
+}
+h1,
+h2,
+h3,
+p,
+dl,
+dd,
+ul {
+  margin: 0;
+  padding: 0;
+}
+ul {
+  list-style: none;
+}
+input,
+textarea {
+  caret-color: var(--fg);
+}
+::selection {
+  background: color-mix(in oklab, var(--ring) 35%, transparent);
+}
+::placeholder {
+  color: var(--muted-fg);
+  opacity: 1;
+}
+:focus-visible {
+  outline: 2px solid color-mix(in oklab, var(--ring) 70%, transparent);
+  outline-offset: 1px;
+}
+input:focus-visible,
+textarea:focus-visible,
+select:focus-visible {
+  outline: none;
+}
+
+/* Lucide icons. Blocks size and tint the icons inside them by setting --icon-size / --icon-color
+   rather than reaching into the svg with descendant selectors. */
+.lucide {
+  width: var(--icon-size, var(--icon-md));
+  height: var(--icon-size, var(--icon-md));
+  color: var(--icon-color, currentColor);
+  flex: none;
+}
+
+.spacer {
+  flex: 1;
+}
+
+@keyframes fade-in {
+  from {
+    opacity: 0;
+  }
+}
+@keyframes pop-in {
+  from {
+    opacity: 0;
+    transform: translateY(-4px) scale(0.98);
+  }
+}
+@keyframes slide-in {
+  from {
+    transform: translateX(16px);
+    opacity: 0;
+  }
+}
+@keyframes rise-in {
+  from {
+    transform: translate(-50%, 8px);
+    opacity: 0;
+  }
+}
+@keyframes pulse {
+  50% {
+    opacity: 0.5;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation: none !important;
+    transition: none !important;
+  }
+}

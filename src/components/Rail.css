@@ -1,0 +1,134 @@
+/* Left navigator (rail), its scope select for narrow widths, and the progress summary. */
+
+.rail {
+  width: var(--rail-w);
+  flex: none;
+  display: flex;
+  flex-direction: column;
+  border-right: var(--hairline);
+  background: color-mix(in oklab, var(--muted) 35%, var(--bg));
+}
+@media (max-width: 759px) {
+  .rail {
+    display: none;
+  }
+}
+.rail__scroll {
+  flex: 1;
+  overflow: auto;
+  padding: var(--space-2);
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-px);
+}
+.rail__section {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  height: var(--control-sm);
+  margin-top: var(--space-3);
+  padding: 0 var(--space-0-5) 0 var(--space-2);
+}
+.rail__gap {
+  flex: 1;
+  min-height: var(--space-3);
+}
+
+.nav-item {
+  --icon-color: var(--muted-fg);
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  height: var(--control-sm);
+  padding: 0 var(--space-2);
+  border-radius: var(--radius-md);
+  text-align: left;
+  color: var(--fg);
+  transition: background-color var(--duration-fast) var(--ease);
+}
+.nav-item:hover {
+  background: var(--accent);
+  color: var(--accent-fg);
+}
+.nav-item[aria-current='page'] {
+  background: var(--accent);
+  color: var(--accent-fg);
+  font-weight: var(--weight-medium);
+}
+.nav-item__label {
+  flex: 1;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+/* ---------- progress ---------- */
+
+.progress {
+  padding: var(--space-3) var(--space-4) 14px;
+  border-top: var(--hairline);
+}
+.progress__bar {
+  display: flex;
+  gap: var(--space-0-5);
+  height: var(--space-1);
+  border-radius: var(--space-0-5);
+  overflow: hidden;
+  background: var(--muted);
+  margin-bottom: var(--space-2-5);
+}
+.progress__segment {
+  transition: flex-grow var(--duration-slow) var(--ease);
+}
+.progress__stats {
+  display: grid;
+  gap: var(--space-0-5);
+  font-size: var(--text-sm);
+}
+.progress__stat {
+  display: flex;
+  justify-content: space-between;
+}
+.progress__term {
+  color: var(--muted-fg);
+}
+.progress__value {
+  font-variant-numeric: tabular-nums;
+  font-weight: var(--weight-medium);
+}
+
+/* Compact: one line in the narrow status bar. */
+.progress--compact {
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+  padding: 0 var(--space-3);
+  height: var(--control-sm);
+}
+.progress--compact .progress__bar {
+  flex: 0 0 64px;
+  margin: 0;
+}
+.progress--compact .progress__stats {
+  display: flex;
+  gap: var(--space-3);
+  font-size: var(--text-xs);
+}
+.progress--compact .progress__stat {
+  gap: var(--space-1);
+}
+
+/* ---------- scope select (replaces the rail when narrow) ---------- */
+
+.scope-select {
+  appearance: auto;
+  width: 100%;
+  height: var(--control-md);
+  padding: 0 var(--space-2);
+  font-size: var(--text-base);
+  font-weight: var(--weight-medium);
+  border: 1px solid var(--input);
+  border-radius: var(--radius-md);
+  background: var(--bg);
+}

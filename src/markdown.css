@@ -1,0 +1,67 @@
+/* Rendered markdown. The HTML comes from `marked`, so it carries no classes: this block is the one
+   place that styles elements by tag, always scoped under `.md`. */
+
+.md {
+  overflow-wrap: anywhere;
+  line-height: 1.6;
+}
+.md > * + * {
+  margin-top: var(--space-2);
+}
+.md h1,
+.md h2,
+.md h3 {
+  font-size: var(--text-md);
+  font-weight: var(--weight-semibold);
+  margin-top: 14px;
+}
+.md ul,
+.md ol {
+  padding-left: var(--space-5);
+}
+.md ul {
+  list-style: disc;
+}
+.md li + li {
+  margin-top: var(--space-0-5);
+}
+.md a {
+  color: inherit;
+  text-decoration: underline;
+  text-decoration-color: color-mix(in oklab, var(--fg) 40%, transparent);
+  text-underline-offset: var(--space-0-5);
+  cursor: pointer;
+}
+.md a:hover {
+  text-decoration-color: currentColor;
+}
+.md code {
+  background: var(--muted);
+  padding: var(--space-px) var(--space-1);
+  border-radius: var(--radius-xs);
+  font: var(--text-sm) var(--font-mono);
+}
+.md pre {
+  background: var(--muted);
+  padding: var(--space-2-5) var(--space-3);
+  border-radius: var(--radius-md);
+  overflow: auto;
+}
+.md pre code {
+  padding: 0;
+  background: none;
+}
+.md blockquote {
+  margin-left: 0;
+  padding-left: var(--space-3);
+  border-left: var(--hairline);
+  color: var(--muted-fg);
+}
+.md input[type='checkbox'] {
+  margin: 0 var(--space-1-5) 0 0;
+  vertical-align: -2px;
+}
+.md li:has(> input[type='checkbox']) {
+  list-style: none;
+  margin-left: -18px;
+}

@@ -1,0 +1,118 @@
+/* App shell: panes, status bar, empty and loading states, toasts. */
+
+.app {
+  display: flex;
+  height: 100vh;
+  min-width: 0;
+}
+.app__main {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+}
+.app__content {
+  flex: 1;
+  overflow: auto;
+  min-height: 0;
+}
+.app__content--list {
+  padding: var(--space-1) var(--space-2) var(--space-6);
+}
+.app__content--board {
+  padding: var(--space-2) var(--space-3) var(--space-3);
+}
+.app__detail-pane {
+  width: var(--detail-w);
+  flex: none;
+  border-left: var(--hairline);
+  min-height: 0;
+  animation: slide-in var(--duration) var(--ease);
+}
+
+/* Narrow: the rail hides (see Rail.css) and a one-line status bar takes over its numbers. */
+.app__statusbar {
+  display: none;
+}
+@media (max-width: 759px) {
+  .app__statusbar {
+    display: block;
+  }
+}
+
+/* ---------- empty and error states ---------- */
+
+.empty {
+  max-width: 380px;
+  margin: 40px auto;
+  padding: 0 var(--space-4);
+  text-align: center;
+  color: var(--muted-fg);
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2-5);
+  line-height: 1.7;
+}
+.empty__title {
+  color: var(--fg);
+  font-size: var(--text-md);
+  font-weight: var(--weight-semibold);
+}
+
+/* ---------- loading ---------- */
+
+.skeleton {
+  padding: var(--space-3) var(--space-2);
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-1-5);
+}
+.skeleton__row {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2-5);
+  height: var(--row-h);
+  padding: 0 var(--space-3);
+}
+.skeleton__dot {
+  width: var(--icon-sm);
+  height: var(--icon-sm);
+  border-radius: 50%;
+  background: var(--muted);
+}
+.skeleton__bar {
+  height: var(--space-2-5);
+  border-radius: 5px;
+  background: var(--muted);
+  animation: pulse 1.4s ease-in-out infinite;
+}
+
+/* ---------- toast ---------- */
+
+.toast {
+  position: fixed;
+  left: 50%;
+  bottom: var(--space-4);
+  transform: translateX(-50%);
+  z-index: 50;
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  max-width: calc(100% - var(--space-6));
+  padding: var(--space-1-5) var(--space-1-5) var(--space-1-5) var(--space-3);
+  border-radius: var(--radius-md);
+  background: var(--popover);
+  color: var(--popover-fg);
+  border: var(--hairline);
+  box-shadow: var(--shadow-floating);
+  animation: rise-in var(--duration) var(--ease);
+}
+.toast--error {
+  --icon-color: var(--destructive);
+}
+.toast__text {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  min-width: 0;
+}
