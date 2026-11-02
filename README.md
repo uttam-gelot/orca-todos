@@ -1,21 +1,55 @@
+<div align="center">
+
+<img src="images/icon.png" alt="ToDos for Orca" width="96" />
+
 # ToDos for Orca
 
-[![CI](https://github.com/uttam-gelot/orca-todos/actions/workflows/ci.yml/badge.svg)](https://github.com/uttam-gelot/orca-todos/actions/workflows/ci.yml)
+**A personal to-do list inside [Orca](https://github.com/stablyai/orca), the agent-orchestrator IDE.**
 
-A personal to-do list inside [Orca](https://github.com/stablyai/orca), the agent-orchestrator IDE.
+Keep your next tasks beside your agent sessions. Use a list or a board in the center tab, or a
+compact list in the sidebar. No account, no sync service, no network.
+
+[![CI](https://github.com/uttam-gelot/orca-todos/actions/workflows/ci.yml/badge.svg)](https://github.com/uttam-gelot/orca-todos/actions/workflows/ci.yml)
+[![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](LICENSE)
+[![Orca](https://img.shields.io/badge/Orca-%3E%3D1.4.246-111)](https://github.com/stablyai/orca)
+[![Bun](https://img.shields.io/badge/Bun-1.4-black?logo=bun)](https://bun.sh)
+[![TypeScript](https://img.shields.io/badge/TypeScript-strict-3178c6?logo=typescript&logoColor=white)](https://www.typescriptlang.org/)
+
+<br />
+
+![The center tab in dark mode: navigator, grouped list and details pane](docs/screenshots/tab-list-dark.png)
+
+</div>
+
+---
+
+## Contents
+
+- [What is ToDos for Orca?](#what-is-todos-for-orca)
+- [Features](#features)
+- [Screenshots](#screenshots)
+- [Requirements](#requirements)
+- [Install in Orca](#install-in-orca)
+- [Use the plugin](#use-the-plugin)
+- [Data and privacy](#data-and-privacy)
+- [Upcoming features](#upcoming-features)
+- [Develop](#develop)
+- [Contributing](#contributing)
+- [License](#license)
+
+## What is ToDos for Orca?
+
+Orca runs many coding agents in parallel. Each agent works in its own git worktree. While the agents
+work, you need a place for your own next steps. ToDos for Orca gives you that place inside Orca, so
+you do not have to change to a different app.
 
 The plugin has two views of the same to-dos:
 
 - **Center tab.** A full-size view with a navigator, a list or a board, and a details pane.
-- **Sidebar panel.** A compact view in the right sidebar.
+- **Sidebar panel.** A compact view in the right sidebar, beside your terminals and diffs.
 
-When you change a to-do in one view, the other view shows the change immediately.
-
-![The center tab in dark mode: navigator, grouped list and details pane](docs/screenshots/tab-list-dark.png)
-
-| Board view (light)                                                                     | Sidebar panel (dark)                                                      |
-| -------------------------------------------------------------------------------------- | ------------------------------------------------------------------------- |
-| ![The board view with one column for each state](docs/screenshots/tab-board-light.png) | ![The compact list in the right sidebar](docs/screenshots/panel-dark.png) |
+When you change a to-do in one view, the other view shows the change immediately. The plugin uses
+the Orca theme, fonts, and control sizes, so it looks like a part of Orca.
 
 ## Features
 
@@ -28,6 +62,12 @@ When you change a to-do in one view, the other view shows the change immediately
 - **Search and filter.** Search titles and notes. Filter by priority. Sort manually, by priority, by last update, or by creation date.
 - **Keyboard.** You can do all tasks with the keyboard. Press `?` to see all shortcuts.
 - **Theme.** The plugin uses the Orca theme colors in light mode and in dark mode.
+
+## Screenshots
+
+| Board view (light)                                                                     | Sidebar panel (dark)                                                      |
+| -------------------------------------------------------------------------------------- | ------------------------------------------------------------------------- |
+| ![The board view with one column for each state](docs/screenshots/tab-board-light.png) | ![The compact list in the right sidebar](docs/screenshots/panel-dark.png) |
 
 ## Requirements
 
@@ -94,6 +134,20 @@ The plugin does not use shortcuts with `⌘` or `Ctrl`, except `⌘Z` / `Ctrl+Z`
 - The plugin keeps all data in Orca plugin storage on your computer.
 - The plugin does not use the network. Orca runs the plugin in a sandboxed frame with no network access.
 - The plugin asks for one permission: `storage:own`. This permission gives access only to the plugin's own storage.
+
+## Upcoming features
+
+These features are planned. They are not available yet.
+
+- **Due dates.** Give a to-do a date, and see the to-dos that are due soon.
+- **Quick-add syntax.** Type tags, a priority, and a state in the title, for example
+  `Fix login #auth !high`.
+- **Checklists.** Show the progress of a markdown checklist on the row and on the card.
+- **Lists for each project.** Keep a separate list for each repository or workspace.
+- **Send a to-do to an agent.** Start an Orca agent from a to-do. This feature needs a future Orca
+  host API.
+
+Do you want a different feature? [Open an issue](https://github.com/uttam-gelot/orca-todos/issues).
 
 ## Develop
 
@@ -171,6 +225,16 @@ More details:
 - `DESIGN.md` gives the visual rules.
 - `PRODUCT.md` gives the users and the purpose.
 - `AGENTS.md` gives the instructions for coding agents.
+
+## Contributing
+
+Contributions are welcome: fixes, new features, and better docs.
+
+1. Fork the repository and make a branch, for example `feature/due-dates` or `fix/board-drag`.
+2. Follow `AGENTS.md` and the skills in `.agents/skills/`. They give the code, CSS, test, and commit
+   rules.
+3. Run `bun run build` and commit `dist/` with your change.
+4. Open a pull request. CI must pass.
 
 ## License
 
