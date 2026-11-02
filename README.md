@@ -17,7 +17,7 @@ compact list in the sidebar. No account, no sync service, no network.
 
 <br />
 
-![The center tab in dark mode: navigator, grouped list and details pane](docs/screenshots/tab-list-dark.png)
+![The board view in the center tab, with one column for each state](docs/screenshots/tab-board-light.png)
 
 </div>
 
@@ -65,9 +65,9 @@ the Orca theme, fonts, and control sizes, so it looks like a part of Orca.
 
 ## Screenshots
 
-| Board view (light)                                                                     | Sidebar panel (dark)                                                      |
-| -------------------------------------------------------------------------------------- | ------------------------------------------------------------------------- |
-| ![The board view with one column for each state](docs/screenshots/tab-board-light.png) | ![The compact list in the right sidebar](docs/screenshots/panel-dark.png) |
+| List view (dark)                                                                                             | Sidebar panel (dark)                                                      |
+| ------------------------------------------------------------------------------------------------------------ | ------------------------------------------------------------------------- |
+| ![The center tab in dark mode: navigator, grouped list and details pane](docs/screenshots/tab-list-dark.png) | ![The compact list in the right sidebar](docs/screenshots/panel-dark.png) |
 
 ## Requirements
 
