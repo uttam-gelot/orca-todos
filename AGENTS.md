@@ -27,6 +27,7 @@ src/keys.ts       keyboard map; src/focus.ts shared focus requests
 src/log.ts        logger; src/errors.ts typed errors
 src/styles.css    global tokens and resets only
 tests/            setup.ts, factories/, fixtures/, unit/, integration/
+scripts/shots/    `bun run shots`: Orca screenshots of a demo copy with sample data
 dist/             committed build output that Orca loads
 ```
 

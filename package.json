@@ -12,7 +12,8 @@
     "test": "bun test",
     "test:unit": "bun test tests/unit",
     "test:integration": "bun test tests/integration",
-    "pack": "bun run build && rm -rf release && mkdir -p release && cp -R orca-plugin.json panel.html board.html README.md dist images release/"
+    "pack": "bun run build && rm -rf release && mkdir -p release && cp -R orca-plugin.json panel.html board.html README.md dist images release/",
+    "shots": "bun scripts/shots/run.ts"
   },
   "dependencies": {
     "@preact/signals": "^2.11.4",

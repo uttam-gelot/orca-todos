@@ -174,10 +174,19 @@ lefthook install
 | `bun run format`           | Format the code with Prettier                       |
 | `bun run format:check`     | Check the format, but do not change files           |
 | `bun run pack`             | Build and write an installable copy to `release/`   |
+| `bun run shots`            | Take screenshots in Orca, in light and dark mode    |
 
 GitHub Actions (`.github/workflows/ci.yml`) runs the type check, ESLint, the Prettier check, the tests, a secret scan, and a check that `dist/` matches the source. It runs on each push to `main` and on each pull request.
 
 Before each push, `lefthook` runs a secret scan (gitleaks), the tests, ESLint, and a Prettier check. If one check fails, the push stops.
+
+### Screenshots
+
+`bun run shots` uses `orca plugin shot` to take screenshots of the sidebar panel and the center tab, in light mode and in dark mode. Orca draws them, so they show the real Orca theme. The script writes the PNG files to `.orca/shots/`.
+
+The script does not use your to-dos. It loads a demo copy of the plugin (`local.todos-demo`) with sample data, and removes the copy when it is done. It approves the demo copy for you. The copy asks for the same access as the plugin.
+
+You need the Orca desktop app 1.4.247 or later, open on this machine. Orca must be hidden while the shots run. If the terminal cannot hide Orca, the script waits up to two minutes for you to hide it (Cmd+H).
 
 ### Why `dist/` is in the repository
 
@@ -206,6 +215,7 @@ tests/
   fixtures/          Stored records: valid, old, and not valid
   unit/              Unit tests
   integration/       Tests of the store with storage, and of the full app
+scripts/shots/       `bun run shots`: the screenshot script and its sample data
 dist/                Build output that Orca loads
 ```
 

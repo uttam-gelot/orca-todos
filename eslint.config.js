@@ -17,6 +17,11 @@ export default tseslint.config(
     }
   },
   {
+    // Bun scripts that run on this machine, not in the plugin frame.
+    files: ['scripts/**/*.ts'],
+    languageOptions: { globals: { ...globals.node } }
+  },
+  {
     files: ['tests/**'],
     rules: { '@typescript-eslint/no-non-null-assertion': 'off' }
   },
