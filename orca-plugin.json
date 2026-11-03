@@ -4,7 +4,7 @@
   "execution": "sandboxed-ui",
   "id": "todos",
   "name": "ToDos",
-  "version": "0.1.0",
+  "version": "0.1.1",
   "description": "Personal to-dos with custom states, tags, priorities, markdown notes, and list and board views.",
   "author": {
     "name": "Uttam Gelot",

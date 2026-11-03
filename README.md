@@ -65,6 +65,8 @@ the Orca theme, fonts, and control sizes, so it looks like a part of Orca.
 
 ## Screenshots
 
+Orca draws these screenshots. To take them again, run `bun run shots` (see [Screenshots](#screenshots-1) under Develop).
+
 | List view (dark)                                                                                             | Sidebar panel (dark)                                                      |
 | ------------------------------------------------------------------------------------------------------------ | ------------------------------------------------------------------------- |
 | ![The center tab in dark mode: navigator, grouped list and details pane](docs/screenshots/tab-list-dark.png) | ![The compact list in the right sidebar](docs/screenshots/panel-dark.png) |
