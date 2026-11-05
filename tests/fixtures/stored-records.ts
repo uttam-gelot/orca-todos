@@ -10,11 +10,28 @@ export const VALID_TODO = {
   archived: false,
   order: 1,
   createdAt: 10,
-  updatedAt: 20
+  updatedAt: 20,
+  runs: [
+    {
+      terminalId: 't1',
+      agent: 'claude',
+      workspaceId: 'wt-1',
+      workspaceName: 'orca-todos',
+      startedAt: 30,
+      state: 'working',
+      stateAt: 40
+    }
+  ]
 }
 
 /** An older record: no description, tags or priority fields yet. */
 export const LEGACY_TODO = { id: 'old', title: 'Legacy', stateId: 'backlog', order: 2, createdAt: 1, updatedAt: 1 }
+
+/** Stored runs: one usable but from a future state name, one missing its terminal. */
+export const ODD_RUNS = [
+  { terminalId: 't2', agent: 'codex', workspaceId: 'wt-1', workspaceName: 'x', startedAt: 5, state: 'paused' },
+  { agent: 'codex', workspaceId: 'wt-1', workspaceName: 'x', startedAt: 5, state: 'done', stateAt: 6 }
+]
 
 export const INVALID_TODOS: unknown[] = [
   null,

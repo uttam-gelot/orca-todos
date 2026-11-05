@@ -12,7 +12,7 @@ import {
   stats
 } from '../../src/model'
 import { makeTodo as todo } from '../factories/todo'
-import { CUSTOM_STATES, INVALID_TODOS, LEGACY_TODO, VALID_TODO } from '../fixtures/stored-records'
+import { CUSTOM_STATES, INVALID_TODOS, LEGACY_TODO, ODD_RUNS, VALID_TODO } from '../fixtures/stored-records'
 
 describe('normalizeTags', () => {
   test('splits, strips #, lowercases and dedupes', () => {
@@ -87,6 +87,23 @@ describe('parseTodo', () => {
   })
   test('rejects values that are not usable todos', () => {
     for (const value of INVALID_TODOS) expect(parseTodo(value)).toBeNull()
+  })
+  test('keeps usable agent runs and drops the rest', () => {
+    const runs = parseTodo({ ...VALID_TODO, runs: ODD_RUNS })?.runs
+    expect(runs).toEqual([
+      {
+        terminalId: 't2',
+        agent: 'codex',
+        workspaceId: 'wt-1',
+        workspaceName: 'x',
+        startedAt: 5,
+        state: 'starting',
+        stateAt: 5
+      }
+    ])
+  })
+  test('gives a record without runs an empty list', () => {
+    expect(parseTodo(LEGACY_TODO)?.runs).toEqual([])
   })
 })
 

@@ -265,6 +265,7 @@ export function createTodo(input: Pick<Todo, 'title' | 'stateId'> & Partial<Todo
       description: '',
       tags: [],
       priority: 'none',
+      runs: [],
       ...input,
       id: uid(),
       archived: false,

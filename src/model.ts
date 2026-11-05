@@ -14,7 +14,28 @@ export type Todo = {
   createdAt: number
   updatedAt: number
   closedAt?: number
+  /** Agents this to-do was sent to, oldest first. */
+  runs: AgentRun[]
 }
+
+/** What an agent is doing, as Orca reports it. `starting` until Orca's first report. */
+export type RunState = 'starting' | 'working' | 'blocked' | 'waiting' | 'done'
+export const RUN_STATES: RunState[] = ['starting', 'working', 'blocked', 'waiting', 'done']
+
+/** One hand-off of a to-do to an agent CLI that Orca started in a terminal. */
+export type AgentRun = {
+  /** Orca's terminal id. It identifies the run: each launch opens a new terminal. */
+  terminalId: string
+  /** Orca's agent id, such as `claude` or `codex`. */
+  agent: string
+  workspaceId: string
+  workspaceName: string
+  startedAt: number
+  state: RunState
+  /** When `state` last changed. */
+  stateAt: number
+}
+
 export type Filter = {
   text: string
   tags: string[]
@@ -25,6 +46,7 @@ export type Filter = {
 export type Sort = 'manual' | 'priority' | 'updated' | 'created'
 
 export const PRIORITIES: Priority[] = ['high', 'med', 'low', 'none']
+export const PRIORITY_LABEL: Record<Priority, string> = { none: 'No priority', low: 'Low', med: 'Medium', high: 'High' }
 const PRIORITY_RANK: Record<Priority, number> = { high: 0, med: 1, low: 2, none: 3 }
 
 export const DEFAULT_STATES: State[] = [
@@ -133,10 +155,28 @@ export function parseTodo(value: unknown): Todo | null {
     description: isString(value.description) ? value.description : '',
     tags: Array.isArray(value.tags) ? value.tags.filter(isString) : [],
     priority,
-    archived: value.archived === true
+    archived: value.archived === true,
+    runs: Array.isArray(value.runs) ? value.runs.map(parseRun).filter((r): r is AgentRun => r !== null) : []
   }
   if (isNumber(value.closedAt)) todo.closedAt = value.closedAt
   return todo
+}
+
+/** A stored agent run, or null when it is not usable. Older plugin versions stored none. */
+function parseRun(value: unknown): AgentRun | null {
+  if (!isRecord(value)) return null
+  const { terminalId, agent, workspaceId, workspaceName, startedAt, state, stateAt } = value
+  if (!isString(terminalId) || !isString(agent) || !isString(workspaceId) || !isString(workspaceName)) return null
+  if (!isNumber(startedAt)) return null
+  return {
+    terminalId,
+    agent,
+    workspaceId,
+    workspaceName,
+    startedAt,
+    state: RUN_STATES.includes(state as RunState) ? (state as RunState) : 'starting',
+    stateAt: isNumber(stateAt) ? stateAt : startedAt
+  }
 }
 
 /** The stored state list, or null when it is missing, empty or malformed. */

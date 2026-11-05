@@ -14,7 +14,7 @@ import {
   SlidersHorizontal,
   X
 } from 'lucide-preact'
-import { EMPTY_FILTER, PRIORITIES, type Priority, type Sort } from '../model'
+import { EMPTY_FILTER, PRIORITIES, PRIORITY_LABEL, type Priority, type Sort } from '../model'
 import {
   archiveClosed,
   filter,
@@ -30,7 +30,7 @@ import {
 } from '../store'
 import { searchRef } from '../focus'
 import { ScopeSelect } from './Rail'
-import { IconButton, Kbd, PRIORITY_LABEL, StateIcon } from './ui'
+import { IconButton, Kbd, StateIcon } from './ui'
 import './Header.css'
 
 function ScopeTitle() {

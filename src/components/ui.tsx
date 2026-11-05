@@ -3,13 +3,11 @@
 import type { ButtonHTMLAttributes, ComponentChildren } from 'preact'
 import { useEffect, useRef } from 'preact/hooks'
 import { Circle, CircleCheck, SignalHigh, SignalLow, SignalMedium, X } from 'lucide-preact'
-import type { Priority, State } from '../model'
+import { PRIORITY_LABEL, type Priority, type State } from '../model'
 import './ui.css'
 
 export const isMac = /Mac|iPhone|iPad/.test(navigator.platform)
 export const MOD = isMac ? '⌘' : 'Ctrl'
-
-export const PRIORITY_LABEL: Record<Priority, string> = { none: 'No priority', low: 'Low', med: 'Medium', high: 'High' }
 
 export function StateIcon({ state }: { state?: State }) {
   const Icon = state?.closed ? CircleCheck : Circle

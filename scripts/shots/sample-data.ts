@@ -107,6 +107,7 @@ export function sampleTodos(now: number = Date.now()): Todo[] {
     priority,
     description,
     archived,
+    runs: [],
     createdAt: now - age - 2 * DAY,
     updatedAt: now - age,
     ...(rest.stateId === 'done' ? { closedAt: now - age } : {})

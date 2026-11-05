@@ -13,6 +13,7 @@ export function makeTodo(over: Partial<Todo> = {}): Todo {
     order: 1,
     createdAt: 0,
     updatedAt: 0,
+    runs: [],
     ...over
   }
 }
