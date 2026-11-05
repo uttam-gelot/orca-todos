@@ -84,6 +84,31 @@ export function withRunState(runs: AgentRun[], terminalId: string, state: RunSta
   return runs.map((r) => (r === run ? { ...r, state, stateAt: at } : r))
 }
 
+/**
+ * Storage key of the run index: terminal id → to-do id, so the worker can find the to-do an agent
+ * status event is about without reading every to-do. Written by the worker at each launch.
+ */
+export const RUN_INDEX_KEY = 'runs'
+
+/** Terminals the index remembers. Older ones drop off; their to-dos keep their last run state. */
+export const MAX_INDEXED_RUNS = 50
+
+export type RunIndex = Record<string, string>
+
+/** The stored run index, or an empty one when it is missing or not valid. */
+export function parseRunIndex(value: unknown): RunIndex {
+  if (typeof value !== 'object' || value === null || Array.isArray(value)) return {}
+  return Object.fromEntries(
+    Object.entries(value).filter((e): e is [string, string] => typeof e[1] === 'string' && e[1] !== '')
+  )
+}
+
+/** The index with a terminal added last, at most MAX_INDEXED_RUNS entries. */
+export function indexRun(index: RunIndex, terminalId: string, todoId: string): RunIndex {
+  const entries = Object.entries(index).filter(([t]) => t !== terminalId)
+  return Object.fromEntries([...entries, [terminalId, todoId]].slice(-MAX_INDEXED_RUNS))
+}
+
 /** The newest run, which is the one lists and cards show. */
 export const latestRun = (todo: Todo): AgentRun | undefined => todo.runs.at(-1)
 

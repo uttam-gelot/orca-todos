@@ -20,6 +20,10 @@ export type Todo = {
 
 /** What an agent is doing, as Orca reports it. `starting` until Orca's first report. */
 export type RunState = 'starting' | 'working' | 'blocked' | 'waiting' | 'done'
+/** Storage keys: each to-do is `todo:<id>`, the ordered state list is `states`. */
+export const TODO_KEY = 'todo:'
+export const STATES_KEY = 'states'
+
 export const RUN_STATES: RunState[] = ['starting', 'working', 'blocked', 'waiting', 'done']
 
 /** One hand-off of a to-do to an agent CLI that Orca started in a terminal. */

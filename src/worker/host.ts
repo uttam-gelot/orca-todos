@@ -9,5 +9,9 @@ export type WorkerOrca = {
     /** Answers a panel's `orca.plugin.request(name, input)`. What the handler returns is the answer. */
     handle(name: string, handler: (input: unknown) => unknown): Disposable
   }
+  events: {
+    /** Delivers an event the manifest lists in `contributes.events`. */
+    on(event: string, handler: (payload: unknown) => unknown): Disposable
+  }
   log(message: string): void
 }

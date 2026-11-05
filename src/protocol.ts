@@ -19,7 +19,8 @@ export type WorkspacesAnswer = {
   truncated: boolean
 }
 
-export type LaunchInput = { workspaceId: string; agent: string; prompt: string }
+/** `todoId` lets the worker tie the agent's later status events to the to-do. */
+export type LaunchInput = { todoId: string; workspaceId: string; agent: string; prompt: string }
 export type LaunchAnswer = { terminalId: string }
 
 /** Names of the worker's request handlers. */
@@ -64,10 +65,10 @@ export function parseWorkspacesAnswer(value: unknown): WorkspacesAnswer | null {
 /** A launch request, or null when the input is not one. The worker checks every panel input. */
 export function parseLaunchInput(value: unknown): LaunchInput | null {
   if (!isRecord(value)) return null
-  const { workspaceId, agent, prompt } = value
-  if (!isString(workspaceId) || !workspaceId || !isString(agent) || !agent || !isString(prompt) || !prompt.trim())
-    return null
-  return { workspaceId, agent, prompt }
+  const { todoId, workspaceId, agent, prompt } = value
+  const filled = (v: unknown): v is string => isString(v) && v.trim() !== ''
+  if (!filled(todoId) || !filled(workspaceId) || !filled(agent) || !filled(prompt)) return null
+  return { todoId, workspaceId, agent, prompt }
 }
 
 /** The worker's launch answer, or null when it is not one. */

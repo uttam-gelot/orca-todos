@@ -29,15 +29,14 @@ import {
   PRIORITIES,
   sortTodos,
   stats,
+  STATES_KEY,
+  TODO_KEY,
   uid,
   type Filter,
   type Sort,
   type State,
   type Todo
 } from './model'
-
-const TODO_KEY = 'todo:'
-const STATES_KEY = 'states'
 
 /** `board` is the center editor tab, `panel` the right sidebar. */
 export const mode = (document.body.dataset.mode ?? 'panel') as 'panel' | 'board'
@@ -442,7 +441,7 @@ export async function sendToAgent(id: string, prompt: string): Promise<string | 
   if (!workspace || !prompt.trim()) return agentErrorText('invalid_params')
   let terminalId: string
   try {
-    ;({ terminalId } = await launchAgent({ workspaceId, agent, prompt }))
+    ;({ terminalId } = await launchAgent({ todoId: id, workspaceId, agent, prompt }))
   } catch (error) {
     return errorMessage('sendToAgent', error)
   }

@@ -31,7 +31,7 @@ describe('openExternal', () => {
 })
 
 describe('worker requests', () => {
-  const launch = { workspaceId: 'w1', agent: 'claude', prompt: 'Do it' }
+  const launch = { todoId: 'a', workspaceId: 'w1', agent: 'claude', prompt: 'Do it' }
 
   test('the worker is reachable inside Orca', () => {
     expect(workerAvailable()).toBe(true)

@@ -1,6 +1,9 @@
 import { describe, expect, test } from 'bun:test'
 import {
   agentErrorText,
+  indexRun,
+  MAX_INDEXED_RUNS,
+  parseRunIndex,
   workspaceLabel,
   addRun,
   agentLabel,
@@ -103,5 +106,21 @@ describe('agentErrorText', () => {
     expect(agentErrorText('not_permitted')).toContain('Approve')
     expect(agentErrorText('timeout')).toContain('in time')
     expect(agentErrorText('weird')).toContain('(weird)')
+  })
+})
+
+describe('run index', () => {
+  test('keeps only string to-do ids', () => {
+    expect(parseRunIndex({ t1: 'a', t2: 3, t3: '' })).toEqual({ t1: 'a' })
+    expect(parseRunIndex(null)).toEqual({})
+    expect(parseRunIndex(['a'])).toEqual({})
+  })
+  test('adds the newest terminal last and drops the oldest past the cap', () => {
+    let index = {}
+    for (let i = 0; i <= MAX_INDEXED_RUNS; i++) index = indexRun(index, `t${i}`, 'a')
+    const keys = Object.keys(index)
+    expect(keys).toHaveLength(MAX_INDEXED_RUNS)
+    expect(keys[0]).toBe('t1')
+    expect(keys.at(-1)).toBe(`t${MAX_INDEXED_RUNS}`)
   })
 })

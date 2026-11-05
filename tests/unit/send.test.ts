@@ -40,7 +40,7 @@ describe('sendToAgent', () => {
     expect(await sendToAgent('a', 'Do it')).toBeNull()
     expect(fakeOrca.requests.at(-1)).toEqual({
       name: REQUEST.launch,
-      input: { workspaceId: 'w2', agent: 'claude', prompt: 'Do it' }
+      input: { todoId: 'a', workspaceId: 'w2', agent: 'claude', prompt: 'Do it' }
     })
     const todo = byId('a')
     expect(todo.stateId).toBe('doing')
