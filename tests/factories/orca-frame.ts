@@ -4,6 +4,7 @@
 import type { OrcaFrame } from '../../src/orca'
 
 type Listener = (e: { key: string }) => void
+type RequestHandler = (input: unknown) => unknown
 type Failure = 'keys' | 'get' | 'set' | 'delete'
 
 export type FakeOrcaFrame = OrcaFrame & {
@@ -16,6 +17,10 @@ export type FakeOrcaFrame = OrcaFrame & {
   /** Clears data, listeners and pending failures. */
   reset(): void
   opened: string[]
+  /** The plugin worker's request handlers, by name. A missing name rejects with `unknown_method`. */
+  handlers: Map<string, RequestHandler>
+  /** Every worker request sent, in order. */
+  requests: { name: string; input: unknown }[]
 }
 
 export function createFakeOrcaFrame(): FakeOrcaFrame {
@@ -23,6 +28,8 @@ export function createFakeOrcaFrame(): FakeOrcaFrame {
   const listeners = new Set<Listener>()
   const failures = new Set<Failure>()
   const opened: string[] = []
+  const handlers = new Map<string, RequestHandler>()
+  const requests: { name: string; input: unknown }[] = []
 
   const check = (op: Failure): void => {
     if (!failures.delete(op)) return
@@ -35,6 +42,8 @@ export function createFakeOrcaFrame(): FakeOrcaFrame {
   return {
     data,
     opened,
+    handlers,
+    requests,
     storage: {
       async get(key) {
         check('get')
@@ -65,6 +74,15 @@ export function createFakeOrcaFrame(): FakeOrcaFrame {
         return { opened: true }
       }
     },
+    host: { has: () => true },
+    plugin: {
+      async request(name, input) {
+        requests.push({ name, input: structuredClone(input) })
+        const handler = handlers.get(name)
+        if (!handler) throw Object.assign(new Error(`No handler for ${name}`), { code: 'unknown_method' })
+        return structuredClone(await handler(structuredClone(input)))
+      }
+    },
     failNext: (op) => void failures.add(op),
     writeFromElsewhere(key, value) {
       data.set(key, structuredClone(value))
@@ -75,6 +93,8 @@ export function createFakeOrcaFrame(): FakeOrcaFrame {
       listeners.clear()
       failures.clear()
       opened.length = 0
+      handlers.clear()
+      requests.length = 0
     }
   }
 }

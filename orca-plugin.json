@@ -1,7 +1,7 @@
 {
   "$schema": "https://raw.githubusercontent.com/stablyai/orca/main/docs/schemas/plugins/orca-plugin.v2.schema.json",
   "manifestVersion": 2,
-  "execution": "sandboxed-ui",
+  "execution": "trusted-worker",
   "id": "todos",
   "name": "ToDos Board",
   "version": "0.1.2",
@@ -31,9 +31,10 @@
     }
   ],
   "engines": {
-    "orca": ">=1.4.246"
+    "orca": ">=1.4.248"
   },
   "pluginApi": 1,
+  "main": "dist/worker.js",
   "contributes": {
     "panels": [
       {
@@ -65,6 +66,12 @@
   "capabilities": [
     {
       "kind": "storage:own"
+    },
+    {
+      "kind": "workspace:read"
+    },
+    {
+      "kind": "agent:launch"
     }
   ]
 }

@@ -17,8 +17,8 @@ export default tseslint.config(
     }
   },
   {
-    // Bun scripts that run on this machine, not in the plugin frame.
-    files: ['scripts/**/*.ts'],
+    // Code that runs in Node or Bun, not in the plugin frame: local scripts and the plugin worker.
+    files: ['scripts/**/*.ts', 'src/worker/**/*.ts'],
     languageOptions: { globals: { ...globals.node } }
   },
   {

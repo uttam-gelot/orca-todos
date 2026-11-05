@@ -3,7 +3,9 @@
   "private": true,
   "type": "module",
   "scripts": {
-    "build": "bun build src/main.tsx --outdir dist --entry-naming app.[ext] --target browser --format esm --minify && cp src/fonts/Geist-Variable.woff2 src/fonts/OFL.txt dist/",
+    "build": "bun run build:app && bun run build:worker && cp src/fonts/Geist-Variable.woff2 src/fonts/OFL.txt dist/",
+    "build:app": "bun build src/main.tsx --outdir dist --entry-naming app.[ext] --target browser --format esm --minify",
+    "build:worker": "bun build src/worker/main.ts --outdir dist --entry-naming worker.[ext] --target node --format esm",
     "watch": "bun run build --watch",
     "typecheck": "tsc --noEmit",
     "lint": "eslint .",

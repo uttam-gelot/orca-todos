@@ -1,5 +1,7 @@
 import { beforeEach, describe, expect, test } from 'bun:test'
-import { browserStorage, openExternal } from '../../src/orca'
+import { AgentError } from '../../src/errors'
+import { browserStorage, launchAgent, listWorkspaces, openExternal, workerAvailable } from '../../src/orca'
+import { REQUEST } from '../../src/protocol'
 import { fakeOrca } from '../setup'
 
 beforeEach(() => {
@@ -25,5 +27,35 @@ describe('openExternal', () => {
   test('hands links to Orca so they open in the OS browser', () => {
     openExternal('https://example.com/')
     expect(fakeOrca.opened).toEqual(['https://example.com/'])
+  })
+})
+
+describe('worker requests', () => {
+  const launch = { workspaceId: 'w1', agent: 'claude', prompt: 'Do it' }
+
+  test('the worker is reachable inside Orca', () => {
+    expect(workerAvailable()).toBe(true)
+  })
+  test('launchAgent sends the launch and answers the terminal', async () => {
+    fakeOrca.handlers.set(REQUEST.launch, () => ({ terminalId: 't1' }))
+    expect(await launchAgent(launch)).toEqual({ terminalId: 't1' })
+    expect(fakeOrca.requests).toEqual([{ name: REQUEST.launch, input: launch }])
+  })
+  test('listWorkspaces drops a focused id that is not listed', async () => {
+    fakeOrca.handlers.set(REQUEST.workspaces, () => ({
+      workspaces: [{ id: 'w1', name: 'app', kind: 'worktree', branch: 'main' }],
+      focusedId: 'gone',
+      truncated: false
+    }))
+    expect((await listWorkspaces()).focusedId).toBeNull()
+  })
+  test("rejects with an AgentError carrying Orca's code", async () => {
+    const error = await launchAgent(launch).catch((e: unknown) => e)
+    expect(error).toBeInstanceOf(AgentError)
+    expect((error as AgentError).code).toBe('unknown_method')
+  })
+  test('rejects an unusable answer as bad_answer', async () => {
+    fakeOrca.handlers.set(REQUEST.launch, () => ({ terminalId: '' }))
+    expect(((await launchAgent(launch).catch((e: unknown) => e)) as AgentError).code).toBe('bad_answer')
   })
 })
