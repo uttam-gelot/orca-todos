@@ -8,6 +8,7 @@ import {
   ArchiveArrowUp,
   ArrowLeft,
   Bold,
+  Bot,
   Code,
   Copy,
   Italic,
@@ -22,6 +23,7 @@ import { normalizeTags, PRIORITIES, PRIORITY_LABEL, type Todo } from '../model'
 import { onMarkdownClick, renderMarkdown } from '../markdown'
 import {
   copyPrompt,
+  openAgentSheet,
   deleteTodo,
   moveTodo,
   select,
@@ -51,6 +53,9 @@ export function Detail({ todo }: { todo: Todo }) {
           {state?.name}
         </span>
         <span class="spacer" />
+        <IconButton label="Send to agent (S)" onClick={() => openAgentSheet(todo.id)}>
+          <Bot />
+        </IconButton>
         <IconButton label="Copy as agent prompt (Y)" onClick={() => copyPrompt(todo.id)}>
           <Copy />
         </IconButton>

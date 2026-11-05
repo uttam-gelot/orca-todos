@@ -8,6 +8,7 @@ import { loadError, loaded, selectedId, todos } from '../../src/store'
 import { StorageError } from '../../src/errors'
 import { makeTodo } from '../factories/todo'
 import { resetStore } from '../factories/store'
+import { serveWorker } from '../factories/workspaces'
 import { fakeOrca } from '../setup'
 
 let root: HTMLElement
@@ -116,6 +117,32 @@ describe('App', () => {
       await pressY()
       expect(root.querySelector('[role="alert"]')?.textContent).toContain('Could not copy')
       warn.mockRestore()
+    })
+  })
+
+  describe('send to agent', () => {
+    const press = (key: string) =>
+      act(() => {
+        document.body.dispatchEvent(new KeyboardEvent('keydown', { key, bubbles: true, cancelable: true }))
+      })
+    const settle = () => act(() => new Promise((resolve) => setTimeout(resolve, 0)))
+
+    test('S opens the sheet with the prompt and the focused workspace, and Send starts the agent', async () => {
+      resetStore({ todos: [makeTodo({ id: 'a', title: 'Fix login', description: 'Steps' })] })
+      selectedId.value = 'a'
+      serveWorker(fakeOrca)
+      mount()
+      await press('s')
+      await settle()
+      const sheet = root.querySelector('[role="dialog"][aria-label="Send to agent"]')!
+      expect(sheet.querySelector('textarea')?.value).toBe('# Fix login\n\nSteps')
+      expect(sheet.querySelector<HTMLSelectElement>('#agent-workspace')?.value).toBe('w2')
+      await act(() => sheet.querySelector<HTMLButtonElement>('button[type="submit"]')!.click())
+      await settle()
+      expect(fakeOrca.requests.at(-1)?.name).toBe('agent.launch')
+      expect(root.querySelector('[aria-label="Send to agent"]')).toBeNull()
+      expect(todos.value[0].stateId).toBe('doing')
+      expect(root.querySelector('[role="status"]')?.textContent).toContain('Started Claude')
     })
   })
 })

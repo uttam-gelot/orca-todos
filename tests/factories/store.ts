@@ -1,7 +1,9 @@
 // Puts the app store back to a fresh, loaded state between tests (the store is a module singleton).
 
+import { DEFAULT_AGENT } from '../../src/agents'
 import { DEFAULT_STATES, EMPTY_FILTER, type State, type Todo } from '../../src/model'
 import {
+  agentChoice,
   collapsed,
   composer,
   detailOpen,
@@ -17,7 +19,8 @@ import {
   sort,
   states,
   todos,
-  view
+  view,
+  workspaceList
 } from '../../src/store'
 
 export function resetStore(seed: { todos?: Todo[]; states?: State[] } = {}): void {
@@ -37,4 +40,6 @@ export function resetStore(seed: { todos?: Todo[]; states?: State[] } = {}): voi
   sort.value = 'manual'
   view.value = 'list'
   collapsed.value = new Set()
+  agentChoice.value = { agent: DEFAULT_AGENT, workspaceId: '' }
+  workspaceList.value = { status: 'loading' }
 }

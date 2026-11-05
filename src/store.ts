@@ -3,11 +3,21 @@
 // Storage is shared by the sidebar panel and the center tab, and `onDidChange` keeps both in sync.
 
 import { computed, effect, signal } from '@preact/signals'
-import { buildPrompt } from './agents'
+import {
+  addRun,
+  agentErrorText,
+  agentLabel,
+  AGENTS,
+  buildPrompt,
+  DEFAULT_AGENT,
+  stateAfterSend,
+  workspaceLabel
+} from './agents'
 import { copyText } from './clipboard'
-import { StorageError } from './errors'
+import { AgentError, StorageError } from './errors'
 import { log } from './log'
-import { storage } from './orca'
+import { launchAgent, listWorkspaces, storage } from './orca'
+import type { WorkspacesAnswer } from './protocol'
 import {
   DEFAULT_STATES,
   EMPTY_FILTER,
@@ -90,7 +100,8 @@ export const selectedId = signal<string | null>(null)
 export const detailOpen = signal(false)
 /** The state whose inline composer is open, or null. */
 export const composer = signal<string | null>(null)
-export const sheet = signal<null | 'states' | 'shortcuts'>(null)
+/** The open edge sheet. `agent` sends the selected to-do to an agent. */
+export const sheet = signal<null | 'states' | 'shortcuts' | 'agent'>(null)
 export const menuOpen = signal(false)
 
 const WIDE = '(min-width: 1040px)'
@@ -344,16 +355,119 @@ export function undoDelete(): void {
 /** A short message about the last action, shown as a toast that clears itself. */
 export const notice = signal<{ text: string; error?: boolean } | null>(null)
 
-/** Copies a to-do as an agent prompt. Call it from a click or key press: the clipboard needs one. */
-export function copyPrompt(id: string): void {
+/**
+ * Copies a to-do as an agent prompt, or `text` when given (an edited prompt). Call it from a click
+ * or key press: the clipboard needs one.
+ */
+export function copyPrompt(id: string, text?: string): void {
   const todo = todos.value.find((t) => t.id === id)
   if (!todo) return
-  if (copyText(buildPrompt(todo))) {
+  if (copyText(text ?? buildPrompt(todo))) {
     notice.value = { text: 'Copied as an agent prompt' }
     return
   }
   log.warn('The clipboard refused the copy', { op: 'copyPrompt', id })
   notice.value = { text: 'Could not copy. Orca did not allow the clipboard.', error: true }
+}
+
+// --- handing a to-do to an agent ---
+
+export type AgentChoice = { agent: string; workspaceId: string }
+
+const AGENT_KEY = 'orca-todos:agent'
+
+/** The last agent and workspace used. Shared by both surfaces; a convenience, so failures only log. */
+function loadAgentChoice(): AgentChoice {
+  try {
+    const saved = JSON.parse(localStorage.getItem(AGENT_KEY) ?? '{}') as Partial<AgentChoice>
+    return {
+      agent: AGENTS.some((a) => a.id === saved.agent) ? saved.agent! : DEFAULT_AGENT,
+      workspaceId: typeof saved.workspaceId === 'string' ? saved.workspaceId : ''
+    }
+  } catch (error) {
+    log.warn('Ignoring an unreadable agent choice', { op: 'loadAgentChoice' }, error)
+    return { agent: DEFAULT_AGENT, workspaceId: '' }
+  }
+}
+
+export const agentChoice = signal<AgentChoice>(loadAgentChoice())
+
+effect(() => {
+  try {
+    localStorage.setItem(AGENT_KEY, JSON.stringify(agentChoice.value))
+  } catch (error) {
+    log.warn('Could not save the agent choice', { op: 'saveAgentChoice' }, error)
+  }
+})
+
+export type WorkspaceList =
+  { status: 'loading' } | { status: 'ready'; answer: WorkspacesAnswer } | { status: 'error'; message: string }
+
+/** The workspaces the agent sheet offers, fetched from the worker each time the sheet opens. */
+export const workspaceList = signal<WorkspaceList>({ status: 'loading' })
+
+const errorMessage = (op: string, error: unknown): string => {
+  log.error('Agent request failed', { op }, error)
+  return agentErrorText(error instanceof AgentError ? error.code : 'action_failed')
+}
+
+/** Fetches the workspaces and picks one: the remembered one, else the focused one, else the first. */
+export async function loadWorkspaces(): Promise<void> {
+  workspaceList.value = { status: 'loading' }
+  try {
+    const answer = await listWorkspaces()
+    workspaceList.value = { status: 'ready', answer }
+    const ids = answer.workspaces.map((w) => w.id)
+    const keep = ids.includes(agentChoice.value.workspaceId)
+    if (!keep) agentChoice.value = { ...agentChoice.value, workspaceId: answer.focusedId ?? ids[0] ?? '' }
+  } catch (error) {
+    workspaceList.value = { status: 'error', message: errorMessage('listWorkspaces', error) }
+  }
+}
+
+export function openAgentSheet(id: string): void {
+  select(id)
+  sheet.value = 'agent'
+  void loadWorkspaces()
+}
+
+/**
+ * Starts the chosen agent on a to-do with `prompt`, records the run, and moves the to-do to the
+ * working state. Answers an error message to show, or null when the agent started.
+ */
+export async function sendToAgent(id: string, prompt: string): Promise<string | null> {
+  const { agent, workspaceId } = agentChoice.value
+  const list = workspaceList.value
+  const workspace = list.status === 'ready' ? list.answer.workspaces.find((w) => w.id === workspaceId) : undefined
+  if (!workspace || !prompt.trim()) return agentErrorText('invalid_params')
+  let terminalId: string
+  try {
+    ;({ terminalId } = await launchAgent({ workspaceId, agent, prompt }))
+  } catch (error) {
+    return errorMessage('sendToAgent', error)
+  }
+  log.info('Sent a to-do to an agent', { id, agent, terminalId })
+  const todo = todos.value.find((t) => t.id === id)
+  if (todo) {
+    const now = Date.now()
+    const run = {
+      terminalId,
+      agent,
+      workspaceId,
+      workspaceName: workspaceLabel(workspace),
+      startedAt: now,
+      state: 'starting' as const,
+      stateAt: now
+    }
+    const stateId = stateAfterSend(todo, states.value)
+    const others = todos.value.filter((t) => t.id !== id)
+    updateTodo(id, {
+      runs: addRun(todo.runs, run),
+      ...(stateId && { stateId, order: orderBefore(others, stateId, null) })
+    })
+  }
+  notice.value = { text: `Started ${agentLabel(agent)} in ${workspaceLabel(workspace)}` }
+  return null
 }
 
 export function archiveClosed(): number {

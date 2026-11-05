@@ -1,5 +1,7 @@
 import { describe, expect, test } from 'bun:test'
 import {
+  agentErrorText,
+  workspaceLabel,
   addRun,
   agentLabel,
   buildPrompt,
@@ -79,5 +81,27 @@ describe('runs', () => {
   test('answers null for an unknown terminal or an unchanged state', () => {
     expect(withRunState([run()], 'other', 'working', 9)).toBeNull()
     expect(withRunState([run()], 't1', 'starting', 9)).toBeNull()
+  })
+})
+
+describe('workspaceLabel', () => {
+  const ws = (name: string, branch: string | null, folder: string) =>
+    ({ id: 'w', kind: 'worktree', name, branch, folder }) as const
+  test('names the folder, since many workspaces are called main', () => {
+    expect(workspaceLabel(ws('main', 'main', 'backup'))).toBe('backup · main')
+    expect(workspaceLabel(ws('feature/x', 'refs/heads/feature/x', 'app'))).toBe('app · feature/x')
+  })
+  test('keeps a renamed workspace and a folder without a branch readable', () => {
+    expect(workspaceLabel(ws('Docs work', 'main', 'app'))).toBe('app (Docs work) · main')
+    expect(workspaceLabel(ws('Notes', null, 'Notes'))).toBe('Notes')
+    expect(workspaceLabel(ws('Notes', null, ''))).toBe('Notes')
+  })
+})
+
+describe('agentErrorText', () => {
+  test('explains the codes a person can act on, and names any other', () => {
+    expect(agentErrorText('not_permitted')).toContain('Approve')
+    expect(agentErrorText('timeout')).toContain('in time')
+    expect(agentErrorText('weird')).toContain('(weird)')
   })
 })

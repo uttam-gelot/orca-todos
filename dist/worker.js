@@ -5,6 +5,7 @@ var REQUEST = {
 };
 var isRecord = (v) => typeof v === "object" && v !== null && !Array.isArray(v);
 var isString = (v) => typeof v === "string";
+var lastSegment = (path) => path.replace(/[\\/]+$/, "").split(/[\\/]/).at(-1) ?? "";
 function parseWorkspace(value) {
   if (!isRecord(value) || !isString(value.id) || !isString(value.name))
     return null;
@@ -12,7 +13,8 @@ function parseWorkspace(value) {
     id: value.id,
     name: value.name,
     kind: value.kind === "folder" ? "folder" : "worktree",
-    branch: isString(value.branch) ? value.branch : null
+    branch: isString(value.branch) ? value.branch : null,
+    folder: isString(value.folder) ? value.folder : isString(value.path) ? lastSegment(value.path) : ""
   };
 }
 function parseLaunchInput(value) {

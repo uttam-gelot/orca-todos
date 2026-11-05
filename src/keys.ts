@@ -13,6 +13,7 @@ import {
   lastDeleted,
   menuOpen,
   navOrder,
+  openAgentSheet,
   openComposer,
   scope,
   scopeKey,
@@ -159,6 +160,8 @@ export function onKeyDown(e: KeyboardEvent): void {
         return todo && (toggleDone(todo.id), true)
       case 'p':
         return todo && (cyclePriority(todo.id), true)
+      case 's':
+        return todo && (openAgentSheet(todo.id), true)
       case 'y':
         return todo && (copyPrompt(todo.id), true)
       case 'a':

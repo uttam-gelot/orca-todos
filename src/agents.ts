@@ -2,6 +2,7 @@
 // No Orca and no DOM, so the panel and the worker share it and tests call it directly.
 
 import { PRIORITY_LABEL, type AgentRun, type RunState, type State, type Todo } from './model'
+import type { WorkspaceOption } from './protocol'
 
 export type AgentChoice = { id: string; label: string }
 
@@ -85,3 +86,32 @@ export function withRunState(runs: AgentRun[], terminalId: string, state: RunSta
 
 /** The newest run, which is the one lists and cards show. */
 export const latestRun = (todo: Todo): AgentRun | undefined => todo.runs.at(-1)
+
+/**
+ * How a workspace reads in a picker. Orca names a repo's main worktree after its branch, so many
+ * are just "main"; the folder tells them apart.
+ */
+export function workspaceLabel(w: WorkspaceOption): string {
+  const branch = w.branch?.replace(/^refs\/heads\//, '') ?? ''
+  const base = w.folder || w.name
+  const name = w.name !== base && w.name !== branch ? `${base} (${w.name})` : base
+  return branch && branch !== base ? `${name} · ${branch}` : name
+}
+
+/** What to tell the person when handing a to-do to an agent failed, by Orca's error code. */
+export function agentErrorText(code: string): string {
+  switch (code) {
+    case 'not_permitted':
+    case 'approval_required':
+      return 'Orca did not allow it. Approve the plugin again so it may start agents.'
+    case 'unavailable':
+    case 'unknown_method':
+      return 'This Orca cannot reach the plugin worker. Update Orca, or copy the prompt instead.'
+    case 'timeout':
+      return 'The plugin worker did not answer in time. Try again.'
+    case 'invalid_params':
+      return 'Pick a workspace and write a prompt first.'
+    default:
+      return `Could not start the agent (${code}).`
+  }
+}

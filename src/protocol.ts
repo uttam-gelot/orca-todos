@@ -7,6 +7,8 @@ export type WorkspaceOption = {
   name: string
   kind: 'worktree' | 'folder'
   branch: string | null
+  /** The last segment of the workspace's path: the repo or folder name, which `name` often is not. */
+  folder: string
 }
 
 export type WorkspacesAnswer = {
@@ -29,14 +31,24 @@ export const REQUEST = {
 const isRecord = (v: unknown): v is Record<string, unknown> => typeof v === 'object' && v !== null && !Array.isArray(v)
 const isString = (v: unknown): v is string => typeof v === 'string'
 
-/** One workspace row, from Orca's `workspace.list` or the worker's answer; null when unusable. */
+const lastSegment = (path: string): string =>
+  path
+    .replace(/[\\/]+$/, '')
+    .split(/[\\/]/)
+    .at(-1) ?? ''
+
+/**
+ * One workspace row, from Orca's `workspace.list` (which has `path`) or the worker's answer (which
+ * has `folder`); null when unusable.
+ */
 export function parseWorkspace(value: unknown): WorkspaceOption | null {
   if (!isRecord(value) || !isString(value.id) || !isString(value.name)) return null
   return {
     id: value.id,
     name: value.name,
     kind: value.kind === 'folder' ? 'folder' : 'worktree',
-    branch: isString(value.branch) ? value.branch : null
+    branch: isString(value.branch) ? value.branch : null,
+    folder: isString(value.folder) ? value.folder : isString(value.path) ? lastSegment(value.path) : ''
   }
 }
 
