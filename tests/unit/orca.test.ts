@@ -37,8 +37,8 @@ describe('worker requests', () => {
     expect(workerAvailable()).toBe(true)
   })
   test('launchAgent sends the launch and answers the terminal', async () => {
-    fakeOrca.handlers.set(REQUEST.launch, () => ({ terminalId: 't1' }))
-    expect(await launchAgent(launch)).toEqual({ terminalId: 't1' })
+    fakeOrca.handlers.set(REQUEST.launch, () => ({ terminalId: 't1', prompt: 'command' }))
+    expect(await launchAgent(launch)).toEqual({ terminalId: 't1', prompt: 'command' })
     expect(fakeOrca.requests).toEqual([{ name: REQUEST.launch, input: launch }])
   })
   test('listWorkspaces drops a focused id that is not listed', async () => {

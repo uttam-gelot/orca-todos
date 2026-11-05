@@ -80,6 +80,9 @@
     },
     {
       "kind": "agent:read"
+    },
+    {
+      "kind": "terminal:send"
     }
   ]
 }

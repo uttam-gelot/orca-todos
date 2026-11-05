@@ -1,6 +1,8 @@
 import { describe, expect, test } from 'bun:test'
 import {
   agentErrorText,
+  shellQuote,
+  startCommand,
   indexRun,
   MAX_INDEXED_RUNS,
   parseRunIndex,
@@ -122,5 +124,20 @@ describe('run index', () => {
     expect(keys).toHaveLength(MAX_INDEXED_RUNS)
     expect(keys[0]).toBe('t1')
     expect(keys.at(-1)).toBe(`t${MAX_INDEXED_RUNS}`)
+  })
+})
+
+describe('startCommand', () => {
+  test('puts the prompt where each CLI takes it', () => {
+    expect(startCommand('claude', 'Fix it')).toBe(`claude 'Fix it'`)
+    expect(startCommand('gemini', 'Fix it')).toBe(`gemini --prompt-interactive 'Fix it'`)
+    expect(startCommand('grok', '-x')).toBe(`grok -- '-x'`)
+  })
+  test('is null for a CLI that takes no prompt, or one it does not know', () => {
+    expect(startCommand('aider', 'Fix it')).toBeNull()
+    expect(startCommand('nope', 'Fix it')).toBeNull()
+  })
+  test('quotes so the shell expands nothing', () => {
+    expect(shellQuote(`it's $HOME \`x\``)).toBe(`'it'\\''s $HOME \`x\`'`)
   })
 })

@@ -4,31 +4,50 @@
 import { PRIORITY_LABEL, type AgentRun, type RunState, type State, type Todo } from './model'
 import type { WorkspaceOption } from './protocol'
 
-export type AgentChoice = { id: string; label: string }
+/**
+ * An agent CLI to offer. `command` and `promptFlag` say how the CLI takes a first prompt on its
+ * command line (`claude '<prompt>'`, `gemini --prompt-interactive '<prompt>'`), the way Orca's own
+ * GitHub and Jira launches start it. Without `command`, the prompt can only be typed in once the
+ * agent is up, which Orca's plugin `agent.launch` does.
+ */
+export type AgentChoice = { id: string; label: string; command?: string; promptFlag?: string }
 
 /**
- * Agent CLIs to offer, by Orca's agent id. Orca knows more; these are the common ones. Orca starts
- * the CLI as installed on the workspace's host, so a missing CLI fails in its terminal.
+ * Agent CLIs to offer, by Orca's agent id. Orca knows more; these are the common ones. The commands
+ * and flags follow Orca's agent catalog. A CLI missing on the host fails in its terminal.
  */
 export const AGENTS: AgentChoice[] = [
-  { id: 'claude', label: 'Claude' },
-  { id: 'codex', label: 'Codex' },
-  { id: 'gemini', label: 'Gemini' },
-  { id: 'opencode', label: 'OpenCode' },
-  { id: 'cursor', label: 'Cursor' },
-  { id: 'copilot', label: 'GitHub Copilot' },
+  { id: 'claude', label: 'Claude', command: 'claude' },
+  { id: 'codex', label: 'Codex', command: 'codex' },
+  { id: 'gemini', label: 'Gemini', command: 'gemini', promptFlag: '--prompt-interactive' },
+  { id: 'opencode', label: 'OpenCode', command: 'opencode', promptFlag: '--prompt' },
+  { id: 'cursor', label: 'Cursor', command: 'cursor-agent' },
+  { id: 'copilot', label: 'GitHub Copilot', command: 'copilot', promptFlag: '-i' },
+  { id: 'droid', label: 'Droid', command: 'droid' },
+  { id: 'grok', label: 'Grok', command: 'grok', promptFlag: '--' },
   { id: 'amp', label: 'Amp' },
   { id: 'aider', label: 'Aider' },
   { id: 'goose', label: 'Goose' },
-  { id: 'droid', label: 'Droid' },
   { id: 'kiro', label: 'Kiro' },
-  { id: 'qwen-code', label: 'Qwen Code' },
-  { id: 'grok', label: 'Grok' }
+  { id: 'qwen-code', label: 'Qwen Code' }
 ]
 
 export const DEFAULT_AGENT = 'claude'
 
 export const agentLabel = (id: string): string => AGENTS.find((a) => a.id === id)?.label ?? id
+
+/** One POSIX shell word: single quotes, with each `'` closed, escaped and reopened. */
+export const shellQuote = (value: string): string => `'${value.replaceAll("'", `'\\''`)}'`
+
+/**
+ * The shell command that starts `agentId` with `prompt` as its first message, or null when the
+ * agent takes no prompt on its command line. POSIX shells only.
+ */
+export function startCommand(agentId: string, prompt: string): string | null {
+  const agent = AGENTS.find((a) => a.id === agentId)
+  if (!agent?.command) return null
+  return [agent.command, agent.promptFlag, shellQuote(prompt)].filter(Boolean).join(' ')
+}
 
 export const RUN_LABEL: Record<RunState, string> = {
   starting: 'Starting',

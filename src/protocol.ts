@@ -21,7 +21,12 @@ export type WorkspacesAnswer = {
 
 /** `todoId` lets the worker tie the agent's later status events to the to-do. */
 export type LaunchInput = { todoId: string; workspaceId: string; agent: string; prompt: string }
-export type LaunchAnswer = { terminalId: string }
+/**
+ * `prompt` says how the prompt went in: `command` when it was part of the agent's start command,
+ * `typed` when Orca was left to type it once the agent is up (which can miss, so the panel also
+ * copies it).
+ */
+export type LaunchAnswer = { terminalId: string; prompt: 'command' | 'typed' }
 
 /** Names of the worker's request handlers. */
 export const REQUEST = {
@@ -73,5 +78,6 @@ export function parseLaunchInput(value: unknown): LaunchInput | null {
 
 /** The worker's launch answer, or null when it is not one. */
 export function parseLaunchAnswer(value: unknown): LaunchAnswer | null {
-  return isRecord(value) && isString(value.terminalId) && value.terminalId ? { terminalId: value.terminalId } : null
+  if (!isRecord(value) || !isString(value.terminalId) || !value.terminalId) return null
+  return { terminalId: value.terminalId, prompt: value.prompt === 'command' ? 'command' : 'typed' }
 }

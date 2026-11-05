@@ -80,6 +80,29 @@ function parseRun(value) {
 }
 
 // src/agents.ts
+var AGENTS = [
+  { id: "claude", label: "Claude", command: "claude" },
+  { id: "codex", label: "Codex", command: "codex" },
+  { id: "gemini", label: "Gemini", command: "gemini", promptFlag: "--prompt-interactive" },
+  { id: "opencode", label: "OpenCode", command: "opencode", promptFlag: "--prompt" },
+  { id: "cursor", label: "Cursor", command: "cursor-agent" },
+  { id: "copilot", label: "GitHub Copilot", command: "copilot", promptFlag: "-i" },
+  { id: "droid", label: "Droid", command: "droid" },
+  { id: "grok", label: "Grok", command: "grok", promptFlag: "--" },
+  { id: "amp", label: "Amp" },
+  { id: "aider", label: "Aider" },
+  { id: "goose", label: "Goose" },
+  { id: "kiro", label: "Kiro" },
+  { id: "qwen-code", label: "Qwen Code" }
+];
+var agentLabel = (id) => AGENTS.find((a) => a.id === id)?.label ?? id;
+var shellQuote = (value) => `'${value.replaceAll("'", `'\\''`)}'`;
+function startCommand(agentId, prompt) {
+  const agent = AGENTS.find((a) => a.id === agentId);
+  if (!agent?.command)
+    return null;
+  return [agent.command, agent.promptFlag, shellQuote(prompt)].filter(Boolean).join(" ");
+}
 function withRunState(runs, terminalId, state, at) {
   const run = runs.find((r) => r.terminalId === terminalId);
   if (!run || run.state === state)
@@ -142,22 +165,25 @@ var readKey = async (orca, key) => {
   return isRecord3(answer) ? answer.value : null;
 };
 var writeKey = (orca, key, value) => orca.host.call("storage.set", { key, value });
-async function launchAgent(orca, input) {
+var terminalOf = (answer, method) => {
+  if (isRecord3(answer) && isString3(answer.terminalId) && answer.terminalId)
+    return answer.terminalId;
+  throw new HandlerError("action_failed", `Orca answered ${method} with something unexpected`);
+};
+async function launchAgent(orca, input, platform = process.platform) {
   const launch = parseLaunchInput(input);
   if (!launch)
     throw new HandlerError("invalid_params", "A launch needs a to-do, a workspace, an agent and a prompt");
   const { todoId, workspaceId, agent, prompt } = launch;
-  const answer = await orca.host.call("agent.launch", { workspaceId, agent, prompt });
-  if (!isRecord3(answer) || !isString3(answer.terminalId) || !answer.terminalId)
-    throw new HandlerError("action_failed", "Orca answered agent.launch with something unexpected");
-  const terminalId = answer.terminalId;
+  const command = platform === "win32" ? null : startCommand(agent, prompt);
+  const terminalId = command ? terminalOf(await orca.host.call("terminal.create", { workspaceId, title: agentLabel(agent), command }), "terminal.create") : terminalOf(await orca.host.call("agent.launch", { workspaceId, agent, prompt }), "agent.launch");
   orca.log(`Started ${agent} for to-do ${todoId} in ${workspaceId} (terminal ${terminalId})`);
   try {
     await writeKey(orca, RUN_INDEX_KEY, indexRun(parseRunIndex(await readKey(orca, RUN_INDEX_KEY)), terminalId, todoId));
   } catch (error) {
     orca.log(`Could not index terminal ${terminalId}; its status will not show: ${String(error)}`);
   }
-  return { terminalId };
+  return { terminalId, prompt: command ? "command" : "typed" };
 }
 var REPORTED = ["working", "blocked", "waiting", "done"];
 function parseStatusEvent(value) {

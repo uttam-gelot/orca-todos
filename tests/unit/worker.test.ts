@@ -63,24 +63,46 @@ describe('listWorkspaces', () => {
 })
 
 describe('launchAgent', () => {
-  const input = { todoId: 'a', workspaceId: 'w1', agent: 'claude', prompt: '# Fix login' }
-  const launched = () => createFakeWorkerOrca({ 'agent.launch': () => ({ terminalId: 't9' }) })
+  const input = { todoId: 'a', workspaceId: 'w1', agent: 'claude', prompt: "Fix Bob's login" }
+  const launched = () =>
+    createFakeWorkerOrca({
+      'terminal.create': () => ({ terminalId: 't9' }),
+      'agent.launch': () => ({ terminalId: 't8' })
+    })
 
-  test('starts the agent without the to-do id and indexes its terminal', async () => {
+  test('starts a CLI that takes a prompt with it in the start command, and indexes the terminal', async () => {
     const orca = launched()
     orca.stored.set(RUN_INDEX_KEY, { t1: 'b' })
-    expect(await launchAgent(orca, input)).toEqual({ terminalId: 't9' })
+    expect(await launchAgent(orca, input, 'darwin')).toEqual({ terminalId: 't9', prompt: 'command' })
     expect(orca.calls[0]).toEqual({
-      method: 'agent.launch',
-      params: { workspaceId: 'w1', agent: 'claude', prompt: '# Fix login' }
+      method: 'terminal.create',
+      params: { workspaceId: 'w1', title: 'Claude', command: `claude 'Fix Bob'\\''s login'` }
     })
     expect(orca.stored.get(RUN_INDEX_KEY)).toEqual({ t1: 'b', t9: 'a' })
+  })
+  test('leaves typing the prompt to Orca for other CLIs and on Windows', async () => {
+    const orca = launched()
+    expect(await launchAgent(orca, { ...input, agent: 'aider' }, 'darwin')).toEqual({
+      terminalId: 't8',
+      prompt: 'typed'
+    })
+    expect(await launchAgent(orca, input, 'win32')).toEqual({ terminalId: 't8', prompt: 'typed' })
+    const launches = orca.calls.filter((c) => c.method === 'agent.launch')
+    expect(launches.map((c) => c.params)).toEqual([
+      { workspaceId: 'w1', agent: 'aider', prompt: "Fix Bob's login" },
+      { workspaceId: 'w1', agent: 'claude', prompt: "Fix Bob's login" }
+    ])
   })
   test('still answers the terminal when the index cannot be written', async () => {
     const orca = launched()
     orca.answers.delete('storage.set')
-    expect(await launchAgent(orca, input)).toEqual({ terminalId: 't9' })
+    expect((await launchAgent(orca, input, 'darwin')).terminalId).toBe('t9')
     expect(orca.logs.at(-1)).toContain('Could not index terminal t9')
+  })
+  test('fails with action_failed when Orca answers without a terminal', async () => {
+    const orca = createFakeWorkerOrca({ 'terminal.create': () => ({}) })
+    const error = await launchAgent(orca, input, 'darwin').catch((e: unknown) => e)
+    expect((error as HandlerError).code).toBe('action_failed')
   })
   test('refuses input that is not a launch, without calling Orca', async () => {
     const orca = launched()
@@ -92,8 +114,8 @@ describe('launchAgent', () => {
   })
   test('never logs the prompt', async () => {
     const orca = launched()
-    await launchAgent(orca, input)
-    expect(orca.logs.join('\n')).not.toContain('Fix login')
+    await launchAgent(orca, input, 'darwin')
+    expect(orca.logs.join('\n')).not.toContain('login')
   })
 })
 

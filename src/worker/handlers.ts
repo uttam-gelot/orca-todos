@@ -2,7 +2,7 @@
 // agents, so the panel asks here; agent status events reach the worker even with no panel open.
 // Every Orca answer, panel input and stored value is checked before use.
 
-import { indexRun, parseRunIndex, RUN_INDEX_KEY, withRunState } from '../agents'
+import { agentLabel, indexRun, parseRunIndex, RUN_INDEX_KEY, startCommand, withRunState } from '../agents'
 import { HandlerError } from '../errors'
 import { parseTodo, TODO_KEY, type RunState } from '../model'
 import {
@@ -62,18 +62,35 @@ const readKey = async (orca: WorkerOrca, key: string): Promise<unknown> => {
 const writeKey = (orca: WorkerOrca, key: string, value: unknown): Promise<unknown> =>
   orca.host.call('storage.set', { key, value })
 
+const terminalOf = (answer: unknown, method: string): string => {
+  if (isRecord(answer) && isString(answer.terminalId) && answer.terminalId) return answer.terminalId
+  throw new HandlerError('action_failed', `Orca answered ${method} with something unexpected`)
+}
+
 /**
  * Starts an agent CLI in a new terminal of the workspace, with the prompt as its first message, and
  * indexes the terminal so its status events find the to-do.
+ *
+ * When the CLI takes a prompt on its command line, the worker opens the terminal with that command,
+ * as Orca's GitHub and Jira launches do. Orca's `agent.launch` types the prompt in afterwards, and
+ * in Orca 1.4.249 it checks for the agent once, right away, so the prompt never arrives. It stays
+ * the path for the other CLIs, and on Windows, whose shells quote differently.
  */
-export async function launchAgent(orca: WorkerOrca, input: unknown): Promise<LaunchAnswer> {
+export async function launchAgent(
+  orca: WorkerOrca,
+  input: unknown,
+  platform: string = process.platform
+): Promise<LaunchAnswer> {
   const launch = parseLaunchInput(input)
   if (!launch) throw new HandlerError('invalid_params', 'A launch needs a to-do, a workspace, an agent and a prompt')
   const { todoId, workspaceId, agent, prompt } = launch
-  const answer = await orca.host.call('agent.launch', { workspaceId, agent, prompt })
-  if (!isRecord(answer) || !isString(answer.terminalId) || !answer.terminalId)
-    throw new HandlerError('action_failed', 'Orca answered agent.launch with something unexpected')
-  const terminalId = answer.terminalId
+  const command = platform === 'win32' ? null : startCommand(agent, prompt)
+  const terminalId = command
+    ? terminalOf(
+        await orca.host.call('terminal.create', { workspaceId, title: agentLabel(agent), command }),
+        'terminal.create'
+      )
+    : terminalOf(await orca.host.call('agent.launch', { workspaceId, agent, prompt }), 'agent.launch')
   orca.log(`Started ${agent} for to-do ${todoId} in ${workspaceId} (terminal ${terminalId})`)
   // The agent is running either way; without the index only its live status is lost.
   try {
@@ -81,7 +98,7 @@ export async function launchAgent(orca: WorkerOrca, input: unknown): Promise<Lau
   } catch (error) {
     orca.log(`Could not index terminal ${terminalId}; its status will not show: ${String(error)}`)
   }
-  return { terminalId }
+  return { terminalId, prompt: command ? 'command' : 'typed' }
 }
 
 type StatusEvent = { terminalId: string; state: RunState; at: number }

@@ -17,7 +17,7 @@ import { copyText } from './clipboard'
 import { AgentError, StorageError } from './errors'
 import { log } from './log'
 import { launchAgent, listWorkspaces, storage } from './orca'
-import type { WorkspacesAnswer } from './protocol'
+import type { LaunchAnswer, WorkspacesAnswer } from './protocol'
 import {
   DEFAULT_STATES,
   EMPTY_FILTER,
@@ -439,12 +439,13 @@ export async function sendToAgent(id: string, prompt: string): Promise<string | 
   const list = workspaceList.value
   const workspace = list.status === 'ready' ? list.answer.workspaces.find((w) => w.id === workspaceId) : undefined
   if (!workspace || !prompt.trim()) return agentErrorText('invalid_params')
-  let terminalId: string
+  let launched: LaunchAnswer
   try {
-    ;({ terminalId } = await launchAgent({ todoId: id, workspaceId, agent, prompt }))
+    launched = await launchAgent({ todoId: id, workspaceId, agent, prompt })
   } catch (error) {
     return errorMessage('sendToAgent', error)
   }
+  const { terminalId } = launched
   log.info('Sent a to-do to an agent', { id, agent, terminalId })
   const todo = todos.value.find((t) => t.id === id)
   if (todo) {
@@ -465,7 +466,11 @@ export async function sendToAgent(id: string, prompt: string): Promise<string | 
       ...(stateId && { stateId, order: orderBefore(others, stateId, null) })
     })
   }
-  notice.value = { text: `Started ${agentLabel(agent)} in ${workspaceLabel(workspace)}` }
+  const started = `Started ${agentLabel(agent)} in ${workspaceLabel(workspace)}`
+  // Orca types the prompt in for CLIs that take none on their command line, and that can miss.
+  notice.value = {
+    text: launched.prompt === 'typed' ? `${started}. If the prompt does not show up there, copy it with Y.` : started
+  }
   return null
 }
 
