@@ -1,7 +1,8 @@
 // src/protocol.ts
 var REQUEST = {
   workspaces: "workspaces.list",
-  launch: "agent.launch"
+  launch: "agent.launch",
+  open: "workspace.open"
 };
 var isRecord = (v) => typeof v === "object" && v !== null && !Array.isArray(v);
 var isString = (v) => typeof v === "string";
@@ -25,6 +26,11 @@ function parseLaunchInput(value) {
   if (!filled(todoId) || !filled(workspaceId) || !filled(agent) || !filled(prompt))
     return null;
   return { todoId, workspaceId, agent, prompt };
+}
+function parseOpenInput(value) {
+  if (!isRecord(value) || !isString(value.workspaceId) || !value.workspaceId.trim())
+    return null;
+  return { workspaceId: value.workspaceId };
 }
 
 // src/model.ts
@@ -185,6 +191,14 @@ async function launchAgent(orca, input, platform = process.platform) {
   }
   return { terminalId, prompt: command ? "command" : "typed" };
 }
+async function openWorkspace(orca, input) {
+  const open = parseOpenInput(input);
+  if (!open)
+    throw new HandlerError("invalid_params", "Opening needs a workspace");
+  await orca.host.call("workspace.open", { workspaceId: open.workspaceId });
+  orca.log(`Opened workspace ${open.workspaceId}`);
+  return { opened: true };
+}
 var REPORTED = ["working", "blocked", "waiting", "done"];
 function parseStatusEvent(value) {
   if (!isRecord3(value) || !isString3(value.terminalId) || !value.terminalId)
@@ -218,6 +232,7 @@ async function onAgentStatus(orca, payload) {
 function activate(orca) {
   orca.panels.handle(REQUEST.workspaces, () => listWorkspaces(orca));
   orca.panels.handle(REQUEST.launch, (input) => launchAgent(orca, input));
+  orca.panels.handle(REQUEST.open, (input) => openWorkspace(orca, input));
   orca.events.on("agent.status.changed", (payload) => onAgentStatus(orca, payload));
 }
 export {

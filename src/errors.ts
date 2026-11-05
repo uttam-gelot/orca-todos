@@ -15,7 +15,7 @@ export class StorageError extends Error {
   }
 }
 
-export type AgentOp = 'workspaces' | 'launch'
+export type AgentOp = 'workspaces' | 'launch' | 'open'
 
 /**
  * Handing a to-do to an agent failed: the worker could not be reached, Orca refused the call, or

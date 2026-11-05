@@ -8,6 +8,7 @@ import {
   launchAgent,
   listWorkspaces,
   onAgentStatus,
+  openWorkspace,
   parseStatusEvent
 } from '../../src/worker/handlers'
 import activate from '../../src/worker/main'
@@ -116,6 +117,22 @@ describe('launchAgent', () => {
     const orca = launched()
     await launchAgent(orca, input, 'darwin')
     expect(orca.logs.join('\n')).not.toContain('login')
+  })
+})
+
+describe('openWorkspace', () => {
+  test('asks Orca to show the workspace', async () => {
+    const orca = createFakeWorkerOrca({ 'workspace.open': () => ({ opened: true }) })
+    expect(await openWorkspace(orca, { workspaceId: 'w1' })).toEqual({ opened: true })
+    expect(orca.calls).toEqual([{ method: 'workspace.open', params: { workspaceId: 'w1' } }])
+  })
+  test('refuses input without a workspace, without calling Orca', async () => {
+    const orca = createFakeWorkerOrca()
+    for (const bad of [null, {}, { workspaceId: ' ' }]) {
+      const error = await openWorkspace(orca, bad).catch((e: unknown) => e)
+      expect((error as HandlerError).code).toBe('invalid_params')
+    }
+    expect(orca.calls).toEqual([])
   })
 })
 

@@ -1,6 +1,7 @@
 // Global keyboard layer. Single keys act only when focus is not in a text field; fields handle their
 // own Escape and Enter and stop propagation, so Esc backs out one layer at a time.
 
+import { latestRun } from './agents'
 import { focusRequest, searchRef } from './focus'
 import {
   composer,
@@ -13,8 +14,9 @@ import {
   lastDeleted,
   menuOpen,
   navOrder,
-  openAgentSheet,
+  openAgentDialog,
   openComposer,
+  openRun,
   scope,
   scopeKey,
   scopes,
@@ -161,9 +163,13 @@ export function onKeyDown(e: KeyboardEvent): void {
       case 'p':
         return todo && (cyclePriority(todo.id), true)
       case 's':
-        return todo && (openAgentSheet(todo.id), true)
+        return todo && (openAgentDialog(todo.id), true)
       case 'y':
         return todo && (copyPrompt(todo.id), true)
+      case 'o': {
+        const run = todo && latestRun(todo)
+        return run && (void openRun(run), true)
+      }
       case 'a':
         return todo && (updateTodo(todo.id, { archived: !todo.archived }), true)
       case 'Backspace':

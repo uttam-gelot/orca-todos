@@ -1,6 +1,13 @@
 import { beforeEach, describe, expect, test } from 'bun:test'
 import { AgentError } from '../../src/errors'
-import { browserStorage, launchAgent, listWorkspaces, openExternal, workerAvailable } from '../../src/orca'
+import {
+  browserStorage,
+  launchAgent,
+  listWorkspaces,
+  openExternal,
+  openWorkspace,
+  workerAvailable
+} from '../../src/orca'
 import { REQUEST } from '../../src/protocol'
 import { fakeOrca } from '../setup'
 
@@ -48,6 +55,11 @@ describe('worker requests', () => {
       truncated: false
     }))
     expect((await listWorkspaces()).focusedId).toBeNull()
+  })
+  test('openWorkspace asks the worker to show a workspace', async () => {
+    fakeOrca.handlers.set(REQUEST.open, () => ({ opened: true }))
+    expect(await openWorkspace('w1')).toEqual({ opened: true })
+    expect(fakeOrca.requests).toEqual([{ name: REQUEST.open, input: { workspaceId: 'w1' } }])
   })
   test("rejects with an AgentError carrying Orca's code", async () => {
     const error = await launchAgent(launch).catch((e: unknown) => e)

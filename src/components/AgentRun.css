@@ -1,0 +1,79 @@
+/* Agent runs: status badge, the Start / Open button, and the run list in the detail pane. */
+
+.run-badge {
+  --run-color: var(--muted-fg);
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-1);
+  flex: none;
+  font-size: var(--text-xs);
+  color: var(--muted-fg);
+  white-space: nowrap;
+}
+.run-badge__dot {
+  width: var(--space-1-5);
+  height: var(--space-1-5);
+  border-radius: 50%;
+  background: var(--run-color);
+}
+.run-badge--starting .run-badge__dot,
+.run-badge--working .run-badge__dot {
+  animation: pulse 1.6s var(--ease) infinite;
+}
+.run-badge--working {
+  --run-color: var(--run-working);
+}
+.run-badge--blocked {
+  --run-color: var(--run-blocked);
+  color: var(--run-blocked);
+}
+.run-badge--done {
+  --run-color: var(--run-done);
+}
+
+.agent-button {
+  --icon-size: var(--icon-sm);
+  flex: none;
+}
+
+.run-list {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-1-5);
+}
+.run-list__head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+.run-list__items {
+  display: flex;
+  flex-direction: column;
+  border: var(--hairline);
+  border-radius: var(--radius-md);
+}
+.run-list__item {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  min-height: var(--row-h);
+  padding: 0 var(--space-1) 0 var(--space-2-5);
+  font-size: var(--text-sm);
+}
+.run-list__item + .run-list__item {
+  border-top: var(--hairline);
+}
+.run-list__name {
+  flex: 1;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.run-list__where {
+  color: var(--muted-fg);
+}
+.run-list__state {
+  color: var(--muted-fg);
+  font-size: var(--text-xs);
+}

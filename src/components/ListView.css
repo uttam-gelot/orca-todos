@@ -110,6 +110,14 @@
   flex: 0 1 auto;
   min-width: 0;
 }
+/* Start shows on hover or selection, so the narrow sidebar stays quiet; Open always shows. */
+.row__agent.agent-button--idle {
+  display: none;
+}
+.row:hover .row__agent,
+.row[aria-selected='true'] .row__agent {
+  display: inline-flex;
+}
 .row__age {
   width: 30px;
   text-align: right;
@@ -117,6 +125,10 @@
 }
 @media (max-width: 420px) {
   .row__tags {
+    display: none;
+  }
+  /* The dot alone: the title needs the room. Its tooltip still names the state. */
+  .row__run .run-badge__label {
     display: none;
   }
 }

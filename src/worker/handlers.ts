@@ -7,6 +7,7 @@ import { HandlerError } from '../errors'
 import { parseTodo, TODO_KEY, type RunState } from '../model'
 import {
   parseLaunchInput,
+  parseOpenInput,
   parseWorkspace,
   type LaunchAnswer,
   type WorkspaceOption,
@@ -99,6 +100,15 @@ export async function launchAgent(
     orca.log(`Could not index terminal ${terminalId}; its status will not show: ${String(error)}`)
   }
   return { terminalId, prompt: command ? 'command' : 'typed' }
+}
+
+/** Shows the workspace an agent runs in, as Orca's "Open" on a GitHub or Jira row does. */
+export async function openWorkspace(orca: WorkerOrca, input: unknown): Promise<{ opened: true }> {
+  const open = parseOpenInput(input)
+  if (!open) throw new HandlerError('invalid_params', 'Opening needs a workspace')
+  await orca.host.call('workspace.open', { workspaceId: open.workspaceId })
+  orca.log(`Opened workspace ${open.workspaceId}`)
+  return { opened: true }
 }
 
 type StatusEvent = { terminalId: string; state: RunState; at: number }

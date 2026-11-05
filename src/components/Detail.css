@@ -14,6 +14,9 @@
   border-bottom: var(--hairline);
   flex: none;
 }
+.detail__agent {
+  margin-right: var(--space-1-5);
+}
 .detail--sheet .detail__bar {
   padding-left: var(--space-2);
 }

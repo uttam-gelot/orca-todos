@@ -8,7 +8,7 @@ import { Detail } from './components/Detail'
 import { Header } from './components/Header'
 import { ListView } from './components/ListView'
 import { Progress, Rail } from './components/Rail'
-import { AgentSheet } from './components/AgentSheet'
+import { AgentDialog } from './components/AgentDialog'
 import { Sheets } from './components/Sheets'
 import { IconButton, Kbd, MOD, Sheet } from './components/ui'
 import { onKeyDown } from './keys'
@@ -64,7 +64,7 @@ export function App() {
           </Sheet>
         ))}
       <Sheets />
-      <AgentSheet />
+      <AgentDialog />
       {saveError.value ? <SaveErrorToast /> : notice.value ? <NoticeToast /> : <UndoToast />}
     </div>
   )

@@ -28,10 +28,14 @@ export type LaunchInput = { todoId: string; workspaceId: string; agent: string; 
  */
 export type LaunchAnswer = { terminalId: string; prompt: 'command' | 'typed' }
 
+/** Shows a workspace in Orca, the way Orca's own task rows open theirs. */
+export type OpenInput = { workspaceId: string }
+
 /** Names of the worker's request handlers. */
 export const REQUEST = {
   workspaces: 'workspaces.list',
-  launch: 'agent.launch'
+  launch: 'agent.launch',
+  open: 'workspace.open'
 } as const
 
 const isRecord = (v: unknown): v is Record<string, unknown> => typeof v === 'object' && v !== null && !Array.isArray(v)
@@ -81,3 +85,13 @@ export function parseLaunchAnswer(value: unknown): LaunchAnswer | null {
   if (!isRecord(value) || !isString(value.terminalId) || !value.terminalId) return null
   return { terminalId: value.terminalId, prompt: value.prompt === 'command' ? 'command' : 'typed' }
 }
+
+/** An open request, or null when the input is not one. */
+export function parseOpenInput(value: unknown): OpenInput | null {
+  if (!isRecord(value) || !isString(value.workspaceId) || !value.workspaceId.trim()) return null
+  return { workspaceId: value.workspaceId }
+}
+
+/** The worker's open answer: true when Orca showed the workspace. */
+export const parseOpenAnswer = (value: unknown): { opened: true } | null =>
+  isRecord(value) && value.opened === true ? { opened: true } : null

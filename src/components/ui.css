@@ -191,6 +191,20 @@
   box-shadow: var(--shadow-floating);
   animation: slide-in var(--duration) var(--ease);
 }
+/* Centered, as Orca's dialogs: near the top, as tall as its content. */
+.sheet--center {
+  align-items: flex-start;
+  justify-content: center;
+  padding: 12vh var(--space-4) var(--space-4);
+}
+.sheet__panel--center {
+  width: min(512px, 100%);
+  height: auto;
+  max-height: 100%;
+  border: var(--hairline);
+  border-radius: var(--radius);
+  animation: pop-in var(--duration) var(--ease);
+}
 .sheet__head {
   display: flex;
   align-items: center;

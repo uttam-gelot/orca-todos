@@ -127,22 +127,44 @@ describe('App', () => {
       })
     const settle = () => act(() => new Promise((resolve) => setTimeout(resolve, 0)))
 
-    test('S opens the sheet with the prompt and the focused workspace, and Send starts the agent', async () => {
+    const dialog = () => root.querySelector('[role="dialog"][aria-label="Start agent"]')
+
+    test('S opens the dialog on the focused workspace with the prompt under Advanced, and Start starts the agent', async () => {
       resetStore({ todos: [makeTodo({ id: 'a', title: 'Fix login', description: 'Steps' })] })
       selectedId.value = 'a'
       serveWorker(fakeOrca)
       mount()
       await press('s')
       await settle()
-      const sheet = root.querySelector('[role="dialog"][aria-label="Send to agent"]')!
-      expect(sheet.querySelector('textarea')?.value).toBe('# Fix login\n\nSteps')
-      expect(sheet.querySelector<HTMLSelectElement>('#agent-workspace')?.value).toBe('w2')
-      await act(() => sheet.querySelector<HTMLButtonElement>('button[type="submit"]')!.click())
+      const form = dialog()!
+      expect(form.querySelector<HTMLSelectElement>('#agent-workspace')?.value).toBe('w2')
+      expect(form.querySelector('textarea')).toBeNull()
+      await act(() => form.querySelector<HTMLButtonElement>('[aria-expanded]')!.click())
+      expect(form.querySelector('textarea')?.value).toBe('# Fix login\n\nSteps')
+      await act(() => form.querySelector<HTMLButtonElement>('button[type="submit"]')!.click())
       await settle()
       expect(fakeOrca.requests.at(-1)?.name).toBe('agent.launch')
-      expect(root.querySelector('[aria-label="Send to agent"]')).toBeNull()
+      expect(dialog()).toBeNull()
       expect(todos.value[0].stateId).toBe('doing')
       expect(root.querySelector('[role="status"]')?.textContent).toContain('Started Claude')
+    })
+
+    test('a row turns Start into Open once an agent runs, and Open shows its workspace', async () => {
+      resetStore({ todos: [makeTodo({ id: 'a', title: 'Fix login' })] })
+      serveWorker(fakeOrca)
+      mount()
+      const button = () => root.querySelector<HTMLButtonElement>('#todo-a .agent-button')!
+      expect(button().textContent).toBe('Start')
+      await act(() => button().click())
+      await settle()
+      expect(dialog()).not.toBeNull()
+      await act(() => dialog()!.querySelector<HTMLButtonElement>('button[type="submit"]')!.click())
+      await settle()
+      expect(button().textContent).toBe('Open')
+      expect(root.querySelector('#todo-a .run-badge')?.textContent).toBe('Starting')
+      await act(() => button().click())
+      await settle()
+      expect(fakeOrca.requests.at(-1)).toEqual({ name: 'workspace.open', input: { workspaceId: 'w2' } })
     })
   })
 })

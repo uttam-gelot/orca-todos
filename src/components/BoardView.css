@@ -105,6 +105,25 @@
   gap: var(--space-1-5);
   margin-top: var(--space-1-5);
 }
+/* Start floats over the card's top-right corner on hover; a card with a run shows it at the foot. */
+.card__start {
+  position: absolute;
+  top: var(--space-1-5);
+  right: var(--space-1-5);
+  display: none;
+  background: var(--card);
+}
+.card:hover .card__start,
+.card[aria-selected='true'] .card__start {
+  display: inline-flex;
+}
+.card__run {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-2);
+  margin-top: var(--space-2);
+}
 .card__note {
   --icon-size: var(--icon-sm);
   --icon-color: var(--muted-fg);

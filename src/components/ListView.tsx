@@ -14,6 +14,8 @@ import {
   toggleCollapsed,
   toggleDone
 } from '../store'
+import { latestRun } from '../agents'
+import { AgentButton, RunBadge } from './AgentRun'
 import { Composer } from './Composer'
 import { ago, IconButton, PriorityIcon, StateIcon } from './ui'
 import './ListView.css'
@@ -73,6 +75,7 @@ function Group({ state, items, single }: { state: State; items: Todo[]; single: 
 function Row({ todo }: { todo: Todo }) {
   const state = stateById.value.get(todo.stateId)
   const current = selectedId.value === todo.id
+  const run = latestRun(todo)
   return (
     <div
       id={`todo-${todo.id}`}
@@ -104,6 +107,8 @@ function Row({ todo }: { todo: Todo }) {
           </span>
         ))}
       </span>
+      {run && <RunBadge run={run} class="row__run" />}
+      <AgentButton todo={todo} class="row__agent" />
       <span class="row__age count" title={`Updated ${new Date(todo.updatedAt).toLocaleString()}`}>
         {ago(todo.updatedAt)}
       </span>

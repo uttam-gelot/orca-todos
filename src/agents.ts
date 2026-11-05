@@ -142,8 +142,11 @@ export function workspaceLabel(w: WorkspaceOption): string {
   return branch && branch !== base ? `${name} · ${branch}` : name
 }
 
-/** What to tell the person when handing a to-do to an agent failed, by Orca's error code. */
-export function agentErrorText(code: string): string {
+/**
+ * What to tell the person when a request to the worker failed, by Orca's error code. `what` names
+ * the request in the fallback text.
+ */
+export function agentErrorText(code: string, what = 'start the agent'): string {
   switch (code) {
     case 'not_permitted':
     case 'approval_required':
@@ -156,6 +159,6 @@ export function agentErrorText(code: string): string {
     case 'invalid_params':
       return 'Pick a workspace and write a prompt first.'
     default:
-      return `Could not start the agent (${code}).`
+      return `Could not ${what} (${code}).`
   }
 }

@@ -5,6 +5,7 @@ import { AgentError, type AgentOp } from './errors'
 import { log } from './log'
 import {
   parseLaunchAnswer,
+  parseOpenAnswer,
   parseWorkspacesAnswer,
   REQUEST,
   type LaunchAnswer,
@@ -110,3 +111,7 @@ export const listWorkspaces = (): Promise<WorkspacesAnswer> =>
 /** Starts an agent in a workspace with the prompt. Answers with the agent's terminal. */
 export const launchAgent = (input: LaunchInput): Promise<LaunchAnswer> =>
   askWorker('launch', REQUEST.launch, input, parseLaunchAnswer)
+
+/** Shows a workspace in Orca. */
+export const openWorkspace = (workspaceId: string): Promise<{ opened: true }> =>
+  askWorker('open', REQUEST.open, { workspaceId }, parseOpenAnswer)

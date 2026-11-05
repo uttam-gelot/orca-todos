@@ -1,6 +1,6 @@
 import { beforeEach, describe, expect, spyOn, test } from 'bun:test'
 import { REQUEST } from '../../src/protocol'
-import { agentChoice, loadWorkspaces, notice, sendToAgent, todos, workspaceList } from '../../src/store'
+import { agentChoice, loadWorkspaces, notice, openRun, sendToAgent, todos, workspaceList } from '../../src/store'
 import { resetStore } from '../factories/store'
 import { makeTodo } from '../factories/todo'
 import { serveWorker } from '../factories/workspaces'
@@ -71,5 +71,32 @@ describe('sendToAgent', () => {
     const before = fakeOrca.requests.length
     expect(await sendToAgent('a', '   ')).not.toBeNull()
     expect(fakeOrca.requests).toHaveLength(before)
+  })
+})
+
+describe('openRun', () => {
+  const run = {
+    terminalId: 't1',
+    agent: 'claude',
+    workspaceId: 'w1',
+    workspaceName: 'app',
+    startedAt: 1,
+    state: 'working',
+    stateAt: 1
+  } as const
+
+  test("asks the worker to show the run's workspace", async () => {
+    await openRun(run)
+    expect(fakeOrca.requests).toEqual([{ name: REQUEST.open, input: { workspaceId: 'w1' } }])
+    expect(notice.value).toBeNull()
+  })
+  test('tells the person when Orca will not open it', async () => {
+    fakeOrca.handlers.set(REQUEST.open, () => {
+      throw Object.assign(new Error('no'), { code: 'action_failed' })
+    })
+    const error = spyOn(console, 'error').mockImplementation(() => {})
+    await openRun(run)
+    expect(notice.value).toEqual({ text: 'Could not open the workspace (action_failed).', error: true })
+    error.mockRestore()
   })
 })

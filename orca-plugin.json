@@ -76,6 +76,9 @@
       "kind": "workspace:read"
     },
     {
+      "kind": "workspace:write"
+    },
+    {
       "kind": "agent:launch"
     },
     {

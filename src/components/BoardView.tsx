@@ -5,6 +5,8 @@ import { signal } from '@preact/signals'
 import { Plus, TextAlignStart } from 'lucide-preact'
 import type { State, Todo } from '../model'
 import { composer, filter, groups, moveTodo, openComposer, select, selectedId } from '../store'
+import { latestRun } from '../agents'
+import { AgentButton, RunBadge } from './AgentRun'
 import { Composer } from './Composer'
 import { IconButton, PriorityIcon, StateIcon } from './ui'
 import './BoardView.css'
@@ -69,6 +71,7 @@ function Column({ state, items }: { state: State; items: Todo[] }) {
 }
 
 function Card({ todo }: { todo: Todo }) {
+  const run = latestRun(todo)
   const hasMeta = todo.priority !== 'none' || todo.tags.length > 0 || todo.description.trim()
   return (
     <div
@@ -94,6 +97,7 @@ function Card({ todo }: { todo: Todo }) {
       onClick={() => select(todo.id, true)}
     >
       <div class="card__title">{todo.title}</div>
+      {!run && <AgentButton todo={todo} class="card__start" />}
       {hasMeta && (
         <div class="card__meta">
           {todo.priority !== 'none' && <PriorityIcon priority={todo.priority} />}
@@ -103,6 +107,12 @@ function Card({ todo }: { todo: Todo }) {
               #{tag}
             </span>
           ))}
+        </div>
+      )}
+      {run && (
+        <div class="card__run">
+          <RunBadge run={run} />
+          <AgentButton todo={todo} />
         </div>
       )}
     </div>

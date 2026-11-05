@@ -16,7 +16,7 @@ import {
 import { copyText } from './clipboard'
 import { AgentError, StorageError } from './errors'
 import { log } from './log'
-import { launchAgent, listWorkspaces, storage } from './orca'
+import { launchAgent, listWorkspaces, openWorkspace, storage } from './orca'
 import type { LaunchAnswer, WorkspacesAnswer } from './protocol'
 import {
   DEFAULT_STATES,
@@ -34,6 +34,7 @@ import {
   uid,
   type Filter,
   type Sort,
+  type AgentRun,
   type State,
   type Todo
 } from './model'
@@ -99,7 +100,7 @@ export const selectedId = signal<string | null>(null)
 export const detailOpen = signal(false)
 /** The state whose inline composer is open, or null. */
 export const composer = signal<string | null>(null)
-/** The open edge sheet. `agent` sends the selected to-do to an agent. */
+/** The open sheet. `agent` is the dialog that starts an agent on the selected to-do. */
 export const sheet = signal<null | 'states' | 'shortcuts' | 'agent'>(null)
 export const menuOpen = signal(false)
 
@@ -402,12 +403,12 @@ effect(() => {
 export type WorkspaceList =
   { status: 'loading' } | { status: 'ready'; answer: WorkspacesAnswer } | { status: 'error'; message: string }
 
-/** The workspaces the agent sheet offers, fetched from the worker each time the sheet opens. */
+/** The workspaces the agent dialog offers, fetched from the worker each time it opens. */
 export const workspaceList = signal<WorkspaceList>({ status: 'loading' })
 
-const errorMessage = (op: string, error: unknown): string => {
+const errorMessage = (op: string, error: unknown, what?: string): string => {
   log.error('Agent request failed', { op }, error)
-  return agentErrorText(error instanceof AgentError ? error.code : 'action_failed')
+  return agentErrorText(error instanceof AgentError ? error.code : 'action_failed', what)
 }
 
 /** Fetches the workspaces and picks one: the remembered one, else the focused one, else the first. */
@@ -424,7 +425,7 @@ export async function loadWorkspaces(): Promise<void> {
   }
 }
 
-export function openAgentSheet(id: string): void {
+export function openAgentDialog(id: string): void {
   select(id)
   sheet.value = 'agent'
   void loadWorkspaces()
@@ -472,6 +473,15 @@ export async function sendToAgent(id: string, prompt: string): Promise<string | 
     text: launched.prompt === 'typed' ? `${started}. If the prompt does not show up there, copy it with Y.` : started
   }
   return null
+}
+
+/** Shows the workspace an agent run works in, as Orca's "Open" on a task row does. */
+export async function openRun(run: AgentRun): Promise<void> {
+  try {
+    await openWorkspace(run.workspaceId)
+  } catch (error) {
+    notice.value = { text: errorMessage('openRun', error, 'open the workspace'), error: true }
+  }
 }
 
 export function archiveClosed(): number {

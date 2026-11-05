@@ -40,29 +40,37 @@ export function IconButton({ label, children, class: cls, ...rest }: IconButtonP
   )
 }
 
-/** An edge panel. Esc and the scrim close it; focus returns to where it was. */
+/**
+ * An edge panel, or with `center` a dialog in the middle (as Orca's composer opens). Esc and the
+ * scrim close it; focus returns to where it was.
+ */
 export function Sheet({
   label,
   onClose,
+  center,
   children
 }: {
   label: string
   onClose: () => void
+  center?: boolean
   children: ComponentChildren
 }) {
   const ref = useRef<HTMLDivElement>(null)
   useEffect(() => {
     const before = document.activeElement as HTMLElement | null
-    const first = ref.current?.querySelector<HTMLElement>('[autofocus], input, textarea, select, button')
+    const panel = ref.current
+    const first =
+      panel?.querySelector<HTMLElement>('[autofocus]') ??
+      panel?.querySelector<HTMLElement>('input, textarea, select, button')
     first?.focus()
     return () => before?.focus?.()
   }, [])
   return (
-    <div class="sheet">
+    <div class={center ? 'sheet sheet--center' : 'sheet'}>
       <div class="sheet__scrim" onClick={onClose} />
       <div
         ref={ref}
-        class="sheet__panel"
+        class={center ? 'sheet__panel sheet__panel--center' : 'sheet__panel'}
         role="dialog"
         aria-label={label}
         onKeyDown={(e) => {

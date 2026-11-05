@@ -8,7 +8,6 @@ import {
   ArchiveArrowUp,
   ArrowLeft,
   Bold,
-  Bot,
   Code,
   Copy,
   Italic,
@@ -23,7 +22,6 @@ import { normalizeTags, PRIORITIES, PRIORITY_LABEL, type Todo } from '../model'
 import { onMarkdownClick, renderMarkdown } from '../markdown'
 import {
   copyPrompt,
-  openAgentSheet,
   deleteTodo,
   moveTodo,
   select,
@@ -34,6 +32,7 @@ import {
   updateTodo,
   wide
 } from '../store'
+import { AgentButton, RunList } from './AgentRun'
 import { formatDate, IconButton, Kbd, MOD, PriorityIcon, StateIcon } from './ui'
 import './Detail.css'
 
@@ -53,9 +52,7 @@ export function Detail({ todo }: { todo: Todo }) {
           {state?.name}
         </span>
         <span class="spacer" />
-        <IconButton label="Send to agent (S)" onClick={() => openAgentSheet(todo.id)}>
-          <Bot />
-        </IconButton>
+        <AgentButton todo={todo} class="detail__agent" />
         <IconButton label="Copy as agent prompt (Y)" onClick={() => copyPrompt(todo.id)}>
           <Copy />
         </IconButton>
@@ -124,6 +121,8 @@ export function Detail({ todo }: { todo: Todo }) {
         </dl>
 
         <Description todo={todo} />
+
+        <RunList todo={todo} />
 
         <p class="detail__meta count">
           Created {formatDate(todo.createdAt)} · Updated {formatDate(todo.updatedAt)}

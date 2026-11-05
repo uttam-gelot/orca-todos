@@ -51,6 +51,10 @@
   --ring: var(--orca-ring, var(--fb-ring));
   --hover-tint: color-mix(in oklab, var(--accent) 60%, transparent);
   --scrim: rgb(0 0 0 / 0.32);
+  /* Agent run states, read in both themes. */
+  --run-working: oklch(0.62 0.17 255);
+  --run-blocked: oklch(0.72 0.16 65);
+  --run-done: oklch(0.64 0.15 150);
 
   /* shape and elevation */
   --radius: var(--orca-radius, 0.625rem);
