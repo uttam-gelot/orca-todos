@@ -3,11 +3,35 @@
 
 import { useSignal } from '@preact/signals'
 import { useEffect, useRef } from 'preact/hooks'
-import { Archive, ArchiveArrowUp, ArrowLeft, Bold, Code, Italic, Link, List, Pencil, Trash, X } from 'lucide-preact'
+import {
+  Archive,
+  ArchiveArrowUp,
+  ArrowLeft,
+  Bold,
+  Code,
+  Copy,
+  Italic,
+  Link,
+  List,
+  Pencil,
+  Trash,
+  X
+} from 'lucide-preact'
 import { focusRequest } from '../focus'
 import { normalizeTags, PRIORITIES, PRIORITY_LABEL, type Todo } from '../model'
 import { onMarkdownClick, renderMarkdown } from '../markdown'
-import { deleteTodo, moveTodo, select, setScope, stateById, states, tagCounts, updateTodo, wide } from '../store'
+import {
+  copyPrompt,
+  deleteTodo,
+  moveTodo,
+  select,
+  setScope,
+  stateById,
+  states,
+  tagCounts,
+  updateTodo,
+  wide
+} from '../store'
 import { formatDate, IconButton, Kbd, MOD, PriorityIcon, StateIcon } from './ui'
 import './Detail.css'
 
@@ -27,6 +51,9 @@ export function Detail({ todo }: { todo: Todo }) {
           {state?.name}
         </span>
         <span class="spacer" />
+        <IconButton label="Copy as agent prompt (Y)" onClick={() => copyPrompt(todo.id)}>
+          <Copy />
+        </IconButton>
         <IconButton
           label={todo.archived ? 'Unarchive (A)' : 'Archive (A)'}
           onClick={() => updateTodo(todo.id, { archived: !todo.archived })}

@@ -18,6 +18,7 @@ import {
   load,
   loaded,
   loadError,
+  notice,
   openComposer,
   saveError,
   select,
@@ -62,7 +63,7 @@ export function App() {
           </Sheet>
         ))}
       <Sheets />
-      {saveError.value ? <SaveErrorToast /> : <UndoToast />}
+      {saveError.value ? <SaveErrorToast /> : notice.value ? <NoticeToast /> : <UndoToast />}
     </div>
   )
 }
@@ -185,6 +186,28 @@ function UndoToast() {
         Undo <Kbd small>{MOD}Z</Kbd>
       </button>
       <IconButton label="Dismiss" class="btn--icon-xs" onClick={() => (lastDeleted.value = null)}>
+        <X />
+      </IconButton>
+    </div>
+  )
+}
+
+/** The result of the last action, such as a copy. It clears itself after a few seconds. */
+function NoticeToast() {
+  const current = notice.value
+  useEffect(() => {
+    if (!current) return
+    const t = setTimeout(() => {
+      if (notice.value === current) notice.value = null
+    }, 4000)
+    return () => clearTimeout(t)
+  }, [current])
+  if (!current) return null
+  return (
+    <div class={current.error ? 'toast toast--error' : 'toast'} role={current.error ? 'alert' : 'status'}>
+      {current.error && <CircleAlert />}
+      <span class="toast__text">{current.text}</span>
+      <IconButton label="Dismiss" class="btn--icon-xs" onClick={() => (notice.value = null)}>
         <X />
       </IconButton>
     </div>

@@ -3,6 +3,8 @@
 // Storage is shared by the sidebar panel and the center tab, and `onDidChange` keeps both in sync.
 
 import { computed, effect, signal } from '@preact/signals'
+import { buildPrompt } from './agents'
+import { copyText } from './clipboard'
 import { StorageError } from './errors'
 import { log } from './log'
 import { storage } from './orca'
@@ -337,6 +339,21 @@ export function undoDelete(): void {
   put(todo)
   lastDeleted.value = null
   select(todo.id)
+}
+
+/** A short message about the last action, shown as a toast that clears itself. */
+export const notice = signal<{ text: string; error?: boolean } | null>(null)
+
+/** Copies a to-do as an agent prompt. Call it from a click or key press: the clipboard needs one. */
+export function copyPrompt(id: string): void {
+  const todo = todos.value.find((t) => t.id === id)
+  if (!todo) return
+  if (copyText(buildPrompt(todo))) {
+    notice.value = { text: 'Copied as an agent prompt' }
+    return
+  }
+  log.warn('The clipboard refused the copy', { op: 'copyPrompt', id })
+  notice.value = { text: 'Could not copy. Orca did not allow the clipboard.', error: true }
 }
 
 export function archiveClosed(): number {

@@ -4,7 +4,7 @@ import { afterEach, beforeEach, describe, expect, spyOn, test } from 'bun:test'
 import { render } from 'preact'
 import { act } from 'preact/test-utils'
 import { App } from '../../src/App'
-import { loadError, loaded, todos } from '../../src/store'
+import { loadError, loaded, selectedId, todos } from '../../src/store'
 import { StorageError } from '../../src/errors'
 import { makeTodo } from '../factories/todo'
 import { resetStore } from '../factories/store'
@@ -74,5 +74,48 @@ describe('App', () => {
     })
     expect(root.querySelector('[role="alert"]')).toBeNull()
     error.mockRestore()
+  })
+
+  describe('copy as agent prompt', () => {
+    // happy-dom has no clipboard: stand in for execCommand, which spyOn cannot wrap there.
+    const original = document.execCommand
+    const stubCopy = (fn: () => boolean) => {
+      const calls: string[] = []
+      document.execCommand = (command: string) => (calls.push(command), fn())
+      return calls
+    }
+    afterEach(() => {
+      document.execCommand = original
+    })
+    const pressY = () =>
+      act(() => {
+        document.body.dispatchEvent(new KeyboardEvent('keydown', { key: 'y', bubbles: true, cancelable: true }))
+      })
+
+    test('Y copies the selected to-do as a prompt and says so', async () => {
+      resetStore({ todos: [makeTodo({ id: 'a', title: 'Fix login', description: 'Steps' })] })
+      selectedId.value = 'a'
+      let copied = ''
+      const calls = stubCopy(() => {
+        copied = document.querySelector<HTMLTextAreaElement>('textarea[readonly]')?.value ?? ''
+        return true
+      })
+      mount()
+      await pressY()
+      expect(calls).toEqual(['copy'])
+      expect(copied).toBe('# Fix login\n\nSteps')
+      expect(root.querySelector('[role="status"]')?.textContent).toContain('Copied as an agent prompt')
+    })
+
+    test('says so when the clipboard refuses', async () => {
+      resetStore({ todos: [makeTodo({ id: 'a' })] })
+      selectedId.value = 'a'
+      stubCopy(() => false)
+      const warn = spyOn(console, 'warn').mockImplementation(() => {})
+      mount()
+      await pressY()
+      expect(root.querySelector('[role="alert"]')?.textContent).toContain('Could not copy')
+      warn.mockRestore()
+    })
   })
 })

@@ -155,6 +155,7 @@ const SHORTCUTS: [string, string[][]][] = [
       ['Mark done / reopen', 'X'],
       ['Cycle priority', 'P'],
       ['Edit description', 'E'],
+      ['Copy as agent prompt', 'Y'],
       ['Archive / unarchive', 'A'],
       ['Delete', '⌫'],
       ['Undo delete', `${MOD}Z`]

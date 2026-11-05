@@ -10,6 +10,7 @@ import {
   loaded,
   loadError,
   menuOpen,
+  notice,
   saveError,
   selectedId,
   sheet,
@@ -31,6 +32,7 @@ export function resetStore(seed: { todos?: Todo[]; states?: State[] } = {}): voi
   sheet.value = null
   menuOpen.value = false
   lastDeleted.value = null
+  notice.value = null
   filter.value = EMPTY_FILTER
   sort.value = 'manual'
   view.value = 'list'
