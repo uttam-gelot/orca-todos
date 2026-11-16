@@ -39,18 +39,26 @@ local: no accounts and no sync service.
 - Custom states (columns) the user creates, renames, recolors, reorders and deletes; a state
   can be marked "closed" (counts as done).
 - To-dos: title, markdown description (links open in the OS browser), tags, priority
-  (none/low/med/high), archive, delete with undo.
+  (none/low/med/high), due date (a day, or a day and a time), Orca project, archive, delete
+  with undo.
+- Due reminders as Orca notifications, sent by the worker; optional automatic archive of closed
+  to-dos after N days. Both are plugin settings in Orca's Settings.
+- Projects: a to-do can name an Orca project (repository); its chip opens the project's main
+  workspace, and each project is a scope.
+- Languages: English, Spanish, French, German, Japanese, simplified Chinese. Follows Orca's
+  locale unless the Language setting picks one.
 - Views: List (state → todo → expandable details) and Board (drag between columns). No table.
-- Search; filter by state, priority, tags; sort by manual order, priority, updated, created.
+- Search; filter by state, project, priority, tags, due; sort by manual order, priority, due,
+  updated, created.
 - Stats: total, open, closed, done this week, per state.
 - Technical: an Orca `trusted-worker` plugin. The UI runs in isolated frames with no network:
   every asset is bundled (including Geist, Orca's UI font, under the OFL). A small worker lists
-  workspaces, starts agents, follows their status, and keeps the status bar count of open to-dos. Permissions: `storage:own`,
-  `workspace:read`, `workspace:write`, `agent:launch`, `agent:read`, `terminal:send`.
+  workspaces, starts agents, follows their status, and keeps the status bar count of open to-dos. It also sends due reminders and runs the
+  automatic archive. Permissions: `storage:own`, `workspace:read`, `workspace:write`,
+  `agent:launch`, `agent:read`, `terminal:send`, `settings:own`, `notifications:show`.
   Colors come only from Orca's `--orca-*` frame variables. Sidebar panels and the center tab are
   separate frames.
 - Stack: Preact + @preact/signals, plain CSS, marked + DOMPurify, built with Bun.
-- Not yet: due dates, per-project lists.
 
 ## Product Principles
 

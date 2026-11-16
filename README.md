@@ -34,8 +34,9 @@ compact list in the sidebar. No account, no sync service, no network.
 - [Requirements](#requirements)
 - [Install in Orca](#install-in-orca)
 - [Use the plugin](#use-the-plugin)
+- [Settings](#settings)
 - [Data and privacy](#data-and-privacy)
-- [Upcoming features](#upcoming-features)
+- [Request a feature](#request-a-feature)
 - [Develop](#develop)
 - [Contributing](#contributing)
 - [License](#license)
@@ -57,22 +58,33 @@ the Orca theme, fonts, and control sizes, so it looks like a part of Orca.
 ## Features
 
 - **States.** Add, rename, recolor, reorder, and delete states. A state that is marked "closed" counts as done.
-- **To-dos.** Each to-do has a title, markdown notes, tags, and a priority. You can archive a to-do. You can undo a delete.
+- **To-dos.** Each to-do has a title, markdown notes, tags, a priority, a due date, and a project. You can archive a to-do. You can undo a delete.
 - **Links.** Links in notes open in your default browser.
 - **Checklists.** Write `- [ ] step` in the notes. Rows and cards show the progress, such as
   `2/5`. Tick an item in the details pane without opening the editor. In the editor, Enter starts the next item.
-- **Quick add.** Type tags and a priority in the title: `Fix login #auth !high` adds the to-do
-  with the tag `auth` and high priority. `!med`, `!low`, `!h`, `!m` and `!l` also work. `#123`
-  stays in the title.
-- **Status bar count.** Orca's status bar shows how many to-dos are open and how many of them are
-  high priority, for example `5 open · 2 high`. Press it to show or hide the right sidebar.
+- **Quick add.** Type tags, a priority, and a due date in the title. See [Quick add](#quick-add).
+- **Due dates.** Give a to-do a day, or a day and a time. Rows and cards show when it is due, such as
+  `Today`, `Fri`, or `Mar 4 15:30`. A to-do that is late shows in red. The header shows how many
+  to-dos are overdue. Select the count to show only those.
+- **Reminders.** When an open to-do comes due, Orca shows a notification. A to-do without a time
+  gets its reminder in the morning of its day. The plugin worker sends the reminders, so they arrive
+  when no ToDos view is open.
+- **Projects.** Connect a to-do to an Orca project (a repository). The project chip on the row opens
+  that project's workspace in Orca. The navigator lists each project as a scope.
+- **Automatic archive.** Optionally, the plugin moves closed to-dos to the archive a set number of
+  days after you close them.
+- **Languages.** English, Spanish, French, German, Japanese, and simplified Chinese. The plugin uses
+  Orca's language, or the language you select in Settings.
+- **Status bar count.** Orca's status bar shows how many to-dos are open, how many are high
+  priority, and how many are overdue, for example `5 open · 2 high · 1 overdue`. Press it to show
+  or hide the right sidebar.
 - **Agents.** Start a coding agent on a to-do in any Orca workspace. The to-do moves to your first
   "in progress" state, and its row and card show the agent's status. You can also copy a to-do as an
   agent prompt.
 - **List view.** The list shows to-dos in groups, one group for each state.
 - **Board view.** The board shows one column for each state. Drag a card to move it to a different state.
-- **Navigator.** Show all to-dos, one state, one tag, or the archive. Each item shows a count. The navigator also shows the numbers for the current week.
-- **Search and filter.** Search titles and notes. Filter by priority. Sort manually, by priority, by last update, or by creation date.
+- **Navigator.** Show all to-dos, one state, one project, one tag, or the archive. Each item shows a count. The navigator also shows the numbers for the current week.
+- **Search and filter.** Search titles and notes. Filter by priority or by due date. Sort manually, by priority, by due date, by last update, or by creation date.
 - **Keyboard.** You can do all tasks with the keyboard. Press `?` to see all shortcuts.
 - **Theme.** The plugin uses the Orca theme colors in light mode and in dark mode.
 
@@ -130,6 +142,33 @@ The file stays empty. The plugin keeps your to-dos in Orca plugin storage, not i
 
 Select the ToDos icon in the right sidebar.
 
+### Quick add
+
+Type these words in the title of a new to-do. The plugin removes them from the title and sets the
+value.
+
+| Word                                     | Sets                                       |
+| ---------------------------------------- | ------------------------------------------ |
+| `#auth`                                  | The tag `auth`. `#123` stays in the title. |
+| `!high`, `!med`, `!low` (`!h` `!m` `!l`) | The priority                               |
+| `@today`, `@tomorrow` (`@tmr`)           | The due date                               |
+| `@fri`, `@friday`                        | The due date: the next Friday, never today |
+| `@2026-03-04`                            | The due date                               |
+
+Example: `Fix login #auth !high @fri` adds "Fix login" with the tag `auth`, high priority, and a due
+date of next Friday. Other `@` words, such as `@alex`, stay in the title.
+
+To set a time, or to change the date later, open the to-do's details and use the **Due** row.
+
+### Connect a to-do to a project
+
+1. Open the to-do's details.
+2. In the **Project** row, select an Orca project.
+
+When you start an agent on a to-do that has no project, the plugin sets the project of the agent's
+workspace. When you add a to-do while a project is the scope, the to-do gets that project. The
+agent dialog selects a workspace of the to-do's project first.
+
 ### Start an agent on a to-do
 
 1. Select a to-do, then press `S`. Or select **Agent →** on its row, card, or details.
@@ -166,31 +205,40 @@ The plugin does not use shortcuts with `⌘` or `Ctrl`, except `⌘Z` / `Ctrl+Z`
 | `⌫`                 | Delete. Press `⌘Z` / `Ctrl+Z` to undo              |
 | `Esc`               | Close, clear, or go back                           |
 
+## Settings
+
+Open **Settings → Plugins → ToDos Board** in Orca.
+
+| Setting                          | Default      | What it does                                                                                      |
+| -------------------------------- | ------------ | ------------------------------------------------------------------------------------------------- |
+| Language                         | Same as Orca | The language of the board, the panel, the status bar item, and reminders                          |
+| Archive closed to-dos            | Never        | Moves a to-do to the archive 1, 3, 7, 14, or 30 days after you close it. You can restore it later |
+| Due date reminders               | On           | Shows an Orca notification when an open to-do comes due                                           |
+| Reminder time for all-day to-dos | 9:00         | The time of the reminder for a to-do that has a date but no time                                  |
+
 ## Data and privacy
 
 - The plugin keeps all data in Orca plugin storage on your computer.
 - The plugin does not use the network. Orca runs its views in sandboxed frames with no network access.
 - The plugin has a small worker. Orca keeps it running while the plugin is on. It counts open
-  to-dos for the status bar, lists workspaces, starts agents, and follows their status. The worker
-  does not read your files or run other commands.
+  to-dos for the status bar, sends due reminders, archives closed to-dos when you turn that on,
+  lists workspaces, starts agents, and follows their status. The worker does not read your files
+  or run other commands.
 
-| Permission        | Used for                                            |
-| ----------------- | --------------------------------------------------- |
-| `storage:own`     | Your to-dos and states, in the plugin's own storage |
-| `workspace:read`  | The workspace list in **Start agent**               |
-| `workspace:write` | Opening the workspace an agent runs in (`O`)        |
-| `agent:launch`    | Starting an agent with a to-do as its prompt        |
-| `agent:read`      | Showing the agent's status on the to-do             |
-| `terminal:send`   | Starting the agent's command in a new terminal      |
+| Permission           | Used for                                                      |
+| -------------------- | ------------------------------------------------------------- |
+| `storage:own`        | Your to-dos and states, in the plugin's own storage           |
+| `workspace:read`     | The workspace list in **Start agent**                         |
+| `workspace:write`    | Opening the workspace an agent runs in (`O`)                  |
+| `agent:launch`       | Starting an agent with a to-do as its prompt                  |
+| `agent:read`         | Showing the agent's status on the to-do                       |
+| `terminal:send`      | Starting the agent's command in a new terminal                |
+| `settings:own`       | Reading the plugin's own settings (see [Settings](#settings)) |
+| `notifications:show` | Due date reminders                                            |
 
-## Upcoming features
+## Request a feature
 
-These features are planned. They are not available yet.
-
-- **Due dates.** Give a to-do a date, and see the to-dos that are due soon.
-- **Lists for each project.** Keep a separate list for each repository or workspace.
-
-Do you want a different feature? [Open an issue](https://github.com/uttam-gelot/orca-todos/issues).
+Do you want a feature? [Open an issue](https://github.com/uttam-gelot/orca-todos/issues).
 
 ## Develop
 
@@ -243,7 +291,7 @@ Orca loads `dist/` as it is. A plugin frame has no network access, so Orca canno
 ### Project structure
 
 ```text
-orca-plugin.json     Plugin manifest: the two views and the storage permission
+orca-plugin.json     Plugin manifest: the two views, settings, and permissions
 panel.html           Entry page for the sidebar panel
 board.html           Entry page for the center tab
 src/
@@ -251,8 +299,14 @@ src/
   App.tsx            Layout, empty states, error states, and messages
   components/        UI components. Each component has its own CSS file
   model.ts           Types and rules: filter, sort, order, counts, data checks
+  due.ts             Due date rules: read, compare, and name a due date
+  settings.ts        The plugin settings and their checks
+  agents.ts          Agent rules: the prompt, runs, and projects of workspaces
+  protocol.ts        Requests between the views and the worker, and their checks
+  i18n/              Interface text: en.ts and one file for each other language
   store.ts           App state, storage, and sync between the two views
   orca.ts            The only access to the Orca frame API
+  worker/            The worker: status bar, reminders, automatic archive, agents
   keys.ts            Keyboard shortcuts
   log.ts             Logger
   errors.ts          Error types
