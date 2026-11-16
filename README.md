@@ -197,19 +197,21 @@ lefthook install
 
 ### Commands
 
-| Command                    | Purpose                                             |
-| -------------------------- | --------------------------------------------------- |
-| `bun run build`            | Bundle `src/` into `dist/app.js` and `dist/app.css` |
-| `bun run watch`            | Build again after each change                       |
-| `bun test`                 | Run all tests                                       |
-| `bun run test:unit`        | Run only the unit tests                             |
-| `bun run test:integration` | Run only the integration tests                      |
-| `bun run typecheck`        | Check types with TypeScript (strict)                |
-| `bun run lint`             | Check the code with ESLint                          |
-| `bun run format`           | Format the code with Prettier                       |
-| `bun run format:check`     | Check the format, but do not change files           |
-| `bun run pack`             | Build and write an installable copy to `release/`   |
-| `bun run shots`            | Take screenshots in Orca, in light and dark mode    |
+| Command                    | Purpose                                                                                   |
+| -------------------------- | ----------------------------------------------------------------------------------------- |
+| `bun run build`            | Bundle the UI into `dist/app.js` and `dist/app.css`, and the worker into `dist/worker.js` |
+| `bun run build:app`        | Bundle only the UI                                                                        |
+| `bun run build:worker`     | Bundle only the worker                                                                    |
+| `bun run watch`            | Build again after each change                                                             |
+| `bun test`                 | Run all tests                                                                             |
+| `bun run test:unit`        | Run only the unit tests                                                                   |
+| `bun run test:integration` | Run only the integration tests                                                            |
+| `bun run typecheck`        | Check types with TypeScript (strict)                                                      |
+| `bun run lint`             | Check the code with ESLint                                                                |
+| `bun run format`           | Format the code with Prettier                                                             |
+| `bun run format:check`     | Check the format, but do not change files                                                 |
+| `bun run pack`             | Build and write an installable copy to `release/`                                         |
+| `bun run shots`            | Take screenshots in Orca, in light and dark mode                                          |
 
 GitHub Actions (`.github/workflows/ci.yml`) runs the type check, ESLint, the Prettier check, the tests, a secret scan, and a check that `dist/` matches the source. It runs on each push to `main` and on each pull request.
 
