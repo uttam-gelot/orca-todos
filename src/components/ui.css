@@ -144,8 +144,11 @@
   flex: none;
   color: var(--muted-fg);
 }
-.prio--high {
+.prio--med {
   color: var(--fg);
+}
+.prio--high {
+  color: var(--prio-high);
 }
 .tag {
   font-size: var(--text-sm);
