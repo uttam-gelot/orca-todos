@@ -20,14 +20,28 @@
   },
   "screenshots": [
     {
-      "path": "images/screenshot-board.png",
-      "alt": "The board view in light mode: cards in Backlog, ToDo, In Progress and Done columns",
-      "caption": "Board view"
+      "path": "images/screenshot-board-light.png",
+      "alt": "The board in light mode: a column for each state, cards with checklist progress, tags and agent status",
+      "caption": "Board view",
+      "theme": "light"
     },
     {
-      "path": "images/screenshot-list.png",
-      "alt": "The list view in dark mode: to-dos grouped by state, with the details pane open",
-      "caption": "List view with details"
+      "path": "images/screenshot-board-dark.png",
+      "alt": "The board in dark mode: a column for each state, cards with checklist progress, tags and agent status",
+      "caption": "Board view",
+      "theme": "dark"
+    },
+    {
+      "path": "images/screenshot-list-light.png",
+      "alt": "The list in light mode: to-dos grouped by state, with the details pane and its checklist open",
+      "caption": "List view with details",
+      "theme": "light"
+    },
+    {
+      "path": "images/screenshot-list-dark.png",
+      "alt": "The list in dark mode: to-dos grouped by state, with the details pane and its checklist open",
+      "caption": "List view with details",
+      "theme": "dark"
     }
   ],
   "engines": {

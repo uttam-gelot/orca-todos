@@ -17,7 +17,10 @@ compact list in the sidebar. No account, no sync service, no network.
 
 <br />
 
-![The board view in the center tab, with one column for each state](docs/screenshots/tab-board-light.png)
+<picture>
+  <source media="(prefers-color-scheme: dark)" srcset="docs/screenshots/tab-board-dark.png" />
+  <img src="docs/screenshots/tab-board-light.png" alt="The board in the center tab: a column for each state, cards with priority, checklist progress, tags, age and agent status" />
+</picture>
 
 </div>
 
