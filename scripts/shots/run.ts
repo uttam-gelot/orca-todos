@@ -48,7 +48,7 @@ function allShots(demoFile: string): Shot[] {
     tabShot('tab-board', theme, demoFile, []),
     // `v` shows the list view. The click opens the details of "Rate limit the agent launch
     // endpoint", the sample with a checklist in its notes.
-    tabShot('tab-list', theme, demoFile, [{ key: 'v' }, { click: [600, 425] }, ...SETTLE])
+    tabShot('tab-list', theme, demoFile, [{ key: 'v' }, { click: [600, 495] }, ...SETTLE])
   ])
   const panels = THEMES.map((theme) => ({
     name: `panel-${theme}`,
