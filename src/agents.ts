@@ -167,7 +167,7 @@ export function agentErrorText(code: string, what = 'start the agent'): string {
   switch (code) {
     case 'not_permitted':
     case 'approval_required':
-      return 'Orca did not allow it. Approve the plugin again so it may start agents.'
+      return 'Orca did not allow it. In Settings → Plugins, approve the access of ToDos Board again.'
     case 'unavailable':
     case 'unknown_method':
       return 'This Orca cannot reach the plugin worker. Update Orca, or copy the prompt instead.'
@@ -176,6 +176,7 @@ export function agentErrorText(code: string, what = 'start the agent'): string {
     case 'invalid_params':
       return 'Pick a workspace and write a prompt first.'
     default:
-      return `Could not ${what} (${code}).`
+      // The code goes to the log, not to the user: it names no step they can take.
+      return `Could not ${what}. Try again.`
   }
 }

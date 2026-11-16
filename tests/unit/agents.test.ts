@@ -152,10 +152,10 @@ describe('workspaceTitle', () => {
 })
 
 describe('agentErrorText', () => {
-  test('explains the codes a person can act on, and names any other', () => {
-    expect(agentErrorText('not_permitted')).toContain('Approve')
+  test('explains the codes a person can act on, and keeps other codes out of the text', () => {
+    expect(agentErrorText('not_permitted')).toContain('Settings → Plugins')
     expect(agentErrorText('timeout')).toContain('in time')
-    expect(agentErrorText('weird')).toContain('(weird)')
+    expect(agentErrorText('weird')).toBe('Could not start the agent. Try again.')
   })
 })
 

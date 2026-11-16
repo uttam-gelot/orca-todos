@@ -96,7 +96,7 @@ describe('openRun', () => {
     })
     const error = spyOn(console, 'error').mockImplementation(() => {})
     await openRun(run)
-    expect(notice.value).toEqual({ text: 'Could not open the workspace (action_failed).', error: true })
+    expect(notice.value).toEqual({ text: 'Could not open the workspace. Try again.', error: true })
     error.mockRestore()
   })
 })
