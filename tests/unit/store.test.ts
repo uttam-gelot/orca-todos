@@ -6,14 +6,16 @@ import {
   deleteState,
   deleteTodo,
   filter,
-  lastDeleted,
+  archiveClosed,
+  lastUndoable,
   moveTodo,
   saveError,
   selectedId,
   states,
   todos,
   toggleDone,
-  undoDelete
+  toggleArchived,
+  undo
 } from '../../src/store'
 import { makeTodo } from '../factories/todo'
 import { resetStore } from '../factories/store'
@@ -78,10 +80,42 @@ describe('deleteTodo', () => {
     deleteTodo('a')
     expect(byId('a')).toBeUndefined()
     expect(selectedId.value).toBe('b')
-    expect(lastDeleted.value?.id).toBe('a')
-    undoDelete()
+    expect(lastUndoable.value?.before.map((t) => t.id)).toEqual(['a'])
+    undo()
     expect(byId('a')).toBeDefined()
-    expect(lastDeleted.value).toBeNull()
+    expect(selectedId.value).toBe('a')
+    expect(lastUndoable.value).toBeNull()
+  })
+})
+
+describe('archive undo', () => {
+  test('archiving a to-do can be undone', () => {
+    resetStore({ todos: [makeTodo({ id: 'a', title: 'Fix login' })] })
+    toggleArchived('a')
+    expect(byId('a')?.archived).toBe(true)
+    expect(lastUndoable.value?.text).toBe('Archived “Fix login”')
+    undo()
+    expect(byId('a')?.archived).toBe(false)
+  })
+
+  test('archiving every closed to-do can be undone at once', () => {
+    resetStore({
+      todos: [
+        makeTodo({ id: 'a', stateId: 'done' }),
+        makeTodo({ id: 'b', stateId: 'done' }),
+        makeTodo({ id: 'c', stateId: 'todo' })
+      ]
+    })
+    expect(archiveClosed()).toBe(2)
+    expect(lastUndoable.value?.text).toBe('Archived 2 closed to-dos')
+    undo()
+    expect(['a', 'b', 'c'].map((id) => byId(id)?.archived)).toEqual([false, false, false])
+  })
+
+  test('archiving nothing leaves nothing to undo', () => {
+    resetStore({ todos: [makeTodo({ id: 'a', stateId: 'todo' })] })
+    expect(archiveClosed()).toBe(0)
+    expect(lastUndoable.value).toBeNull()
   })
 })
 

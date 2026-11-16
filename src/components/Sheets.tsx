@@ -160,7 +160,7 @@ const SHORTCUTS: [string, string[][]][] = [
       ['Copy as agent prompt', 'Y'],
       ['Archive / unarchive', 'A'],
       ['Delete', '⌫'],
-      ['Undo delete', `${MOD}Z`]
+      ['Undo delete or archive', `${MOD}Z`]
     ]
   ]
 ]

@@ -8,7 +8,7 @@ import {
   composer,
   detailOpen,
   filter,
-  lastDeleted,
+  lastUndoable,
   loaded,
   loadError,
   menuOpen,
@@ -34,7 +34,7 @@ export function resetStore(seed: { todos?: Todo[]; states?: State[] } = {}): voi
   composer.value = null
   sheet.value = null
   menuOpen.value = false
-  lastDeleted.value = null
+  lastUndoable.value = null
   notice.value = null
   filter.value = EMPTY_FILTER
   sort.value = 'manual'

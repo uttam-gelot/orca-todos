@@ -29,6 +29,7 @@ import {
   stateById,
   states,
   tagCounts,
+  toggleArchived,
   updateTodo,
   wide
 } from '../store'
@@ -56,10 +57,7 @@ export function Detail({ todo }: { todo: Todo }) {
         <IconButton label="Copy as agent prompt (Y)" onClick={() => copyPrompt(todo.id)}>
           <Copy />
         </IconButton>
-        <IconButton
-          label={todo.archived ? 'Unarchive (A)' : 'Archive (A)'}
-          onClick={() => updateTodo(todo.id, { archived: !todo.archived })}
-        >
+        <IconButton label={todo.archived ? 'Unarchive (A)' : 'Archive (A)'} onClick={() => toggleArchived(todo.id)}>
           {todo.archived ? <ArchiveArrowUp /> : <Archive />}
         </IconButton>
         <IconButton label="Delete (Delete)" class="btn--danger" onClick={() => deleteTodo(todo.id)}>

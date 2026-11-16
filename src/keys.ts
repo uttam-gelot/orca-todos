@@ -11,7 +11,7 @@ import {
   detailOpen,
   filter,
   groups,
-  lastDeleted,
+  lastUndoable,
   menuOpen,
   navOrder,
   openAgentDialog,
@@ -28,8 +28,8 @@ import {
   shiftState,
   states,
   toggleDone,
-  undoDelete,
-  updateTodo,
+  undo,
+  toggleArchived,
   moveTodo,
   view
 } from './store'
@@ -97,9 +97,9 @@ export function onKeyDown(e: KeyboardEvent): void {
   }
   if (isTyping(e.target)) return
 
-  if (mod && e.key.toLowerCase() === 'z' && !e.shiftKey && lastDeleted.value) {
+  if (mod && e.key.toLowerCase() === 'z' && !e.shiftKey && lastUndoable.value) {
     e.preventDefault()
-    undoDelete()
+    undo()
     return
   }
   if (mod || e.altKey || sheet.value) return
@@ -171,7 +171,7 @@ export function onKeyDown(e: KeyboardEvent): void {
         return run && (void openRun(run), true)
       }
       case 'a':
-        return todo && (updateTodo(todo.id, { archived: !todo.archived }), true)
+        return todo && (toggleArchived(todo.id), true)
       case 'Backspace':
       case 'Delete':
         return todo && (deleteTodo(todo.id), true)

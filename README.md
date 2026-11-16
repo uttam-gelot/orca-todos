@@ -133,28 +133,28 @@ yourself.
 
 ### Keyboard shortcuts
 
-The plugin does not use shortcuts with `⌘` or `Ctrl`, except `⌘Z` / `Ctrl+Z` for undo. Orca keeps all its own shortcuts.
+The plugin does not use shortcuts with `⌘` or `Ctrl`, except `⌘Z` / `Ctrl+Z` to undo a delete or an archive. Orca keeps all its own shortcuts.
 
-| Keys                | Action                                       |
-| ------------------- | -------------------------------------------- |
-| `J` `K` / `↓` `↑`   | Select the next or previous to-do            |
-| `H` `L` / `←` `→`   | Go to the previous or next column (board)    |
-| `[` `]`             | Go to the previous or next scope             |
-| `N`                 | Add a to-do                                  |
-| `/`                 | Search                                       |
-| `V`                 | Switch between list and board                |
-| `↵`                 | Open details. Press again to edit the title  |
-| `E`                 | Edit notes                                   |
-| `1`–`9`             | Move the to-do to state 1–9                  |
-| `Shift+H` `Shift+L` | Move the to-do to the previous or next state |
-| `X`                 | Mark done, or open again                     |
-| `P`                 | Change the priority                          |
-| `S`                 | Start an agent on the to-do                  |
-| `O`                 | Open the workspace of the to-do's agent      |
-| `Y`                 | Copy the to-do as an agent prompt            |
-| `A`                 | Archive, or restore from the archive         |
-| `⌫`                 | Delete. Press `⌘Z` / `Ctrl+Z` to undo        |
-| `Esc`               | Close, clear, or go back                     |
+| Keys                | Action                                             |
+| ------------------- | -------------------------------------------------- |
+| `J` `K` / `↓` `↑`   | Select the next or previous to-do                  |
+| `H` `L` / `←` `→`   | Go to the previous or next column (board)          |
+| `[` `]`             | Go to the previous or next scope                   |
+| `N`                 | Add a to-do                                        |
+| `/`                 | Search                                             |
+| `V`                 | Switch between list and board                      |
+| `↵`                 | Open details. Press again to edit the title        |
+| `E`                 | Edit notes                                         |
+| `1`–`9`             | Move the to-do to state 1–9                        |
+| `Shift+H` `Shift+L` | Move the to-do to the previous or next state       |
+| `X`                 | Mark done, or open again                           |
+| `P`                 | Change the priority                                |
+| `S`                 | Start an agent on the to-do                        |
+| `O`                 | Open the workspace of the to-do's agent            |
+| `Y`                 | Copy the to-do as an agent prompt                  |
+| `A`                 | Archive, or restore. Press `⌘Z` / `Ctrl+Z` to undo |
+| `⌫`                 | Delete. Press `⌘Z` / `Ctrl+Z` to undo              |
+| `Esc`               | Close, clear, or go back                           |
 
 ## Data and privacy
 

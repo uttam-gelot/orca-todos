@@ -15,7 +15,7 @@ import { onKeyDown } from './keys'
 import {
   detailOpen,
   filter,
-  lastDeleted,
+  lastUndoable,
   load,
   loaded,
   loadError,
@@ -27,7 +27,7 @@ import {
   setScope,
   states,
   todos,
-  undoDelete,
+  undo,
   view,
   visible,
   wide
@@ -171,23 +171,23 @@ function Skeleton() {
 }
 
 function UndoToast() {
-  const todo = lastDeleted.value
+  const last = lastUndoable.value
   useEffect(() => {
-    if (!todo) return
+    if (!last) return
     const t = setTimeout(() => {
-      if (lastDeleted.value === todo) lastDeleted.value = null
+      if (lastUndoable.value === last) lastUndoable.value = null
     }, 8000)
     return () => clearTimeout(t)
-  }, [todo])
-  if (!todo) return null
+  }, [last])
+  if (!last) return null
   return (
     <div class="toast" role="status">
-      <span class="toast__text">Deleted “{todo.title}”</span>
-      <button type="button" class="btn btn--outline btn--xs" onClick={undoDelete}>
+      <span class="toast__text">{last.text}</span>
+      <button type="button" class="btn btn--outline btn--xs" onClick={undo}>
         <Undo2 />
         Undo <Kbd small>{MOD}Z</Kbd>
       </button>
-      <IconButton label="Dismiss" class="btn--icon-xs" onClick={() => (lastDeleted.value = null)}>
+      <IconButton label="Dismiss" class="btn--icon-xs" onClick={() => (lastUndoable.value = null)}>
         <X />
       </IconButton>
     </div>
