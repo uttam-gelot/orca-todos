@@ -17,7 +17,7 @@
   padding-top: var(--space-1);
 }
 .agent-dialog__title {
-  font-size: var(--text-base);
+  font-size: var(--text-md);
   font-weight: var(--weight-semibold);
 }
 .agent-dialog__subject {
@@ -29,6 +29,9 @@
   white-space: nowrap;
 }
 .agent-dialog__body {
+  min-width: 0;
+  margin: 0;
+  border: 0;
   display: flex;
   flex-direction: column;
   gap: var(--space-4);
@@ -47,24 +50,41 @@
 }
 .agent-dialog__control {
   width: 100%;
-  height: var(--control-md);
 }
-.agent-dialog__advanced {
+.agent-dialog__label-row {
   display: flex;
-  flex-direction: column;
-  align-items: flex-start;
-  gap: var(--space-2);
+  align-items: center;
+  justify-content: space-between;
+  min-height: var(--control-xs);
 }
-.agent-dialog__advanced > .agent-dialog__field {
-  align-self: stretch;
-}
-.agent-dialog__toggle {
+.agent-dialog__edit {
   --icon-size: var(--icon-sm);
-  margin-left: calc(-1 * var(--space-2));
+  margin-right: calc(-1 * var(--space-2));
+  color: var(--muted-fg);
+}
+/* What the agent gets, readable before it is sent. Edit turns it into the textarea below. */
+.agent-dialog__preview {
+  max-height: 132px;
+  overflow: auto;
+  padding: var(--space-2) var(--space-2-5);
+  border: var(--hairline);
+  border-radius: var(--radius-md);
+  background: var(--muted);
+  font: var(--text-sm) / 1.6 var(--font-mono);
+  color: var(--muted-fg);
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+}
+.agent-dialog__preview:focus-visible {
+  box-shadow: var(--focus-ring);
+  outline: none;
+}
+.agent-dialog__notice {
+  font-size: var(--text-sm);
   color: var(--muted-fg);
 }
 .agent-dialog__prompt {
-  min-height: 120px;
+  min-height: 132px;
   max-height: 240px;
   resize: vertical;
   padding: var(--space-2) var(--space-2-5);
@@ -105,6 +125,11 @@
   align-items: center;
   gap: var(--space-2);
   padding: var(--space-3) var(--space-5) var(--space-4);
+}
+/* Same width while it reads "Starting…", so the footer does not jump. */
+.agent-dialog__submit {
+  min-width: 128px;
+  justify-content: center;
 }
 .agent-dialog__kbd {
   background: color-mix(in oklab, var(--primary-fg) 15%, transparent);

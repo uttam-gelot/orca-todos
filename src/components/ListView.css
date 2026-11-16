@@ -110,13 +110,14 @@
   flex: 0 1 auto;
   min-width: 0;
 }
-/* Start shows on hover or selection, so the narrow sidebar stays quiet; Open always shows. */
+/* Agent → shows on hover or selection, so the list stays quiet; Open always shows. It keeps its
+   room while hidden, so the title does not shift under the pointer. */
 .row__agent.agent-button--idle {
-  display: none;
+  visibility: hidden;
 }
 .row:hover .row__agent,
 .row[aria-selected='true'] .row__agent {
-  display: inline-flex;
+  visibility: visible;
 }
 .row__age {
   width: 30px;
@@ -130,5 +131,13 @@
   /* The dot alone: the title needs the room. Its tooltip still names the state. */
   .row__run .run-badge__label {
     display: none;
+  }
+  /* In the narrow sidebar the title needs the room more than a stable hover. */
+  .row__agent.agent-button--idle {
+    display: none;
+  }
+  .row:hover .row__agent,
+  .row[aria-selected='true'] .row__agent {
+    display: inline-flex;
   }
 }

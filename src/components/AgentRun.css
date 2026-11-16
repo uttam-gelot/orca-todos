@@ -25,7 +25,8 @@
 }
 .run-badge--blocked {
   --run-color: var(--run-blocked);
-  color: var(--run-blocked);
+  /* Mixed toward the text color so small amber text keeps its contrast in both themes. */
+  color: color-mix(in oklab, var(--run-blocked) 70%, var(--fg));
 }
 .run-badge--done {
   --run-color: var(--run-done);

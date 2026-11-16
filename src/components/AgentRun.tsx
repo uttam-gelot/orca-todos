@@ -1,5 +1,6 @@
 // An agent run on a to-do, shown the way Orca shows its GitHub and Jira tasks: a status badge, and
-// a "Start →" button that turns into a solid "Open →" once an agent works on the to-do.
+// an "Agent →" button that turns into "Open →" once an agent works on the to-do. Both stay outline
+// or ghost: in this plugin color carries state, and the primary button is only for New.
 
 import { ArrowRight } from 'lucide-preact'
 import { agentLabel, latestRun, RUN_LABEL } from '../agents'
@@ -12,19 +13,38 @@ import './AgentRun.css'
 export const runSummary = (run: AgentRun): string =>
   `${agentLabel(run.agent)} in ${run.workspaceName}: ${RUN_LABEL[run.state]}`
 
-/** The run's state as a dot, with its label unless `dot`. */
-export function RunBadge({ run, dot, class: cls = '' }: { run: AgentRun; dot?: boolean; class?: string }) {
+/**
+ * The run's state as a dot, with its label unless `dot`. Screen readers get the whole summary as
+ * text (an `aria-label` on a plain span is often skipped); `decorative` hides it where the state is
+ * already written next to it.
+ */
+export function RunBadge({
+  run,
+  dot,
+  decorative,
+  class: cls = ''
+}: {
+  run: AgentRun
+  dot?: boolean
+  decorative?: boolean
+  class?: string
+}) {
   return (
-    <span class={`run-badge run-badge--${run.state} ${cls}`} title={runSummary(run)} aria-label={runSummary(run)}>
+    <span class={`run-badge run-badge--${run.state} ${cls}`} title={runSummary(run)} aria-hidden={decorative}>
       <span class="run-badge__dot" />
-      {!dot && <span class="run-badge__label">{RUN_LABEL[run.state]}</span>}
+      {!dot && (
+        <span class="run-badge__label" aria-hidden="true">
+          {RUN_LABEL[run.state]}
+        </span>
+      )}
+      {!decorative && <span class="sr-only">{runSummary(run)}</span>}
     </span>
   )
 }
 
 /**
- * "Open →" shows the workspace of the newest run; "Start →" opens the start dialog. `idle` marks
- * the Start button so a row can hide it until hovered or selected.
+ * "Open →" shows the workspace of the newest run; "Agent →" opens the start dialog. `idle` marks
+ * the start button so a row can hide it until hovered or selected.
  */
 export function AgentButton({ todo, class: cls = '' }: { todo: Todo; class?: string }) {
   const run = latestRun(todo)
@@ -36,7 +56,7 @@ export function AgentButton({ todo, class: cls = '' }: { todo: Todo; class?: str
     return (
       <button
         type="button"
-        class={`btn btn--primary btn--xs agent-button ${cls}`}
+        class={`btn btn--outline btn--xs agent-button ${cls}`}
         title={`Open ${run.workspaceName} (O)`}
         onClick={(e) => click(e, () => void openRun(run))}
       >
@@ -47,11 +67,12 @@ export function AgentButton({ todo, class: cls = '' }: { todo: Todo; class?: str
   return (
     <button
       type="button"
-      class={`btn btn--outline btn--xs agent-button agent-button--idle ${cls}`}
-      title="Start an agent on it (S)"
+      class={`btn btn--ghost btn--xs agent-button agent-button--idle ${cls}`}
+      title="Start an agent on this to-do (S)"
+      aria-label="Start an agent on this to-do"
       onClick={(e) => click(e, () => openAgentDialog(todo.id))}
     >
-      Start
+      Agent
       <ArrowRight />
     </button>
   )
@@ -71,7 +92,7 @@ export function RunList({ todo }: { todo: Todo }) {
       <ul class="run-list__items">
         {[...todo.runs].reverse().map((run) => (
           <li key={run.terminalId} class="run-list__item">
-            <RunBadge run={run} dot />
+            <RunBadge run={run} dot decorative />
             <span class="run-list__name">
               {agentLabel(run.agent)}
               <span class="run-list__where"> in {run.workspaceName}</span>

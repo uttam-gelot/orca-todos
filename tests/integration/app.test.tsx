@@ -129,7 +129,7 @@ describe('App', () => {
 
     const dialog = () => root.querySelector('[role="dialog"][aria-label="Start agent"]')
 
-    test('S opens the dialog on the focused workspace with the prompt under Advanced, and Start starts the agent', async () => {
+    test('S opens the dialog on the focused workspace showing the prompt, and Start starts the agent', async () => {
       resetStore({ todos: [makeTodo({ id: 'a', title: 'Fix login', description: 'Steps' })] })
       selectedId.value = 'a'
       serveWorker(fakeOrca)
@@ -139,7 +139,8 @@ describe('App', () => {
       const form = dialog()!
       expect(form.querySelector<HTMLSelectElement>('#agent-workspace')?.value).toBe('w2')
       expect(form.querySelector('textarea')).toBeNull()
-      await act(() => form.querySelector<HTMLButtonElement>('[aria-expanded]')!.click())
+      expect(form.querySelector('pre#agent-prompt')?.textContent).toBe('# Fix login\n\nSteps')
+      await act(() => form.querySelector<HTMLButtonElement>('.agent-dialog__edit')!.click())
       expect(form.querySelector('textarea')?.value).toBe('# Fix login\n\nSteps')
       await act(() => form.querySelector<HTMLButtonElement>('button[type="submit"]')!.click())
       await settle()
@@ -149,19 +150,37 @@ describe('App', () => {
       expect(root.querySelector('[role="status"]')?.textContent).toContain('Started Claude')
     })
 
-    test('a row turns Start into Open once an agent runs, and Open shows its workspace', async () => {
+    test('keeps an edited prompt when the dialog closes before starting', async () => {
+      resetStore({ todos: [makeTodo({ id: 'b', title: 'Fix login' })] })
+      selectedId.value = 'b'
+      serveWorker(fakeOrca)
+      mount()
+      await press('s')
+      await settle()
+      await act(() => dialog()!.querySelector<HTMLButtonElement>('.agent-dialog__edit')!.click())
+      const area = dialog()!.querySelector('textarea')!
+      area.value = 'Only the login form'
+      await act(() => void area.dispatchEvent(new Event('input', { bubbles: true })))
+      await press('Escape')
+      expect(dialog()).toBeNull()
+      await press('s')
+      await settle()
+      expect(dialog()!.querySelector('textarea')?.value).toBe('Only the login form')
+    })
+
+    test('a row turns its agent button into Open once an agent runs, and Open shows its workspace', async () => {
       resetStore({ todos: [makeTodo({ id: 'a', title: 'Fix login' })] })
       serveWorker(fakeOrca)
       mount()
       const button = () => root.querySelector<HTMLButtonElement>('#todo-a .agent-button')!
-      expect(button().textContent).toBe('Start')
+      expect(button().textContent).toBe('Agent')
       await act(() => button().click())
       await settle()
       expect(dialog()).not.toBeNull()
       await act(() => dialog()!.querySelector<HTMLButtonElement>('button[type="submit"]')!.click())
       await settle()
       expect(button().textContent).toBe('Open')
-      expect(root.querySelector('#todo-a .run-badge')?.textContent).toBe('Starting')
+      expect(root.querySelector('#todo-a .run-badge__label')?.textContent).toBe('Starting')
       await act(() => button().click())
       await settle()
       expect(fakeOrca.requests.at(-1)).toEqual({ name: 'workspace.open', input: { workspaceId: 'w2' } })

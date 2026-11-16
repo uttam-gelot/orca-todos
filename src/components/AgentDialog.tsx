@@ -1,9 +1,9 @@
 // The "Start agent" dialog, laid out like Orca's New Workspace composer: workspace and agent up
-// front, the prompt under "Advanced", one primary action with ⌘↵. The worker starts the agent; the
-// prompt can also be copied to paste anywhere.
+// front, then the prompt the agent will get, one primary action with ⌘↵. The worker starts the
+// agent; the prompt can also be copied to paste anywhere.
 
 import { useSignal } from '@preact/signals'
-import { ChevronDown, ChevronRight, Copy, RotateCw, X } from 'lucide-preact'
+import { Copy, Pencil, RotateCw, X } from 'lucide-preact'
 import { AGENTS, buildPrompt, groupWorkspaces, stateAfterSend, workspaceLabel } from '../agents'
 import type { Todo } from '../model'
 import { workerAvailable } from '../orca'
@@ -23,6 +23,9 @@ import './AgentDialog.css'
 
 const close = () => (sheet.value = null)
 
+/** Prompts the person edited, by to-do, so Esc or a click outside does not lose them. */
+const drafts = new Map<string, string>()
+
 export function AgentDialog() {
   const todo = selected.value
   if (sheet.value !== 'agent' || !todo) return null
@@ -34,8 +37,9 @@ export function AgentDialog() {
 }
 
 function AgentForm({ todo }: { todo: Todo }) {
-  const prompt = useSignal(buildPrompt(todo))
-  const advanced = useSignal(false)
+  const draft = drafts.get(todo.id)
+  const prompt = useSignal(draft ?? buildPrompt(todo))
+  const editing = useSignal(draft !== undefined)
   const sending = useSignal(false)
   const error = useSignal<string | null>(null)
   const canSend = workerAvailable()
@@ -43,13 +47,16 @@ function AgentForm({ todo }: { todo: Todo }) {
   const choice = agentChoice.value
   const target = stateAfterSend(todo, states.value)
   const ready = list.status === 'ready' && list.answer.workspaces.some((w) => w.id === choice.workspaceId)
+  const copy = () => copyPrompt(todo.id, prompt.value)
 
   const send = async () => {
-    if (sending.value || !canSend) return
+    if (sending.value || !canSend || !ready) return
     sending.value = true
     error.value = await sendToAgent(todo.id, prompt.value)
     sending.value = false
-    if (!error.value) close()
+    if (error.value) return
+    drafts.delete(todo.id)
+    close()
   }
 
   return (
@@ -62,99 +69,88 @@ function AgentForm({ todo }: { todo: Todo }) {
       onKeyDown={(e) => {
         if (e.key === 'Enter' && (e.metaKey || e.ctrlKey)) {
           e.preventDefault()
-          void send()
+          if (canSend) void send()
+          else copy()
         }
       }}
     >
       <header class="agent-dialog__head">
         <div class="agent-dialog__heading">
           <h2 class="agent-dialog__title">Start agent</h2>
-          <p class="agent-dialog__subject">{todo.title}</p>
+          <p class="agent-dialog__subject" title={todo.title}>
+            {todo.title}
+          </p>
         </div>
         <IconButton label="Close (Esc)" onClick={close}>
           <X />
         </IconButton>
       </header>
 
-      <div class="agent-dialog__body">
-        <div class="agent-dialog__field">
-          <label class="agent-dialog__label" for="agent-workspace">
-            Workspace
-          </label>
-          {!canSend ? (
-            <p class="agent-dialog__hint">
-              Starting an agent needs Orca 1.4.248 or later. Copy the prompt and paste it into an agent instead.
-            </p>
-          ) : list.status === 'error' ? (
-            <div class="agent-dialog__error" role="alert">
-              <span>{list.message}</span>
-              <button type="button" class="btn btn--ghost btn--xs" onClick={() => void loadWorkspaces()}>
-                <RotateCw />
-                Retry
-              </button>
+      <fieldset class="agent-dialog__body" disabled={sending.value}>
+        {canSend ? (
+          <>
+            <div class="agent-dialog__field">
+              <label class="agent-dialog__label" for="agent-workspace">
+                Workspace
+              </label>
+              <WorkspacePicker />
             </div>
-          ) : (
-            <select
-              id="agent-workspace"
-              class="select agent-dialog__control"
-              disabled={list.status === 'loading'}
-              value={choice.workspaceId}
-              onChange={(e) => (agentChoice.value = { ...choice, workspaceId: e.currentTarget.value })}
-            >
-              {list.status === 'loading' ? (
-                <option value="">Loading workspaces…</option>
-              ) : (
-                groupWorkspaces(list.answer.workspaces).map((group) => (
-                  <optgroup key={group.name} label={group.name}>
-                    {group.workspaces.map((w) => (
-                      <option key={w.id} value={w.id}>
-                        {workspaceLabel(w)}
-                        {w.id === list.answer.focusedId ? ' (open now)' : ''}
-                      </option>
-                    ))}
-                  </optgroup>
-                ))
-              )}
-            </select>
-          )}
-        </div>
+            <div class="agent-dialog__field">
+              <label class="agent-dialog__label" for="agent-agent">
+                Agent
+              </label>
+              <select
+                id="agent-agent"
+                class="select agent-dialog__control"
+                value={choice.agent}
+                onChange={(e) => (agentChoice.value = { ...choice, agent: e.currentTarget.value })}
+              >
+                {AGENTS.map((a) => (
+                  <option key={a.id} value={a.id}>
+                    {a.label}
+                  </option>
+                ))}
+              </select>
+            </div>
+          </>
+        ) : (
+          <p class="agent-dialog__notice">
+            Starting an agent from here needs Orca 1.4.248 or later. Copy the prompt, then paste it into an agent.
+          </p>
+        )}
 
-        <label class="agent-dialog__field">
-          <span class="agent-dialog__label">Agent</span>
-          <select
-            class="select agent-dialog__control"
-            autofocus
-            value={choice.agent}
-            onChange={(e) => (agentChoice.value = { ...choice, agent: e.currentTarget.value })}
-          >
-            {AGENTS.map((a) => (
-              <option key={a.id} value={a.id}>
-                {a.label}
-              </option>
-            ))}
-          </select>
-        </label>
-
-        <div class="agent-dialog__advanced">
-          <button
-            type="button"
-            class="btn btn--ghost btn--xs agent-dialog__toggle"
-            aria-expanded={advanced.value}
-            onClick={() => (advanced.value = !advanced.value)}
-          >
-            Advanced
-            {advanced.value ? <ChevronDown /> : <ChevronRight />}
-          </button>
-          {advanced.value && (
-            <label class="agent-dialog__field">
-              <span class="agent-dialog__label">Prompt</span>
-              <textarea
-                class="agent-dialog__prompt"
-                value={prompt.value}
-                spellcheck={false}
-                onInput={(e) => (prompt.value = e.currentTarget.value)}
-              />
+        <div class="agent-dialog__field">
+          <div class="agent-dialog__label-row">
+            <label class="agent-dialog__label" for="agent-prompt">
+              Prompt
             </label>
+            {!editing.value && (
+              <button
+                type="button"
+                class="btn btn--ghost btn--xs agent-dialog__edit"
+                onClick={() => (editing.value = true)}
+              >
+                <Pencil />
+                Edit
+              </button>
+            )}
+          </div>
+          {editing.value ? (
+            <textarea
+              id="agent-prompt"
+              class="agent-dialog__prompt"
+              value={prompt.value}
+              spellcheck={false}
+              ref={(el) => el?.focus()}
+              onInput={(e) => {
+                prompt.value = e.currentTarget.value
+                drafts.set(todo.id, prompt.value)
+              }}
+            />
+          ) : (
+            <pre id="agent-prompt" class="agent-dialog__preview" tabIndex={0}>
+              {prompt.value}
+            </pre>
           )}
         </div>
 
@@ -163,32 +159,86 @@ function AgentForm({ todo }: { todo: Todo }) {
             {error.value}
           </p>
         )}
-      </div>
+      </fieldset>
 
       <footer class="agent-dialog__foot">
-        <span class="agent-dialog__hint">
-          {target ? `Moves to ${stateById.value.get(target)?.name}` : 'Runs in a new terminal'}
-        </span>
-        <button
-          type="button"
-          class="btn btn--ghost btn--sm"
-          title="Copy prompt (Y)"
-          onClick={() => copyPrompt(todo.id, prompt.value)}
-        >
-          <Copy />
-          Copy prompt
-        </button>
-        <button
-          type="submit"
-          class="btn btn--primary btn--sm"
-          disabled={!canSend || !ready || !prompt.value.trim() || sending.value}
-        >
-          {sending.value ? 'Starting…' : 'Start agent'}
-          <Kbd small class="agent-dialog__kbd">
-            {MOD}↵
-          </Kbd>
-        </button>
+        {canSend ? (
+          <>
+            <span class="agent-dialog__hint">
+              {target ? `New terminal · moves to ${stateById.value.get(target)?.name}` : 'Opens in a new terminal'}
+            </span>
+            <button type="button" class="btn btn--ghost btn--sm" onClick={copy}>
+              <Copy />
+              Copy
+            </button>
+            <button
+              type="submit"
+              class="btn btn--primary btn--sm agent-dialog__submit"
+              disabled={!ready || !prompt.value.trim() || sending.value}
+              aria-busy={sending.value}
+            >
+              {sending.value ? 'Starting…' : 'Start agent'}
+              <Kbd small class="agent-dialog__kbd">
+                {MOD}↵
+              </Kbd>
+            </button>
+          </>
+        ) : (
+          <>
+            <span class="agent-dialog__hint" />
+            <button type="button" class="btn btn--primary btn--sm" autofocus onClick={copy}>
+              <Copy />
+              Copy prompt
+              <Kbd small class="agent-dialog__kbd">
+                {MOD}↵
+              </Kbd>
+            </button>
+          </>
+        )}
       </footer>
     </form>
+  )
+}
+
+/** The workspace select, grouped by project, or what stops it: loading, an error, no workspaces. */
+function WorkspacePicker() {
+  const list = workspaceList.value
+  const choice = agentChoice.value
+  if (list.status === 'error' || (list.status === 'ready' && !list.answer.workspaces.length))
+    return (
+      <div class="agent-dialog__error" role="alert">
+        <span>
+          {list.status === 'error' ? list.message : 'Orca has no workspaces yet. Create one in Orca, then retry.'}
+        </span>
+        <button type="button" class="btn btn--ghost btn--xs" autofocus onClick={() => void loadWorkspaces()}>
+          <RotateCw />
+          Retry
+        </button>
+      </div>
+    )
+  return (
+    <select
+      id="agent-workspace"
+      class="select agent-dialog__control"
+      autofocus
+      aria-busy={list.status === 'loading'}
+      value={choice.workspaceId}
+      onChange={(e) => (agentChoice.value = { ...choice, workspaceId: e.currentTarget.value })}
+    >
+      {list.status === 'loading' ? (
+        <option value="">Loading workspaces…</option>
+      ) : (
+        groupWorkspaces(list.answer.workspaces).map((group) => (
+          <optgroup key={group.name} label={group.name}>
+            {group.workspaces.map((w) => (
+              <option key={w.id} value={w.id}>
+                {workspaceLabel(w)}
+                {w.id === list.answer.focusedId ? ' (open now)' : ''}
+              </option>
+            ))}
+          </optgroup>
+        ))
+      )}
+    </select>
   )
 }
