@@ -12,8 +12,9 @@ in a frame.
 - **Color carries state, nothing else.** Each state's color appears on its circle icon, the rail
   and the progress bar. An agent run's state is a dot in its own fixed colors (`--run-*`: blue
   working, amber needs you, green finished, gray otherwise). Only "Needs you" also colors its text,
-  mixed toward the foreground for contrast. Everything else is monochrome. High priority is the
-  foreground color, not red.
+  mixed toward the foreground for contrast. High priority is the one priority with a color
+  (`--prio-high`, red-orange mixed toward the foreground); medium is the foreground and low is
+  muted. Everything else is monochrome.
 - **Type:** Geist (bundled, OFL) at 13px for rows and items, 12px for secondary text, 14px semibold
   for titles, and 18px semibold for the detail title. Section labels are 11px uppercase semibold
   with 0.05em tracking. Numbers use tabular figures.
@@ -43,16 +44,33 @@ in a frame.
 
 - **Rows:** 34px.
   - Hover is a 60% accent tint; selected is full accent.
-  - Columns: priority, state toggle, title, notes marker, tags, age.
-- **Cards:** the selected card gets a ring. The drop target shows a 2px ring-colored line above the
-  card.
+  - Columns: priority, state toggle, title, notes hint, tags, age.
+- **Notes hint:** checklist progress (`ListChecks` + `2/5`, success-tinted when all are done) when
+  the notes hold task items, else a note icon (`NotepadText`). Nothing for empty notes.
+- **Search:** a full-width field under the header row. Below 520px it folds into a header icon while
+  empty, so the first to-do moves up a row; the icon or `/` opens it, and it folds again on blur.
+- **Header:** "N high" (open high-priority to-dos in view) toggles the priority filter. The display
+  options icon gets a dot while a filter or order is on, and the menu offers a reset.
+- **Columns:** flex from 260px to 360px, so a wide tab fills; more states scroll sideways. Each
+  column has a 2px top edge in its state color. A column collapses to a 40px strip (icon, count, vertical
+  name) from its head; the strip expands it and still takes drops. Collapsing a state applies to the
+  list group too.
+- **Cards:** a state toggle before the title (marks done, as on rows), then one meta line under
+  the title: priority, notes hint, tags (cut first when narrow), and Agent → plus the age at the
+  right. A card with a run adds a line with the run badge and Open →. The selected card gets a ring.
+  The drop target shows a 2px ring-colored line above the card.
+- **Add slot:** open groups and columns end with a quiet **+ Add to-do** row (muted, hover tint)
+  that opens the composer in its place. Closed states and the archive have none; the head's + still
+  adds.
 - **Composer:** inline, at the end of the target group or column. Enter adds and keeps it open; Esc
   closes it.
+  `#tag` and `!high` words in the title set tags and the priority; the placeholder says so.
 - **Editing in place:**
   - Title: Enter or blur saves; Esc reverts.
   - Tags: Enter or comma adds; Backspace removes the last one.
   - Notes: the markdown preview has an edit control. The editor saves as you type, and ⌘↵ or Esc
-    finishes.
+    finishes. Checklist boxes in the preview tick in place; the format bar inserts `- [ ] `. In the
+    editor, Enter continues a list or checklist, and Enter on an empty item ends it.
 - **Overlays:** sheets for edge panels (details when narrow, states, shortcuts). A popover holds the
   display options. The one centered dialog is **Start agent**, laid out like Orca's New Workspace
   composer. Sheets and the dialog are modal: `aria-modal`, Tab stays inside, Esc or the scrim
@@ -61,6 +79,9 @@ in a frame.
   - Rows and cards: a ghost **Agent →** (on hover or selection in rows) opens the dialog. Once a
     run exists it becomes an outline **Open →** with the run's dot and label next to it. Below
     420px, rows show the dot alone.
+  - Not seen yet: when the newest run needs you, waits or finishes after the to-do was last
+    selected, its badge label turns to the text color in medium weight and the dot gets a halo,
+    until the to-do is selected. The times live in localStorage, shared by panel and tab.
   - The dialog: workspace (grouped by project), agent, then the prompt as a read-only preview with
     **Edit**. An edited prompt is kept per to-do until it starts. The footer names the side
     effects ("New terminal · moves to In Progress"). Without the worker, Copy prompt is the

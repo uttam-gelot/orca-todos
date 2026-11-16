@@ -38,6 +38,7 @@ import {
   type State,
   type Todo
 } from './model'
+import { lookAt } from './seen'
 
 /** `board` is the center editor tab, `panel` the right sidebar. */
 export const mode = (document.body.dataset.mode ?? 'panel') as 'panel' | 'board'
@@ -172,12 +173,16 @@ export const groups = computed(() => {
 
 /** The todos in on-screen order, for j/k. */
 export const navOrder = computed(() =>
-  groups.value.flatMap((g) => (view.value === 'list' && collapsed.value.has(g.state.id) ? [] : g.items))
+  groups.value.flatMap((g) => (collapsed.value.has(g.state.id) && !filter.value.stateId ? [] : g.items))
 )
 
 export const selected = computed(() => todos.value.find((t) => t.id === selectedId.value) ?? null)
 
 export function select(id: string | null, open = detailOpen.value): void {
+  // Leaving a to-do counts as looking at it until now, so changes seen in the details clear.
+  const before = selectedId.value
+  if (before && before !== id) lookAt(before)
+  if (id) lookAt(id)
   selectedId.value = id
   detailOpen.value = id !== null && open
 }
@@ -331,25 +336,45 @@ export function cyclePriority(id: string): void {
   updateTodo(id, { priority: order[(order.indexOf(todo.priority) + 1) % order.length] })
 }
 
-export const lastDeleted = signal<Todo | null>(null)
+/** The last action that removed to-dos from view (delete, archive), with the to-dos as they were. */
+export type Undoable = { text: string; before: Todo[] }
 
-/** Deletes a todo and moves the selection to its neighbour. */
-export function deleteTodo(id: string): void {
+export const lastUndoable = signal<Undoable | null>(null)
+
+/** Moves the selection off `id` to its neighbour, as a to-do leaves the current view. */
+function selectNeighbour(id: string): void {
   const order = navOrder.value
   const i = order.findIndex((t) => t.id === id)
   if (selectedId.value === id) selectedId.value = (order[i + 1] ?? order[i - 1])?.id ?? null
   if (!selectedId.value) detailOpen.value = false
-  lastDeleted.value = todos.value.find((t) => t.id === id) ?? null
+}
+
+/** Deletes a todo and moves the selection to its neighbour. */
+export function deleteTodo(id: string): void {
+  const todo = todos.value.find((t) => t.id === id)
+  if (!todo) return
+  selectNeighbour(id)
+  lastUndoable.value = { text: `Deleted “${todo.title}”`, before: [todo] }
   todos.value = todos.value.filter((t) => t.id !== id)
   persist('delete', TODO_KEY + id, storage.delete(TODO_KEY + id))
 }
 
-export function undoDelete(): void {
-  const todo = lastDeleted.value
+/** Archives a to-do, or restores it from the archive. Either way it leaves the current view. */
+export function toggleArchived(id: string): void {
+  const todo = todos.value.find((t) => t.id === id)
   if (!todo) return
-  put(todo)
-  lastDeleted.value = null
-  select(todo.id)
+  selectNeighbour(id)
+  lastUndoable.value = { text: `${todo.archived ? 'Restored' : 'Archived'} “${todo.title}”`, before: [todo] }
+  updateTodo(id, { archived: !todo.archived })
+}
+
+/** Puts back the to-dos of the last delete or archive, as they were. */
+export function undo(): void {
+  const last = lastUndoable.value
+  if (!last) return
+  for (const todo of last.before) put(todo)
+  lastUndoable.value = null
+  if (last.before.length === 1) select(last.before[0].id)
 }
 
 /** A short message about the last action, shown as a toast that clears itself. */
@@ -487,8 +512,11 @@ export async function openRun(run: AgentRun): Promise<void> {
 export function archiveClosed(): number {
   const closed = new Set(states.value.filter((s) => s.closed).map((s) => s.id))
   const list = live.value.filter((t) => closed.has(t.stateId))
+  if (!list.length) return 0
+  const n = list.length
+  lastUndoable.value = { text: `Archived ${n} closed to-do${n === 1 ? '' : 's'}`, before: list }
   for (const t of list) updateTodo(t.id, { archived: true })
-  return list.length
+  return n
 }
 
 // --- state actions ---

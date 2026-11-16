@@ -17,7 +17,10 @@ compact list in the sidebar. No account, no sync service, no network.
 
 <br />
 
-![The board view in the center tab, with one column for each state](docs/screenshots/tab-board-light.png)
+<picture>
+  <source media="(prefers-color-scheme: dark)" srcset="docs/screenshots/tab-board-dark.png" />
+  <img src="docs/screenshots/tab-board-light.png" alt="The board in the center tab: a column for each state, cards with priority, checklist progress, tags, age and agent status" />
+</picture>
 
 </div>
 
@@ -56,6 +59,13 @@ the Orca theme, fonts, and control sizes, so it looks like a part of Orca.
 - **States.** Add, rename, recolor, reorder, and delete states. A state that is marked "closed" counts as done.
 - **To-dos.** Each to-do has a title, markdown notes, tags, and a priority. You can archive a to-do. You can undo a delete.
 - **Links.** Links in notes open in your default browser.
+- **Checklists.** Write `- [ ] step` in the notes. Rows and cards show the progress, such as
+  `2/5`. Tick an item in the details pane without opening the editor. In the editor, Enter starts the next item.
+- **Quick add.** Type tags and a priority in the title: `Fix login #auth !high` adds the to-do
+  with the tag `auth` and high priority. `!med`, `!low`, `!h`, `!m` and `!l` also work. `#123`
+  stays in the title.
+- **Status bar count.** Orca's status bar shows how many to-dos are open and how many of them are
+  high priority, for example `5 open · 2 high`. Press it to show or hide the right sidebar.
 - **Agents.** Start a coding agent on a to-do in any Orca workspace. The to-do moves to your first
   "in progress" state, and its row and card show the agent's status. You can also copy a to-do as an
   agent prompt.
@@ -133,35 +143,36 @@ yourself.
 
 ### Keyboard shortcuts
 
-The plugin does not use shortcuts with `⌘` or `Ctrl`, except `⌘Z` / `Ctrl+Z` for undo. Orca keeps all its own shortcuts.
+The plugin does not use shortcuts with `⌘` or `Ctrl`, except `⌘Z` / `Ctrl+Z` to undo a delete or an archive. Orca keeps all its own shortcuts.
 
-| Keys                | Action                                       |
-| ------------------- | -------------------------------------------- |
-| `J` `K` / `↓` `↑`   | Select the next or previous to-do            |
-| `H` `L` / `←` `→`   | Go to the previous or next column (board)    |
-| `[` `]`             | Go to the previous or next scope             |
-| `N`                 | Add a to-do                                  |
-| `/`                 | Search                                       |
-| `V`                 | Switch between list and board                |
-| `↵`                 | Open details. Press again to edit the title  |
-| `E`                 | Edit notes                                   |
-| `1`–`9`             | Move the to-do to state 1–9                  |
-| `Shift+H` `Shift+L` | Move the to-do to the previous or next state |
-| `X`                 | Mark done, or open again                     |
-| `P`                 | Change the priority                          |
-| `S`                 | Start an agent on the to-do                  |
-| `O`                 | Open the workspace of the to-do's agent      |
-| `Y`                 | Copy the to-do as an agent prompt            |
-| `A`                 | Archive, or restore from the archive         |
-| `⌫`                 | Delete. Press `⌘Z` / `Ctrl+Z` to undo        |
-| `Esc`               | Close, clear, or go back                     |
+| Keys                | Action                                             |
+| ------------------- | -------------------------------------------------- |
+| `J` `K` / `↓` `↑`   | Select the next or previous to-do                  |
+| `H` `L` / `←` `→`   | Go to the previous or next column (board)          |
+| `[` `]`             | Go to the previous or next scope                   |
+| `N`                 | Add a to-do                                        |
+| `/`                 | Search                                             |
+| `V`                 | Switch between list and board                      |
+| `↵`                 | Open details. Press again to edit the title        |
+| `E`                 | Edit notes                                         |
+| `1`–`9`             | Move the to-do to state 1–9                        |
+| `Shift+H` `Shift+L` | Move the to-do to the previous or next state       |
+| `X`                 | Mark done, or open again                           |
+| `P`                 | Change the priority                                |
+| `S`                 | Start an agent on the to-do                        |
+| `O`                 | Open the workspace of the to-do's agent            |
+| `Y`                 | Copy the to-do as an agent prompt                  |
+| `A`                 | Archive, or restore. Press `⌘Z` / `Ctrl+Z` to undo |
+| `⌫`                 | Delete. Press `⌘Z` / `Ctrl+Z` to undo              |
+| `Esc`               | Close, clear, or go back                           |
 
 ## Data and privacy
 
 - The plugin keeps all data in Orca plugin storage on your computer.
 - The plugin does not use the network. Orca runs its views in sandboxed frames with no network access.
-- The plugin has a small worker. Orca runs it to list workspaces, start agents, and follow their
-  status. The worker does not read your files or run other commands.
+- The plugin has a small worker. Orca keeps it running while the plugin is on. It counts open
+  to-dos for the status bar, lists workspaces, starts agents, and follows their status. The worker
+  does not read your files or run other commands.
 
 | Permission        | Used for                                            |
 | ----------------- | --------------------------------------------------- |
@@ -177,9 +188,6 @@ The plugin does not use shortcuts with `⌘` or `Ctrl`, except `⌘Z` / `Ctrl+Z`
 These features are planned. They are not available yet.
 
 - **Due dates.** Give a to-do a date, and see the to-dos that are due soon.
-- **Quick-add syntax.** Type tags, a priority, and a state in the title, for example
-  `Fix login #auth !high`.
-- **Checklists.** Show the progress of a markdown checklist on the row and on the card.
 - **Lists for each project.** Keep a separate list for each repository or workspace.
 
 Do you want a different feature? [Open an issue](https://github.com/uttam-gelot/orca-todos/issues).
@@ -212,6 +220,7 @@ lefthook install
 | `bun run format:check`     | Check the format, but do not change files                                                 |
 | `bun run pack`             | Build and write an installable copy to `release/`                                         |
 | `bun run shots`            | Take screenshots in Orca, in light and dark mode                                          |
+| `bun run cover`            | Draw the catalog cover, `images/cover.png`, in headless Chrome                            |
 
 GitHub Actions (`.github/workflows/ci.yml`) runs the type check, ESLint, the Prettier check, the tests, a secret scan, and a check that `dist/` matches the source. It runs on each push to `main` and on each pull request.
 
@@ -224,6 +233,8 @@ Before each push, `lefthook` runs a secret scan (gitleaks), the tests, ESLint, a
 The script does not use your to-dos. It loads a demo copy of the plugin (`local.todos-demo`) with sample data, and removes the copy when it is done. It approves the demo copy for you. The copy asks for the same access as the plugin.
 
 You need the Orca desktop app 1.4.247 or later, open on this machine. Orca must be hidden while the shots run. If the terminal cannot hide Orca, the script waits up to two minutes for you to hide it (Cmd+H).
+
+`bun run cover` draws the catalog cover, `images/cover.png`: the name, a line about the plugin, and the board and panel with sample data. It builds the board from the current code and renders `scripts/cover/cover.html` in headless Chrome, so Orca is not needed. It needs Google Chrome, Playwright's Chromium, or a browser named by `CHROME_PATH`.
 
 ### Why `dist/` is in the repository
 

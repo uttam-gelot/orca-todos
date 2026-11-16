@@ -2,14 +2,17 @@ import { describe, expect, test } from 'bun:test'
 import {
   DEFAULT_STATES,
   EMPTY_FILTER,
+  checklist,
   matches,
   normalizeTags,
   orderBefore,
+  parseQuickAdd,
   parseStates,
   parseTodo,
   patchTodo,
   sortTodos,
-  stats
+  stats,
+  toggleTask
 } from '../../src/model'
 import { makeTodo as todo } from '../factories/todo'
 import { CUSTOM_STATES, INVALID_TODOS, LEGACY_TODO, ODD_RUNS, VALID_TODO } from '../fixtures/stored-records'
@@ -115,5 +118,60 @@ describe('parseStates', () => {
     expect(parseStates([])).toBeNull()
     expect(parseStates([...CUSTOM_STATES, { id: 'x' }])).toBeNull()
     expect(parseStates({ states: CUSTOM_STATES })).toBeNull()
+  })
+})
+
+describe('parseQuickAdd', () => {
+  test('takes tags and a priority out of the title', () => {
+    expect(parseQuickAdd('Fix login #auth #UI !high')).toEqual({
+      title: 'Fix login',
+      tags: ['auth', 'ui'],
+      priority: 'high'
+    })
+  })
+
+  test('reads the short priorities and keeps only the first one', () => {
+    expect(parseQuickAdd('Ship it !l !h')).toEqual({ title: 'Ship it !h', tags: [], priority: 'low' })
+  })
+
+  test('keeps issue numbers, unknown marks, and words with # inside in the title', () => {
+    expect(parseQuickAdd('Fix #123 now! !urgent C#')).toEqual({ title: 'Fix #123 now! !urgent C#', tags: [] })
+  })
+
+  test('ignores names on Object.prototype', () => {
+    expect(parseQuickAdd('Read !constructor')).toEqual({ title: 'Read !constructor', tags: [] })
+  })
+
+  test('keeps the whole line as the title when only marks were typed', () => {
+    expect(parseQuickAdd('#later !high')).toEqual({ title: '#later !high', tags: [] })
+  })
+})
+
+describe('checklist', () => {
+  const notes = [
+    'Plan',
+    '- [x] Write it',
+    '* [ ] Test it',
+    '1. [X] Ship',
+    '> - [ ] Quoted',
+    '- [] not a task',
+    '- [ ]',
+    '- [ ]x tight'
+  ].join('\n')
+
+  test('counts task items and the ticked ones', () => {
+    expect(checklist(notes)).toEqual({ done: 2, total: 4 })
+    expect(checklist('No tasks here')).toEqual({ done: 0, total: 0 })
+  })
+
+  test('skips task items inside fenced code', () => {
+    expect(checklist('```md\n- [ ] in code\n```\n- [ ] real')).toEqual({ done: 0, total: 1 })
+    expect(checklist('~~~~\n```\n- [ ] still code\n~~~~\n- [x] real')).toEqual({ done: 1, total: 1 })
+  })
+
+  test('toggles one item in document order and keeps the rest of the text', () => {
+    expect(toggleTask(notes, 1)).toBe(notes.replace('* [ ] Test it', '* [x] Test it'))
+    expect(toggleTask(notes, 2)).toBe(notes.replace('1. [X] Ship', '1. [ ] Ship'))
+    expect(toggleTask(notes, 9)).toBe(notes)
   })
 })

@@ -4,7 +4,7 @@ import { afterEach, beforeEach, describe, expect, spyOn, test } from 'bun:test'
 import { render } from 'preact'
 import { act } from 'preact/test-utils'
 import { App } from '../../src/App'
-import { loadError, loaded, selectedId, todos } from '../../src/store'
+import { detailOpen, filter, loadError, loaded, navOrder, selectedId, sort, todos, view } from '../../src/store'
 import { StorageError } from '../../src/errors'
 import { makeTodo } from '../factories/todo'
 import { resetStore } from '../factories/store'
@@ -62,6 +62,22 @@ describe('App', () => {
     expect(todos.value.map((t) => t.title)).toContain('From the composer')
   })
 
+  test('the composer reads tags and a priority from the title', async () => {
+    mount()
+    await act(() => {
+      document.body.dispatchEvent(new KeyboardEvent('keydown', { key: 'n', bubbles: true, cancelable: true }))
+    })
+    const input = root.querySelector<HTMLInputElement>('.composer__input')!
+    await act(() => {
+      input.value = 'Fix login #auth !high'
+      input.dispatchEvent(new Event('input', { bubbles: true }))
+      input.form!.requestSubmit()
+    })
+    const added = todos.value.find((t) => t.title === 'Fix login')
+    expect(added?.tags).toEqual(['auth'])
+    expect(added?.priority).toBe('high')
+  })
+
   test('a load failure offers a retry instead of an empty list', async () => {
     loadError.value = new StorageError('load', undefined)
     mount()
@@ -75,6 +91,48 @@ describe('App', () => {
     })
     expect(root.querySelector('[role="alert"]')).toBeNull()
     error.mockRestore()
+  })
+
+  describe('header', () => {
+    test('counts open high-priority to-dos and filters by them', async () => {
+      resetStore({
+        todos: [
+          makeTodo({ id: 'a', title: 'A', priority: 'high' }),
+          makeTodo({ id: 'b', title: 'B', priority: 'high', stateId: 'done' }),
+          makeTodo({ id: 'c', title: 'C', priority: 'low' })
+        ]
+      })
+      mount()
+      const chip = () => root.querySelector<HTMLButtonElement>('.header__high')
+      expect(chip()?.textContent).toBe('1high')
+      await act(() => chip()!.click())
+      expect(chip()?.getAttribute('aria-pressed')).toBe('true')
+      expect(root.querySelectorAll('.row').length).toBe(2)
+      await act(() => chip()!.click())
+      expect(root.querySelectorAll('.row').length).toBe(3)
+    })
+
+    test('hides the count when nothing open is high priority', () => {
+      resetStore({ todos: [makeTodo({ id: 'a', priority: 'med' })] })
+      mount()
+      expect(root.querySelector('.header__high')).toBeNull()
+    })
+
+    test('the display menu resets a changed priority and order', async () => {
+      resetStore({ todos: [makeTodo({ id: 'a' })] })
+      filter.value = { ...filter.value, priority: 'low' }
+      sort.value = 'priority'
+      mount()
+      const menu = root.querySelector<HTMLButtonElement>('[aria-haspopup]')!
+      expect(menu.getAttribute('aria-label')).toBe('Display options (filter or order on)')
+      await act(() => menu.click())
+      const reset = [...root.querySelectorAll<HTMLButtonElement>('.menu__item')].find((b) =>
+        b.textContent?.includes('Reset')
+      )!
+      await act(() => reset.click())
+      expect(filter.value.priority).toBe('')
+      expect(sort.peek() as string).toBe('manual')
+    })
   })
 
   describe('copy as agent prompt', () => {
@@ -185,5 +243,111 @@ describe('App', () => {
       await settle()
       expect(fakeOrca.requests.at(-1)).toEqual({ name: 'workspace.open', input: { workspaceId: 'w2' } })
     })
+  })
+})
+
+describe('checklist', () => {
+  const notes = 'Steps\n- [x] Write it\n- [ ] Test it\n- [ ] Ship it'
+
+  test('rows show the progress of the checklist in the notes', async () => {
+    resetStore({ todos: [makeTodo({ id: 'a', description: notes })] })
+    await mount()
+    expect(root.querySelector('.row .checklist')?.textContent).toContain('1/3')
+    expect(root.querySelector('.row .checklist .sr-only')?.textContent).toBe('Checklist: 1 of 3 done')
+  })
+
+  test('ticking an item in the details pane saves it in the notes', async () => {
+    resetStore({ todos: [makeTodo({ id: 'a', description: notes })] })
+    selectedId.value = 'a'
+    detailOpen.value = true
+    await mount()
+    const boxes = root.querySelectorAll<HTMLInputElement>('.description .md input[type="checkbox"]')
+    expect([...boxes].map((b) => b.getAttribute('aria-label'))).toEqual(['Write it', 'Test it', 'Ship it'])
+    expect(boxes[1].disabled).toBe(false)
+    await act(() => boxes[1].click())
+    expect(todos.value[0].description).toBe(notes.replace('- [ ] Test it', '- [x] Test it'))
+  })
+})
+
+describe('add slot', () => {
+  test('open groups end with an Add to-do row that opens the composer; closed ones do not', async () => {
+    resetStore({ todos: [makeTodo({ id: 'a', stateId: 'todo' })] })
+    await mount()
+    const slots = [...root.querySelectorAll<HTMLButtonElement>('.add-slot')]
+    const groupOf = (el: Element) => el.closest('.group')?.getAttribute('aria-label')
+    expect(slots.map(groupOf)).toEqual(['Backlog', 'ToDo', 'In Progress'])
+    await act(() => slots[1].click())
+    expect(root.querySelector('.group[aria-label="ToDo"] .composer__input')).not.toBeNull()
+    expect(root.querySelector('.group[aria-label="ToDo"] .add-slot')).toBeNull()
+  })
+})
+
+describe('search', () => {
+  test('folds into the header icon while empty, and / unfolds and focuses it', async () => {
+    await mount()
+    expect(root.querySelector('.search')?.classList.contains('search--folded')).toBe(true)
+    await act(async () => {
+      document.body.dispatchEvent(new KeyboardEvent('keydown', { key: '/', bubbles: true, cancelable: true }))
+      await new Promise((r) => requestAnimationFrame(r))
+    })
+    const input = root.querySelector<HTMLInputElement>('.search__input')!
+    expect(root.querySelector('.search')?.classList.contains('search--folded')).toBe(false)
+    expect(document.activeElement).toBe(input)
+    await act(() => input.blur())
+    expect(root.querySelector('.search')?.classList.contains('search--folded')).toBe(true)
+  })
+})
+
+describe('board columns', () => {
+  test('collapse to a strip that j/k skip, and expand again', async () => {
+    resetStore({ todos: [makeTodo({ id: 'a', stateId: 'todo' }), makeTodo({ id: 'b', stateId: 'backlog' })] })
+    view.value = 'board'
+    await mount()
+    await act(() => root.querySelector<HTMLButtonElement>('.column[aria-label="ToDo"] .column__collapse')!.click())
+    const strip = root.querySelector<HTMLButtonElement>('.column[aria-label="ToDo"] .column__strip')!
+    expect(strip.textContent).toContain('1')
+    expect(root.querySelector('.card[data-id="a"]')).toBeNull()
+    expect(navOrder.value.map((t) => t.id)).toEqual(['b'])
+    await act(() => strip.click())
+    expect(root.querySelector('.card[data-id="a"]')).not.toBeNull()
+  })
+})
+
+describe('unseen runs', () => {
+  test('a finished run stands out until its to-do is selected', async () => {
+    const run = {
+      terminalId: 't1',
+      agent: 'claude',
+      workspaceId: 'w1',
+      workspaceName: 'app',
+      startedAt: 1,
+      state: 'done' as const,
+      stateAt: 2
+    }
+    resetStore({ todos: [makeTodo({ id: 'a', runs: [run] }), makeTodo({ id: 'b', order: 2 })] })
+    await mount()
+    const badge = () => root.querySelector('.row[data-id="a"] .run-badge')
+    expect(badge()?.classList.contains('run-badge--unseen')).toBe(true)
+    await act(() => root.querySelector<HTMLElement>('.row[data-id="a"]')!.click())
+    expect(badge()?.classList.contains('run-badge--unseen')).toBe(false)
+    await act(() => root.querySelector<HTMLElement>('.row[data-id="b"]')!.click())
+    expect(badge()?.classList.contains('run-badge--unseen')).toBe(false)
+  })
+})
+
+describe('notes editor', () => {
+  test('Enter continues a checklist', async () => {
+    resetStore({ todos: [makeTodo({ id: 'a', description: '- [x] one' })] })
+    selectedId.value = 'a'
+    detailOpen.value = true
+    await mount()
+    await act(() => root.querySelector<HTMLButtonElement>('.description__edit')!.click())
+    const area = root.querySelector<HTMLTextAreaElement>('.description__input')!
+    area.setSelectionRange(9, 9)
+    await act(
+      () => void area.dispatchEvent(new KeyboardEvent('keydown', { key: 'Enter', bubbles: true, cancelable: true }))
+    )
+    expect(area.value).toBe('- [x] one\n- [ ] ')
+    expect(area.selectionStart).toBe(16)
   })
 })

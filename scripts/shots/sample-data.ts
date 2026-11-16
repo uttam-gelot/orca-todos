@@ -1,7 +1,7 @@
 // Sample to-dos for screenshots. Dates are relative to now, so "done this week" and the update
 // times in the shots always look current.
 
-import type { Priority, State, Todo } from '../../src/model'
+import type { AgentRun, Priority, RunState, State, Todo } from '../../src/model'
 
 const HOUR = 3_600_000
 const DAY = 24 * HOUR
@@ -24,6 +24,8 @@ type Sample = {
   age: number
   description?: string
   archived?: boolean
+  /** The newest agent run's state and how long ago it changed. */
+  run?: { agent: string; state: RunState; ago: number }
 }
 
 const SAMPLES: Sample[] = [
@@ -35,6 +37,7 @@ const SAMPLES: Sample[] = [
     priority: 'high',
     order: 1,
     age: 2 * HOUR,
+    run: { agent: 'claude', state: 'working', ago: 4 * 60_000 },
     description:
       'Agents spawn faster than the worktree pool can clean up.\n\n- [x] Measure p95 spawn time\n- [ ] Token bucket per workspace\n- [ ] Show a toast when throttled\n\n`MAX_PARALLEL = 8` today.'
   },
@@ -45,7 +48,8 @@ const SAMPLES: Sample[] = [
     tags: ['review'],
     priority: 'med',
     order: 2,
-    age: 5 * HOUR
+    age: 5 * HOUR,
+    run: { agent: 'codex', state: 'blocked', ago: 12 * 60_000 }
   },
   {
     id: 'c',
@@ -64,6 +68,7 @@ const SAMPLES: Sample[] = [
     priority: 'high',
     order: 2,
     age: 3 * DAY,
+    run: { agent: 'claude', state: 'done', ago: 40 * 60_000 },
     description: 'Fails about 1 in 20 runs on macOS runners.'
   },
   { id: 'e', title: 'Try the new terminal split shortcuts', stateId: 'todo', priority: 'low', order: 3, age: 4 * DAY },
@@ -101,13 +106,22 @@ const SAMPLES: Sample[] = [
 
 /** The sample to-dos, stamped relative to `now`. */
 export function sampleTodos(now: number = Date.now()): Todo[] {
-  return SAMPLES.map(({ age, tags = [], priority = 'none', description = '', archived = false, ...rest }) => ({
+  const runOf = (id: string, run: NonNullable<Sample['run']>): AgentRun => ({
+    terminalId: `demo-${id}`,
+    agent: run.agent,
+    workspaceId: 'demo',
+    workspaceName: 'orca',
+    startedAt: now - run.ago - HOUR,
+    state: run.state,
+    stateAt: now - run.ago
+  })
+  return SAMPLES.map(({ age, tags = [], priority = 'none', description = '', archived = false, run, ...rest }) => ({
     ...rest,
     tags,
     priority,
     description,
     archived,
-    runs: [],
+    runs: run ? [runOf(rest.id, run)] : [],
     createdAt: now - age - 2 * DAY,
     updatedAt: now - age,
     ...(rest.stateId === 'done' ? { closedAt: now - age } : {})

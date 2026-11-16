@@ -13,5 +13,9 @@ export type WorkerOrca = {
     /** Delivers an event the manifest lists in `contributes.events`. */
     on(event: string, handler: (payload: unknown) => unknown): Disposable
   }
+  storage: {
+    /** Hears every write to the plugin's storage, from the worker or a panel. */
+    onDidChange(listener: (change: { key: string }) => void): Disposable
+  }
   log(message: string): void
 }

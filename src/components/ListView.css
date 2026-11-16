@@ -83,25 +83,12 @@
 .row--closed .row__title {
   color: var(--muted-fg);
 }
-.row__toggle {
-  display: inline-flex;
-  padding: var(--space-0-5);
-  margin: calc(-1 * var(--space-0-5));
-  border-radius: 50%;
-}
-.row__toggle:hover {
-  --icon-scale: 1.12;
-}
 .row__title {
   flex: 1 1 auto;
   min-width: 0;
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
-}
-.row__note {
-  --icon-size: var(--icon-sm);
-  --icon-color: var(--muted-fg);
 }
 .row__tags {
   display: flex;

@@ -69,6 +69,72 @@ export function normalizeTags(input: string): string[] {
   return [...new Set(tags.filter(Boolean))]
 }
 
+const QUICK_PRIORITY = new Map<string, Priority>([
+  ['high', 'high'],
+  ['h', 'high'],
+  ['med', 'med'],
+  ['m', 'med'],
+  ['low', 'low'],
+  ['l', 'low']
+])
+
+/**
+ * Reads a composer line such as `Fix login #auth !high`: each `#tag` word becomes a tag and one
+ * `!high` / `!med` / `!low` (or `!h` / `!m` / `!l`) the priority; the other words are the title.
+ * A number such as `#123` is not a tag.
+ * A line made only of these keeps its whole text as the title, so nothing typed is lost.
+ */
+export function parseQuickAdd(line: string): { title: string; tags: string[]; priority?: Priority } {
+  const tags: string[] = []
+  const rest: string[] = []
+  let priority: Priority | undefined
+  for (const word of line.trim().split(/\s+/)) {
+    const quick = word.startsWith('!') ? QUICK_PRIORITY.get(word.slice(1).toLowerCase()) : undefined
+    // `#123` stays in the title: it is an issue number, not a tag.
+    if (/^#(?!\d+$)[^#]+$/.test(word)) tags.push(...normalizeTags(word))
+    else if (quick && !priority) priority = quick
+    else rest.push(word)
+  }
+  if (!rest.length) return { title: line.trim(), tags: [] }
+  return { title: rest.join(' '), tags: [...new Set(tags)], ...(priority && { priority }) }
+}
+
+// A GFM task item: `- [ ] text`, `* [x] text` or `1. [ ] text`, also inside a blockquote. An item
+// with no text is not one, as in marked.
+const TASK = /^((?:\s*>)*\s*(?:[-*+]|\d{1,9}[.)])\s+\[)([ xX])(\])(?=[ \t]+\S)/
+const FENCE = /^\s{0,3}(`{3,}|~{3,})/
+
+/** The line indexes of the task items in markdown notes, skipping fenced code. */
+function taskLines(lines: string[]): number[] {
+  const found: number[] = []
+  let fence = ''
+  lines.forEach((line, i) => {
+    const mark = FENCE.exec(line)?.[1]
+    if (mark && (!fence || (mark[0] === fence[0] && mark.length >= fence.length))) fence = fence ? '' : mark
+    else if (!fence && TASK.test(line)) found.push(i)
+  })
+  return found
+}
+
+/** How many task items the notes hold, and how many are ticked. `total` is 0 when there are none. */
+export function checklist(description: string): { done: number; total: number } {
+  const lines = description.split('\n')
+  const tasks = taskLines(lines)
+  return { done: tasks.filter((i) => TASK.exec(lines[i])?.[2] !== ' ').length, total: tasks.length }
+}
+
+/** Ticks or unticks the `index`-th task item (in document order). Other text stays as it was. */
+export function toggleTask(description: string, index: number): string {
+  const lines = description.split('\n')
+  const at = taskLines(lines)[index]
+  if (at === undefined) return description
+  lines[at] = lines[at].replace(
+    TASK,
+    (_, open: string, mark: string, close: string) => open + (mark === ' ' ? 'x' : ' ') + close
+  )
+  return lines.join('\n')
+}
+
 /** Applies a patch and keeps `closedAt` in step with whether the new state is closed. */
 export function patchTodo(todo: Todo, patch: Partial<Todo>, states: State[], now = Date.now()): Todo {
   const next = { ...todo, ...patch, updatedAt: now }

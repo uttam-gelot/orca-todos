@@ -45,12 +45,12 @@ local: no accounts and no sync service.
 - Stats: total, open, closed, done this week, per state.
 - Technical: an Orca `trusted-worker` plugin. The UI runs in isolated frames with no network:
   every asset is bundled (including Geist, Orca's UI font, under the OFL). A small worker lists
-  workspaces, starts agents and follows their status. Permissions: `storage:own`,
+  workspaces, starts agents, follows their status, and keeps the status bar count of open to-dos. Permissions: `storage:own`,
   `workspace:read`, `workspace:write`, `agent:launch`, `agent:read`, `terminal:send`.
   Colors come only from Orca's `--orca-*` frame variables. Sidebar panels and the center tab are
   separate frames.
 - Stack: Preact + @preact/signals, plain CSS, marked + DOMPurify, built with Bun.
-- Not yet: due dates, quick-add syntax, checklists, per-project lists.
+- Not yet: due dates, per-project lists.
 
 ## Product Principles
 

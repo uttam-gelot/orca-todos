@@ -9,6 +9,7 @@ import {
   Keyboard,
   List,
   Plus,
+  RotateCcw,
   Search,
   Settings2,
   SlidersHorizontal,
@@ -28,9 +29,9 @@ import {
   view,
   visible
 } from '../store'
-import { searchRef } from '../focus'
+import { focusSearch, searchOpen, searchRef } from '../focus'
 import { ScopeSelect } from './Rail'
-import { IconButton, Kbd, StateIcon } from './ui'
+import { IconButton, Kbd, PriorityIcon, StateIcon } from './ui'
 import './Header.css'
 
 function ScopeTitle() {
@@ -53,6 +54,29 @@ function ScopeTitle() {
   )
 }
 
+/**
+ * "2 high": the open high-priority to-dos in view, as a toggle for the priority filter. It answers
+ * "what needs attention now", which the totals do not.
+ */
+function HighCount() {
+  const on = filter.value.priority === 'high'
+  const count = visible.value.filter((t) => t.priority === 'high' && !stateById.value.get(t.stateId)?.closed).length
+  if (!count && !on) return null
+  return (
+    <button
+      type="button"
+      class="btn btn--ghost btn--xs header__high"
+      aria-pressed={on}
+      title={on ? 'Show every priority' : 'Show only high priority'}
+      onClick={() => (filter.value = { ...filter.value, priority: on ? '' : 'high' })}
+    >
+      <PriorityIcon priority="high" />
+      {count}
+      <span class="header__high-label">high</span>
+    </button>
+  )
+}
+
 export function Header() {
   return (
     <header class="header">
@@ -63,6 +87,7 @@ export function Header() {
         <div class="header__narrow-only">
           <ScopeSelect />
         </div>
+        <HighCount />
         <span class="spacer" />
         <div class="seg" role="group" aria-label="View">
           <button
@@ -86,6 +111,11 @@ export function Header() {
             <span class="seg__label">Board</span>
           </button>
         </div>
+        {searchFolded() && (
+          <IconButton label="Search (/)" class="header__search" onClick={focusSearch}>
+            <Search />
+          </IconButton>
+        )}
         <DisplayMenu />
         <button
           type="button"
@@ -102,6 +132,9 @@ export function Header() {
   )
 }
 
+/** True while the search is folded into the header icon: closed and empty. Only narrow panes fold. */
+const searchFolded = () => !searchOpen.value && !filter.value.text
+
 function SearchBox() {
   const ref = useRef<HTMLInputElement>(null)
   useEffect(() => {
@@ -109,7 +142,7 @@ function SearchBox() {
   }, [])
   const text = filter.value.text
   return (
-    <div class="search">
+    <div class={searchFolded() ? 'search search--folded' : 'search'}>
       <Search class="search__icon" />
       <input
         ref={ref}
@@ -119,6 +152,7 @@ function SearchBox() {
         placeholder="Search titles and notes"
         value={text}
         onInput={(e) => (filter.value = { ...filter.value, text: e.currentTarget.value })}
+        onBlur={() => (searchOpen.value = false)}
         onKeyDown={(e) => {
           if (e.key === 'Escape') {
             e.stopPropagation()
@@ -147,6 +181,10 @@ function DisplayMenu() {
   const ref = useRef<HTMLDivElement>(null)
   const open = menuOpen.value
   const changed = filter.value.priority !== EMPTY_FILTER.priority || sort.value !== 'manual'
+  const reset = () => {
+    filter.value = { ...filter.value, priority: EMPTY_FILTER.priority }
+    sort.value = 'manual'
+  }
   useEffect(() => {
     if (!open) return
     const onDown = (e: MouseEvent): void => {
@@ -163,7 +201,7 @@ function DisplayMenu() {
   return (
     <div class="menu" ref={ref}>
       <IconButton
-        label="Display options"
+        label={changed ? 'Display options (filter or order on)' : 'Display options'}
         aria-expanded={open}
         aria-haspopup="true"
         class={changed ? 'btn--dot' : ''}
@@ -209,6 +247,12 @@ function DisplayMenu() {
               <option value="created">Newest</option>
             </select>
           </label>
+          {changed && (
+            <button type="button" class="menu__item" onClick={pick(reset)}>
+              <RotateCcw />
+              Reset priority and order
+            </button>
+          )}
           <div class="menu__sep" />
           <button type="button" class="menu__item" disabled={!closedCount} onClick={pick(archiveClosed)}>
             <Archive />

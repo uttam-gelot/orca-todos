@@ -16,18 +16,32 @@
   "icon": "images/icon.png",
   "cover": {
     "path": "images/cover.png",
-    "alt": "The ToDos board in dark mode, with one column for each state"
+    "alt": "ToDos Board: your next steps beside your agents. The board tab with a column for each state, and the sidebar list"
   },
   "screenshots": [
     {
-      "path": "images/screenshot-board.png",
-      "alt": "The board view in light mode: cards in Backlog, ToDo, In Progress and Done columns",
-      "caption": "Board view"
+      "path": "images/screenshot-board-light.png",
+      "alt": "The board in light mode: a column for each state, cards with checklist progress, tags and agent status",
+      "caption": "Board view",
+      "theme": "light"
     },
     {
-      "path": "images/screenshot-list.png",
-      "alt": "The list view in dark mode: to-dos grouped by state, with the details pane open",
-      "caption": "List view with details"
+      "path": "images/screenshot-board-dark.png",
+      "alt": "The board in dark mode: a column for each state, cards with checklist progress, tags and agent status",
+      "caption": "Board view",
+      "theme": "dark"
+    },
+    {
+      "path": "images/screenshot-list-light.png",
+      "alt": "The list in light mode: to-dos grouped by state, with the details pane and its checklist open",
+      "caption": "List view with details",
+      "theme": "light"
+    },
+    {
+      "path": "images/screenshot-list-dark.png",
+      "alt": "The list in dark mode: to-dos grouped by state, with the details pane and its checklist open",
+      "caption": "List view with details",
+      "theme": "dark"
     }
   ],
   "engines": {
@@ -65,6 +79,22 @@
     "events": [
       {
         "on": "agent.status.changed"
+      }
+    ],
+    "commands": [
+      {
+        "id": "todos.toggleSidebar",
+        "title": "ToDos: Show or hide the right sidebar",
+        "action": "sidebar.right.toggle"
+      }
+    ],
+    "statusBarItems": [
+      {
+        "id": "open-count",
+        "text": "ToDos",
+        "icon": "check",
+        "tooltip": "ToDos: open to-dos. Press to show or hide the right sidebar.",
+        "command": "todos.toggleSidebar"
       }
     ]
   },

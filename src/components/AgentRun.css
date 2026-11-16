@@ -32,6 +32,15 @@
   --run-color: var(--run-done);
 }
 
+/* Not seen yet: the label in the text color and a halo on the dot, until the to-do is selected. */
+.run-badge--unseen {
+  color: var(--fg);
+  font-weight: var(--weight-medium);
+}
+.run-badge--unseen .run-badge__dot {
+  box-shadow: 0 0 0 2px color-mix(in oklab, var(--run-color) 35%, transparent);
+}
+
 .agent-button {
   --icon-size: var(--icon-sm);
   flex: none;

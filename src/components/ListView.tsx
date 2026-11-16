@@ -1,10 +1,9 @@
 // List: state groups → rows. Selecting a row opens it in the detail pane.
 
-import { ChevronRight, Plus, TextAlignStart } from 'lucide-preact'
+import { ChevronRight, Plus } from 'lucide-preact'
 import type { State, Todo } from '../model'
 import {
   collapsed,
-  composer,
   filter,
   groups,
   openComposer,
@@ -15,9 +14,10 @@ import {
   toggleDone
 } from '../store'
 import { latestRun } from '../agents'
+import { isUnseen, seen } from '../seen'
 import { AgentButton, RunBadge } from './AgentRun'
-import { Composer } from './Composer'
-import { ago, IconButton, PriorityIcon, StateIcon } from './ui'
+import { AddSlot } from './Composer'
+import { ago, DoneToggle, IconButton, NotesHint, PriorityIcon, StateIcon } from './ui'
 import './ListView.css'
 
 export function ListView() {
@@ -65,7 +65,7 @@ function Group({ state, items, single }: { state: State; items: Todo[]; single: 
           {items.map((t) => (
             <Row key={t.id} todo={t} />
           ))}
-          {composer.value === state.id && <Composer stateId={state.id} variant="row" />}
+          <AddSlot stateId={state.id} variant="row" />
         </div>
       )}
     </section>
@@ -86,20 +86,9 @@ function Row({ todo }: { todo: Todo }) {
       onClick={() => select(todo.id, true)}
     >
       <PriorityIcon priority={todo.priority} />
-      <button
-        type="button"
-        class="row__toggle"
-        aria-label={state?.closed ? 'Reopen' : 'Mark done'}
-        title={state?.closed ? 'Reopen (X)' : 'Mark done (X)'}
-        onClick={(e) => {
-          e.stopPropagation()
-          toggleDone(todo.id)
-        }}
-      >
-        <StateIcon state={state} />
-      </button>
+      <DoneToggle state={state} onToggle={() => toggleDone(todo.id)} />
       <span class="row__title">{todo.title}</span>
-      {todo.description.trim() && <TextAlignStart class="row__note" aria-label="Has notes" />}
+      <NotesHint description={todo.description} />
       <span class="row__tags">
         {todo.tags.map((tag) => (
           <span key={tag} class="tag">
@@ -107,7 +96,7 @@ function Row({ todo }: { todo: Todo }) {
           </span>
         ))}
       </span>
-      {run && <RunBadge run={run} class="row__run" />}
+      {run && <RunBadge run={run} unseen={!current && isUnseen(todo, seen.value)} class="row__run" />}
       <AgentButton todo={todo} class="row__agent" />
       <span class="row__age count" title={`Updated ${new Date(todo.updatedAt).toLocaleString()}`}>
         {ago(todo.updatedAt)}

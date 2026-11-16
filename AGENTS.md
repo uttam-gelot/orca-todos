@@ -2,7 +2,7 @@
 
 ## Project Overview
 
-Personal to-do plugin for Orca, the agent-orchestrator IDE: a center tab (list or board) and a right-sidebar panel over the same to-dos, kept in Orca plugin storage. A small worker starts coding agents on to-dos and follows their status. This file is the only agent instruction file in the repo (there is no CLAUDE.md).
+Personal to-do plugin for Orca, the agent-orchestrator IDE: a center tab (list or board) and a right-sidebar panel over the same to-dos, kept in Orca plugin storage. A small worker starts coding agents on to-dos, follows their status, and keeps the status bar count of open to-dos. This file is the only agent instruction file in the repo (there is no CLAUDE.md).
 
 ## Tech Stack
 
@@ -32,6 +32,7 @@ src/log.ts        logger; src/errors.ts typed errors
 src/styles.css    global tokens and resets only
 tests/            setup.ts, factories/, fixtures/, unit/, integration/
 scripts/shots/    `bun run shots`: Orca screenshots of a demo copy with sample data
+scripts/cover/    `bun run cover`: the catalog cover (images/cover.png) from cover.html, headless Chrome
 dist/             committed build output that Orca loads (app.js, app.css, worker.js)
 ```
 

@@ -22,6 +22,33 @@
   padding: 0 var(--space-1-5) 0 var(--space-2-5);
   height: 38px;
 }
+.add-slot {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  height: var(--row-h);
+  padding: 0 var(--space-2) 0 var(--space-3);
+  border-radius: var(--radius-md);
+  color: var(--muted-fg);
+  text-align: left;
+  --icon-size: var(--icon-sm);
+  transition:
+    background-color var(--duration-fast) var(--ease),
+    color var(--duration-fast) var(--ease);
+}
+/* Lined up with the composer it opens: the + under the rows' state icons. */
+.add-slot--row {
+  padding-left: 38px;
+}
+.add-slot--card {
+  height: 34px;
+  /* The card's padding and border, and half the size difference of the icons. */
+  padding-left: calc(var(--space-2-5) + 1px + (var(--icon-md) - var(--icon-sm)) / 2);
+}
+.add-slot:hover {
+  background: var(--hover-tint);
+  color: var(--fg);
+}
 .composer__input {
   flex: 1;
   min-width: 0;

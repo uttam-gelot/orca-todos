@@ -1,7 +1,10 @@
-// Inline capture: a title and Enter. Stays open for the next one; Esc closes.
+// Inline capture: a title and Enter. Stays open for the next one; Esc closes. `#tag` and `!high`
+// words in the title set tags and the priority.
 
 import { useSignal } from '@preact/signals'
-import { composer, createTodo, filter, select, stateById } from '../store'
+import { Plus } from 'lucide-preact'
+import { parseQuickAdd } from '../model'
+import { composer, createTodo, filter, openComposer, select, stateById } from '../store'
 import { Kbd, StateIcon } from './ui'
 import './Composer.css'
 
@@ -15,7 +18,13 @@ export function Composer({ stateId, variant }: { stateId: string; variant: 'row'
         e.preventDefault()
         const text = title.value.trim()
         if (!text) return
-        const todo = createTodo({ title: text, stateId, tags: [...filter.value.tags] })
+        const { title: name, tags, priority } = parseQuickAdd(text)
+        const todo = createTodo({
+          title: name,
+          stateId,
+          tags: [...new Set([...filter.value.tags, ...tags])],
+          ...(priority && { priority })
+        })
         select(todo.id, false)
         title.value = ''
       }}
@@ -25,7 +34,7 @@ export function Composer({ stateId, variant }: { stateId: string; variant: 'row'
         class="composer__input"
         autoFocus
         aria-label={`New to-do in ${state?.name ?? 'state'}`}
-        placeholder="To-do title"
+        placeholder="To-do title (#tag !high)"
         value={title.value}
         onInput={(e) => (title.value = e.currentTarget.value)}
         onBlur={() => !title.value.trim() && (composer.value = null)}
@@ -37,5 +46,20 @@ export function Composer({ stateId, variant }: { stateId: string; variant: 'row'
       />
       <Kbd>↵</Kbd>
     </form>
+  )
+}
+
+/**
+ * Where a group or column ends: the composer while it is open there, else a quiet "Add to-do" row
+ * that opens it. Closed states and the archive get neither; their head's + still adds.
+ */
+export function AddSlot({ stateId, variant }: { stateId: string; variant: 'row' | 'card' }) {
+  if (composer.value === stateId) return <Composer stateId={stateId} variant={variant} />
+  if (filter.value.archived || stateById.value.get(stateId)?.closed) return null
+  return (
+    <button type="button" class={`add-slot add-slot--${variant}`} onClick={() => openComposer(stateId)}>
+      <Plus aria-hidden="true" />
+      Add to-do
+    </button>
   )
 }

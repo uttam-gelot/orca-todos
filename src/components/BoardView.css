@@ -8,16 +8,43 @@
 }
 
 .column {
-  flex: 0 0 280px;
+  /* Columns share a wide tab, up to a readable width; many states still scroll sideways. */
+  flex: 1 1 260px;
+  min-width: 260px;
+  max-width: 360px;
   display: flex;
   flex-direction: column;
   max-height: 100%;
   border-radius: var(--radius);
   background: color-mix(in oklab, var(--muted) 45%, var(--bg));
   border: 1px solid transparent;
+  /* The state's color as a 2px top edge, so columns are told apart on a wide board. */
+  box-shadow: inset 0 2px 0 var(--column-color, transparent);
   transition:
     border-color var(--duration-fast) var(--ease),
     background-color var(--duration-fast) var(--ease);
+}
+.column--shut {
+  flex: 0 0 40px;
+  min-width: 40px;
+}
+.column__strip {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: var(--space-2);
+  width: 100%;
+  padding: var(--space-3) 0;
+  border-radius: var(--radius);
+  text-align: left;
+  transition: background-color var(--duration-fast) var(--ease);
+}
+.column__strip:hover {
+  background: var(--hover-tint);
+}
+.column__strip .column__name {
+  writing-mode: vertical-rl;
+  max-height: 240px;
 }
 .column--over {
   border-color: var(--ring);
@@ -37,16 +64,20 @@
   overflow: hidden;
   text-overflow: ellipsis;
 }
-.column__add {
+.column__collapse {
   margin-left: auto;
+}
+.column__collapse,
+.column__add {
   opacity: 0;
   transition: opacity var(--duration-fast) var(--ease);
 }
-.column__head:hover .column__add,
-.column__add:focus-visible {
+.column__head:hover :is(.column__collapse, .column__add),
+:is(.column__collapse, .column__add):focus-visible {
   opacity: 1;
 }
 @media (hover: none) {
+  .column__collapse,
   .column__add {
     opacity: 1;
   }
@@ -95,36 +126,62 @@
   border-radius: 1px;
   background: var(--ring);
 }
+.card__head {
+  display: flex;
+  align-items: flex-start;
+  gap: var(--space-2);
+}
+/* Centers the 16px icon on the first line of the title. */
+.card__toggle {
+  margin-top: calc((1lh - var(--icon-md)) / 2 - var(--space-0-5));
+}
 .card__title {
+  flex: 1;
+  min-width: 0;
   overflow-wrap: anywhere;
 }
+/* Priority, notes, tags, then Agent → (no run yet) and the age at the right. Aligned under the title.
+   Tags are cut first when the card is narrow; the tooltip lists them all. */
 .card__meta {
   display: flex;
   align-items: center;
-  flex-wrap: wrap;
-  gap: var(--space-1-5);
+  gap: var(--space-2);
+  min-height: var(--control-xs);
   margin-top: var(--space-1-5);
+  padding-left: calc(var(--icon-md) + var(--space-2));
 }
-/* Start floats over the card's top-right corner on hover; a card with a run shows it at the foot. */
-.card__start {
-  position: absolute;
-  top: var(--space-1-5);
-  right: var(--space-1-5);
-  display: none;
-  background: var(--card);
-}
-.card:hover .card__start,
-.card[aria-selected='true'] .card__start {
-  display: inline-flex;
+.card__tags {
+  display: flex;
+  gap: var(--space-1-5);
+  min-width: 0;
+  overflow: hidden;
 }
 .card__run {
   display: flex;
   align-items: center;
   justify-content: space-between;
   gap: var(--space-2);
-  margin-top: var(--space-2);
+  margin-top: var(--space-1-5);
+  padding-left: calc(var(--icon-md) + var(--space-2));
 }
-.card__note {
-  --icon-size: var(--icon-sm);
-  --icon-color: var(--muted-fg);
+.card__end {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-2);
+  flex: none;
+  margin-left: auto;
+}
+/* Agent → shows on hover or selection, so cards stay quiet; Open always shows. It keeps its room,
+   so nothing shifts under the pointer. From the keyboard, S starts an agent on the selected card. */
+.card__agent.agent-button--idle {
+  visibility: hidden;
+}
+.card:hover .card__agent,
+.card[aria-selected='true'] .card__agent {
+  visibility: visible;
+}
+@media (hover: none) {
+  .card__agent.agent-button--idle {
+    visibility: visible;
+  }
 }

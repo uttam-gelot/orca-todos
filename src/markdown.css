@@ -60,6 +60,14 @@
 .md input[type='checkbox'] {
   margin: 0 var(--space-1-5) 0 0;
   vertical-align: -2px;
+  accent-color: var(--primary);
+}
+/* Tickable in the details pane; a ticked item reads as finished. */
+.md input[type='checkbox']:not(:disabled) {
+  cursor: pointer;
+}
+.md li:has(> input[type='checkbox']:checked) {
+  color: var(--muted-fg);
 }
 .md li:has(> input[type='checkbox']) {
   list-style: none;

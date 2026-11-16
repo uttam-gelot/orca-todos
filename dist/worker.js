@@ -36,8 +36,23 @@ function parseOpenInput(value) {
 
 // src/model.ts
 var TODO_KEY = "todo:";
+var STATES_KEY = "states";
 var RUN_STATES = ["starting", "working", "blocked", "waiting", "done"];
 var PRIORITIES = ["high", "med", "low", "none"];
+var DEFAULT_STATES = [
+  { id: "backlog", name: "Backlog", color: "#8b8b8b", closed: false },
+  { id: "todo", name: "ToDo", color: "#3b82f6", closed: false },
+  { id: "doing", name: "In Progress", color: "#f59e0b", closed: false },
+  { id: "done", name: "Done", color: "#22c55e", closed: true }
+];
+var QUICK_PRIORITY = new Map([
+  ["high", "high"],
+  ["h", "high"],
+  ["med", "med"],
+  ["m", "med"],
+  ["low", "low"],
+  ["l", "low"]
+]);
 var isRecord2 = (v) => typeof v === "object" && v !== null && !Array.isArray(v);
 var isString2 = (v) => typeof v === "string";
 var isNumber = (v) => typeof v === "number" && Number.isFinite(v);
@@ -84,6 +99,17 @@ function parseRun(value) {
     state: RUN_STATES.includes(state) ? state : "starting",
     stateAt: isNumber(stateAt) ? stateAt : startedAt
   };
+}
+function parseStates(value) {
+  if (!Array.isArray(value) || value.length === 0)
+    return null;
+  const list = [];
+  for (const s of value) {
+    if (!isRecord2(s) || !isString2(s.id) || !isString2(s.name) || !isString2(s.color))
+      return null;
+    list.push({ id: s.id, name: s.name, color: s.color, closed: s.closed === true });
+  }
+  return list;
 }
 
 // src/agents.ts
@@ -236,12 +262,61 @@ async function onAgentStatus(orca, payload) {
   orca.log(`To-do ${todoId}: terminal ${event.terminalId} is ${event.state}`);
 }
 
+// src/worker/status.ts
+var STATUS_ITEM = "open-count";
+var isRecord4 = (v) => typeof v === "object" && v !== null && !Array.isArray(v);
+function statusFor(todos, states) {
+  const closed = new Set(states.filter((s2) => s2.closed).map((s2) => s2.id));
+  const open = todos.filter((t) => !t.archived && !closed.has(t.stateId));
+  const high = open.filter((t) => t.priority === "high").length;
+  const press = "Press to show or hide the right sidebar.";
+  if (!open.length)
+    return { text: "No open to-dos", tooltip: `ToDos: nothing open. ${press}` };
+  const s = open.length === 1 ? "" : "s";
+  return {
+    text: high ? `${open.length} open · ${high} high` : `${open.length} open`,
+    tooltip: `ToDos: ${open.length} open to-do${s}${high ? `, ${high} high priority` : ""}. ${press}`
+  };
+}
+var read = async (orca, key) => {
+  const answer = await orca.host.call("storage.get", { key });
+  return isRecord4(answer) ? answer.value : null;
+};
+async function readAll(orca) {
+  const answer = await orca.host.call("storage.keys", {});
+  const keys = isRecord4(answer) && Array.isArray(answer.keys) ? answer.keys.filter((k) => typeof k === "string") : [];
+  const values = await Promise.all(keys.filter((k) => k.startsWith(TODO_KEY)).map((k) => read(orca, k)));
+  const todos = values.map(parseTodo).filter((t) => t !== null);
+  return { todos, states: parseStates(await read(orca, STATES_KEY)) ?? DEFAULT_STATES };
+}
+async function updateStatus(orca) {
+  const { todos, states } = await readAll(orca);
+  await orca.host.call("statusBar.update", { id: STATUS_ITEM, ...statusFor(todos, states), visible: true });
+}
+function followStatus(orca, delayMs = 300) {
+  let timer;
+  const run = () => {
+    updateStatus(orca).catch((error) => {
+      const code = isRecord4(error) && typeof error.code === "string" ? error.code : "action_failed";
+      orca.log(`Could not update the status bar item (${code})`);
+    });
+  };
+  orca.storage.onDidChange((change) => {
+    if (!change.key.startsWith(TODO_KEY) && change.key !== STATES_KEY)
+      return;
+    clearTimeout(timer);
+    timer = setTimeout(run, delayMs);
+  });
+  run();
+}
+
 // src/worker/main.ts
 function activate(orca) {
   orca.panels.handle(REQUEST.workspaces, () => listWorkspaces(orca));
   orca.panels.handle(REQUEST.launch, (input) => launchAgent(orca, input));
   orca.panels.handle(REQUEST.open, (input) => openWorkspace(orca, input));
   orca.events.on("agent.status.changed", (payload) => onAgentStatus(orca, payload));
+  followStatus(orca);
 }
 export {
   activate as default
