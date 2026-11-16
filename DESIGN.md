@@ -55,6 +55,9 @@ in a frame.
   the title: priority, notes hint, run, tags (cut first when narrow), and Agent/Open plus the age at
   the right. The selected card gets a ring. The drop target shows a 2px ring-colored line above the
   card.
+- **Add slot:** open groups and columns end with a quiet **+ Add to-do** row (muted, hover tint)
+  that opens the composer in its place. Closed states and the archive have none; the head's + still
+  adds.
 - **Composer:** inline, at the end of the target group or column. Enter adds and keeps it open; Esc
   closes it.
   `#tag` and `!high` words in the title set tags and the priority; the placeholder says so.

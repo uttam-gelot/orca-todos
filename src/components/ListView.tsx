@@ -4,7 +4,6 @@ import { ChevronRight, Plus } from 'lucide-preact'
 import type { State, Todo } from '../model'
 import {
   collapsed,
-  composer,
   filter,
   groups,
   openComposer,
@@ -16,7 +15,7 @@ import {
 } from '../store'
 import { latestRun } from '../agents'
 import { AgentButton, RunBadge } from './AgentRun'
-import { Composer } from './Composer'
+import { AddSlot } from './Composer'
 import { ago, DoneToggle, IconButton, NotesHint, PriorityIcon, StateIcon } from './ui'
 import './ListView.css'
 
@@ -65,7 +64,7 @@ function Group({ state, items, single }: { state: State; items: Todo[]; single: 
           {items.map((t) => (
             <Row key={t.id} todo={t} />
           ))}
-          {composer.value === state.id && <Composer stateId={state.id} variant="row" />}
+          <AddSlot stateId={state.id} variant="row" />
         </div>
       )}
     </section>

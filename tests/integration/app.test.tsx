@@ -268,3 +268,16 @@ describe('checklist', () => {
     expect(todos.value[0].description).toBe(notes.replace('- [ ] Test it', '- [x] Test it'))
   })
 })
+
+describe('add slot', () => {
+  test('open groups end with an Add to-do row that opens the composer; closed ones do not', async () => {
+    resetStore({ todos: [makeTodo({ id: 'a', stateId: 'todo' })] })
+    await mount()
+    const slots = [...root.querySelectorAll<HTMLButtonElement>('.add-slot')]
+    const groupOf = (el: Element) => el.closest('.group')?.getAttribute('aria-label')
+    expect(slots.map(groupOf)).toEqual(['Backlog', 'ToDo', 'In Progress'])
+    await act(() => slots[1].click())
+    expect(root.querySelector('.group[aria-label="ToDo"] .composer__input')).not.toBeNull()
+    expect(root.querySelector('.group[aria-label="ToDo"] .add-slot')).toBeNull()
+  })
+})

@@ -4,10 +4,10 @@
 import { signal } from '@preact/signals'
 import { Plus } from 'lucide-preact'
 import type { State, Todo } from '../model'
-import { composer, filter, groups, moveTodo, openComposer, select, selectedId, stateById, toggleDone } from '../store'
+import { filter, groups, moveTodo, openComposer, select, selectedId, stateById, toggleDone } from '../store'
 import { latestRun } from '../agents'
 import { AgentButton, RunBadge } from './AgentRun'
-import { Composer } from './Composer'
+import { AddSlot } from './Composer'
 import { ago, DoneToggle, IconButton, NotesHint, PriorityIcon, StateIcon } from './ui'
 import './BoardView.css'
 
@@ -65,7 +65,7 @@ function Column({ state, items }: { state: State; items: Todo[] }) {
         {items.map((t) => (
           <Card key={t.id} todo={t} />
         ))}
-        {composer.value === state.id && <Composer stateId={state.id} variant="card" />}
+        <AddSlot stateId={state.id} variant="card" />
       </div>
     </section>
   )

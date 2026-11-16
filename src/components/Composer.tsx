@@ -2,8 +2,9 @@
 // words in the title set tags and the priority.
 
 import { useSignal } from '@preact/signals'
+import { Plus } from 'lucide-preact'
 import { parseQuickAdd } from '../model'
-import { composer, createTodo, filter, select, stateById } from '../store'
+import { composer, createTodo, filter, openComposer, select, stateById } from '../store'
 import { Kbd, StateIcon } from './ui'
 import './Composer.css'
 
@@ -45,5 +46,20 @@ export function Composer({ stateId, variant }: { stateId: string; variant: 'row'
       />
       <Kbd>↵</Kbd>
     </form>
+  )
+}
+
+/**
+ * Where a group or column ends: the composer while it is open there, else a quiet "Add to-do" row
+ * that opens it. Closed states and the archive get neither; their head's + still adds.
+ */
+export function AddSlot({ stateId, variant }: { stateId: string; variant: 'row' | 'card' }) {
+  if (composer.value === stateId) return <Composer stateId={stateId} variant={variant} />
+  if (filter.value.archived || stateById.value.get(stateId)?.closed) return null
+  return (
+    <button type="button" class={`add-slot add-slot--${variant}`} onClick={() => openComposer(stateId)}>
+      <Plus aria-hidden="true" />
+      Add to-do
+    </button>
   )
 }
