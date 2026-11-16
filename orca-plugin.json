@@ -5,7 +5,7 @@
   "id": "todos",
   "name": "ToDos Board",
   "version": "0.1.2",
-  "description": "Personal to-dos with custom states, tags, priorities, markdown notes, and list and board views.",
+  "description": "Personal to-dos with custom states, tags, priorities, markdown notes, list and board views, and coding agents you start from a to-do.",
   "author": {
     "name": "Uttam Gelot",
     "url": "https://github.com/uttam-gelot"
