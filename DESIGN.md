@@ -12,8 +12,9 @@ in a frame.
 - **Color carries state, nothing else.** Each state's color appears on its circle icon, the rail
   and the progress bar. An agent run's state is a dot in its own fixed colors (`--run-*`: blue
   working, amber needs you, green finished, gray otherwise). Only "Needs you" also colors its text,
-  mixed toward the foreground for contrast. Everything else is monochrome. High priority is the
-  foreground color, not red.
+  mixed toward the foreground for contrast. High priority is the one priority with a color
+  (`--prio-high`, red-orange mixed toward the foreground); medium is the foreground and low is
+  muted. Everything else is monochrome.
 - **Type:** Geist (bundled, OFL) at 13px for rows and items, 12px for secondary text, 14px semibold
   for titles, and 18px semibold for the detail title. Section labels are 11px uppercase semibold
   with 0.05em tracking. Numbers use tabular figures.
@@ -44,6 +45,10 @@ in a frame.
 - **Rows:** 34px.
   - Hover is a 60% accent tint; selected is full accent.
   - Columns: priority, state toggle, title, notes marker, tags, age.
+- **Header:** "N high" (open high-priority to-dos in view) toggles the priority filter. The display
+  options icon gets a dot while a filter or order is on, and the menu offers a reset.
+- **Columns:** flex from 260px to 360px, so a wide tab fills; more states scroll sideways. Each
+  column has a 2px top edge in its state color.
 - **Cards:** the selected card gets a ring. The drop target shows a 2px ring-colored line above the
   card.
 - **Composer:** inline, at the end of the target group or column. Enter adds and keeps it open; Esc
