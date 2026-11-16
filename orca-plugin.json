@@ -106,6 +106,22 @@
         "default": 0,
         "enum": [0, 1, 3, 7, 14, 30],
         "enumLabels": ["Never", "After 1 day", "After 3 days", "After 7 days", "After 14 days", "After 30 days"]
+      },
+      {
+        "key": "dueReminders",
+        "title": "Due date reminders",
+        "description": "Show a notification when an open to-do comes due.",
+        "type": "boolean",
+        "default": true
+      },
+      {
+        "key": "reminderTime",
+        "title": "Reminder time for all-day to-dos",
+        "description": "When to remind about a to-do due on a day with no time set. To-dos with a time are reminded at that time.",
+        "type": "string",
+        "default": "09:00",
+        "enum": ["07:00", "08:00", "09:00", "10:00", "12:00", "17:00"],
+        "enumLabels": ["7:00", "8:00", "9:00", "10:00", "12:00", "17:00"]
       }
     ]
   },
@@ -130,6 +146,9 @@
     },
     {
       "kind": "settings:own"
+    },
+    {
+      "kind": "notifications:show"
     }
   ]
 }

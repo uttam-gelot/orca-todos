@@ -152,6 +152,9 @@ var en = {
   addTime: "Add time",
   clearDue: "Clear due date",
   dueTitle: (full, overdue) => overdue ? `Overdue: was due ${full}` : `Due ${full}`,
+  reminderDueNow: "Due now",
+  reminderDueToday: "Due today",
+  reminderMany: (n) => `${n} to-dos are due`,
   archive: "Archive",
   unarchive: "Unarchive",
   copyAsPrompt: "Copy as agent prompt",
@@ -269,6 +272,7 @@ function parseDue(value) {
 var hasTime = (due) => due.length > 10;
 var dueDay = (due) => due.slice(0, 10);
 var dueTime = (due) => hasTime(due) ? due.slice(11, 16) : "";
+var joinDue = (day, time) => time ? `${day}T${time}` : day;
 function dayStart(due) {
   const [y, m, d] = dueDay(due).split("-").map(Number);
   return new Date(y, m - 1, d).getTime();
@@ -279,6 +283,9 @@ function dueAt(due) {
   const [h, mi] = dueTime(due).split(":").map(Number);
   const [y, m, d] = dueDay(due).split("-").map(Number);
   return new Date(y, m - 1, d, h, mi).getTime();
+}
+function remindAt(due, morning) {
+  return hasTime(due) ? dueAt(due) : dueAt(joinDue(dueDay(due), morning));
 }
 function daysUntil(due, now) {
   const today = new Date(now);
@@ -537,15 +544,20 @@ async function onAgentStatus(orca, payload) {
 // src/settings.ts
 var DEFAULT_SETTINGS = {
   language: "auto",
-  autoArchiveDays: 0
+  autoArchiveDays: 0,
+  dueReminders: true,
+  reminderTime: "09:00"
 };
 var ARCHIVE_DAYS = [0, 1, 3, 7, 14, 30];
+var REMINDER_TIMES = ["07:00", "08:00", "09:00", "10:00", "12:00", "17:00"];
 var isRecord4 = (v) => typeof v === "object" && v !== null && !Array.isArray(v);
 function parseSettings(value) {
   const raw = isRecord4(value) ? value : {};
   return {
     language: typeof raw.language === "string" ? raw.language : DEFAULT_SETTINGS.language,
-    autoArchiveDays: ARCHIVE_DAYS.includes(raw.autoArchiveDays) ? raw.autoArchiveDays : DEFAULT_SETTINGS.autoArchiveDays
+    autoArchiveDays: ARCHIVE_DAYS.includes(raw.autoArchiveDays) ? raw.autoArchiveDays : DEFAULT_SETTINGS.autoArchiveDays,
+    dueReminders: typeof raw.dueReminders === "boolean" ? raw.dueReminders : DEFAULT_SETTINGS.dueReminders,
+    reminderTime: REMINDER_TIMES.includes(raw.reminderTime) ? raw.reminderTime : DEFAULT_SETTINGS.reminderTime
   };
 }
 
@@ -604,6 +616,73 @@ function followArchive(orca, everyMs = HOUR_MS) {
   };
 }
 
+// src/worker/reminders.ts
+var REMINDERS_KEY = "reminders";
+var GRACE_MS = 12 * 60 * 60 * 1000;
+var MAX_SEPARATE = 3;
+var isRecord6 = (v) => typeof v === "object" && v !== null && !Array.isArray(v);
+function parseReminded(value) {
+  if (!isRecord6(value))
+    return {};
+  return Object.fromEntries(Object.entries(value).filter((entry) => typeof entry[1] === "string"));
+}
+function notificationsFor(due, m = en) {
+  if (due.length > MAX_SEPARATE)
+    return [{ title: m.reminderMany(due.length), body: due.map((t) => t.title).join(", ") }];
+  return due.map((t) => ({ title: t.due && hasTime(t.due) ? m.reminderDueNow : m.reminderDueToday, body: t.title }));
+}
+async function remind(orca, now = Date.now(), m = en) {
+  const { dueReminders, reminderTime } = await readSettings(orca);
+  if (!dueReminders)
+    return 0;
+  const { todos, states } = await readAll(orca);
+  const closed = new Set(states.filter((s) => s.closed).map((s) => s.id));
+  const open = todos.filter((t) => Boolean(t.due) && !t.archived && !closed.has(t.stateId));
+  const before = parseReminded(await readValue(orca, REMINDERS_KEY));
+  const after = Object.fromEntries(open.filter((t) => before[t.id] === t.due).map((t) => [t.id, t.due]));
+  const fresh = [];
+  for (const todo of open) {
+    if (after[todo.id])
+      continue;
+    const at = remindAt(todo.due, reminderTime);
+    if (at > now)
+      continue;
+    after[todo.id] = todo.due;
+    if (now - at <= GRACE_MS)
+      fresh.push(todo);
+  }
+  for (const note of notificationsFor(fresh, m)) {
+    try {
+      await orca.host.call("notifications.show", note);
+    } catch (error) {
+      orca.log(`Could not show a due reminder (${errorCode(error)})`);
+    }
+  }
+  if (JSON.stringify(after) !== JSON.stringify(before))
+    await writeValue(orca, REMINDERS_KEY, after);
+  if (fresh.length)
+    orca.log(`Reminded about ${fresh.length} due to-dos`);
+  return fresh.length;
+}
+function followReminders(orca, everyMs = 60000) {
+  let running = false;
+  const run = () => {
+    if (running)
+      return;
+    running = true;
+    remind(orca).catch((error) => orca.log(`Could not check due reminders (${errorCode(error)})`)).finally(() => running = false);
+  };
+  const timer = setInterval(run, everyMs);
+  const listening = orca.settings.onDidChange(run);
+  run();
+  return {
+    dispose() {
+      clearInterval(timer);
+      listening.dispose();
+    }
+  };
+}
+
 // src/worker/status.ts
 var STATUS_ITEM = "open-count";
 function statusFor(todos, states, m = en, now = Date.now()) {
@@ -650,6 +729,7 @@ function activate(orca) {
   orca.events.on("agent.status.changed", (payload) => onAgentStatus(orca, payload));
   followStatus(orca);
   followArchive(orca);
+  followReminders(orca);
 }
 export {
   activate as default

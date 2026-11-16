@@ -1,6 +1,6 @@
 import { describe, expect, test } from 'bun:test'
 import { DEFAULT_STATES, staleClosed, STATES_KEY, TODO_KEY } from '../../src/model'
-import { parseSettings } from '../../src/settings'
+import { DEFAULT_SETTINGS, parseSettings } from '../../src/settings'
 import { autoArchive, followArchive } from '../../src/worker/archive'
 import { makeTodo } from '../factories/todo'
 import { createFakeWorkerOrca } from '../factories/worker-orca'
@@ -28,9 +28,9 @@ describe('staleClosed', () => {
 
 describe('parseSettings', () => {
   test('keeps allowed values and defaults the rest', () => {
-    expect(parseSettings({ autoArchiveDays: 7, language: 'de' })).toEqual({ autoArchiveDays: 7, language: 'de' })
-    expect(parseSettings({ autoArchiveDays: 5, language: 3 })).toEqual({ autoArchiveDays: 0, language: 'auto' })
-    expect(parseSettings(null)).toEqual({ autoArchiveDays: 0, language: 'auto' })
+    expect(parseSettings({ autoArchiveDays: 7, language: 'de' })).toMatchObject({ autoArchiveDays: 7, language: 'de' })
+    expect(parseSettings({ autoArchiveDays: 5, language: 3 })).toMatchObject({ autoArchiveDays: 0, language: 'auto' })
+    expect(parseSettings(null)).toEqual(DEFAULT_SETTINGS)
   })
 })
 

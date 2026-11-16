@@ -10,15 +10,24 @@ export type Settings = {
   language: string
   /** Days after closing that a to-do moves to the archive; 0 keeps closed to-dos where they are. */
   autoArchiveDays: number
+  /** Whether Orca shows a notification when an open to-do comes due. */
+  dueReminders: boolean
+  /** When, as `HH:mm`, a to-do due on a day with no time is reminded that morning. */
+  reminderTime: string
 }
 
 export const DEFAULT_SETTINGS: Settings = {
   language: 'auto',
-  autoArchiveDays: 0
+  autoArchiveDays: 0,
+  dueReminders: true,
+  reminderTime: '09:00'
 }
 
 /** The choices the manifest offers for `autoArchiveDays`. */
 export const ARCHIVE_DAYS = [0, 1, 3, 7, 14, 30]
+
+/** The choices the manifest offers for `reminderTime`. */
+export const REMINDER_TIMES = ['07:00', '08:00', '09:00', '10:00', '12:00', '17:00']
 
 const isRecord = (v: unknown): v is Record<string, unknown> => typeof v === 'object' && v !== null && !Array.isArray(v)
 
@@ -29,6 +38,10 @@ export function parseSettings(value: unknown): Settings {
     language: typeof raw.language === 'string' ? raw.language : DEFAULT_SETTINGS.language,
     autoArchiveDays: ARCHIVE_DAYS.includes(raw.autoArchiveDays as number)
       ? (raw.autoArchiveDays as number)
-      : DEFAULT_SETTINGS.autoArchiveDays
+      : DEFAULT_SETTINGS.autoArchiveDays,
+    dueReminders: typeof raw.dueReminders === 'boolean' ? raw.dueReminders : DEFAULT_SETTINGS.dueReminders,
+    reminderTime: REMINDER_TIMES.includes(raw.reminderTime as string)
+      ? (raw.reminderTime as string)
+      : DEFAULT_SETTINGS.reminderTime
   }
 }

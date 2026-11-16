@@ -54,6 +54,13 @@ export function dueAt(due: string): number {
   return new Date(y, m - 1, d, h, mi).getTime()
 }
 
+/**
+ * When to remind about a due: at its time, or at `morning` (`HH:mm`) on its day when it has none.
+ */
+export function remindAt(due: string, morning: string): number {
+  return hasTime(due) ? dueAt(due) : dueAt(joinDue(dueDay(due), morning))
+}
+
 /** Whole local days from `now`'s day to the due's day: 0 today, 1 tomorrow, -1 yesterday. */
 export function daysUntil(due: string, now: number): number {
   const today = new Date(now)

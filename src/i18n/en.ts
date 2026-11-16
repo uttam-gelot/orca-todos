@@ -143,6 +143,12 @@ export const en = {
   /** A due chip's tooltip. `full` is the date in words. */
   dueTitle: (full: string, overdue: boolean) => (overdue ? `Overdue: was due ${full}` : `Due ${full}`),
 
+  // Due reminders, shown as Orca notifications. The body is the to-do's title.
+  reminderDueNow: 'Due now',
+  reminderDueToday: 'Due today',
+  /** One notification for several to-dos coming due together. */
+  reminderMany: (n: number) => `${n} to-dos are due`,
+
   // The details pane
   archive: 'Archive',
   unarchive: 'Unarchive',
