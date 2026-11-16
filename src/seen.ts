@@ -4,6 +4,7 @@
 
 import { signal } from '@preact/signals'
 import { latestRun } from './agents'
+import { log } from './log'
 import type { RunState, Todo } from './model'
 
 const SEEN_KEY = 'orca-todos:seen'
@@ -44,7 +45,8 @@ function read(): Seen {
   try {
     const raw = localStorage.getItem(SEEN_KEY)
     return parseSeen(raw === null ? null : JSON.parse(raw), Date.now())
-  } catch {
+  } catch (error) {
+    log.warn('Ignoring unreadable seen times', { op: 'readSeen', key: SEEN_KEY }, error)
     return { since: Date.now(), todos: {} }
   }
 }
@@ -54,8 +56,9 @@ export const seen = signal<Seen>(read())
 // The first run stores `since`, so a reload does not show old runs as new.
 try {
   if (localStorage.getItem(SEEN_KEY) === null) localStorage.setItem(SEEN_KEY, JSON.stringify(seen.value))
-} catch {
-  // Storage may be off; the dots then reset with each load.
+} catch (error) {
+  // Storage may be off; the marks then reset with each load.
+  log.warn('Could not store seen times', { op: 'initSeen', key: SEEN_KEY }, error)
 }
 
 // The other surface (panel or tab) looked at a to-do.
@@ -68,7 +71,8 @@ export function lookAt(id: string): void {
   seen.value = markSeen(seen.value, id, Date.now())
   try {
     localStorage.setItem(SEEN_KEY, JSON.stringify(seen.value))
-  } catch {
+  } catch (error) {
     // As above: the mark lasts until reload.
+    log.warn('Could not store seen times', { op: 'lookAt', key: SEEN_KEY }, error)
   }
 }
