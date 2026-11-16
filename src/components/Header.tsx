@@ -29,7 +29,7 @@ import {
   view,
   visible
 } from '../store'
-import { searchRef } from '../focus'
+import { focusSearch, searchOpen, searchRef } from '../focus'
 import { ScopeSelect } from './Rail'
 import { IconButton, Kbd, PriorityIcon, StateIcon } from './ui'
 import './Header.css'
@@ -111,6 +111,11 @@ export function Header() {
             <span class="seg__label">Board</span>
           </button>
         </div>
+        {searchFolded() && (
+          <IconButton label="Search (/)" class="header__search" onClick={focusSearch}>
+            <Search />
+          </IconButton>
+        )}
         <DisplayMenu />
         <button
           type="button"
@@ -127,6 +132,9 @@ export function Header() {
   )
 }
 
+/** True while the search is folded into the header icon: closed and empty. Only narrow panes fold. */
+const searchFolded = () => !searchOpen.value && !filter.value.text
+
 function SearchBox() {
   const ref = useRef<HTMLInputElement>(null)
   useEffect(() => {
@@ -134,7 +142,7 @@ function SearchBox() {
   }, [])
   const text = filter.value.text
   return (
-    <div class="search">
+    <div class={searchFolded() ? 'search search--folded' : 'search'}>
       <Search class="search__icon" />
       <input
         ref={ref}
@@ -144,6 +152,7 @@ function SearchBox() {
         placeholder="Search titles and notes"
         value={text}
         onInput={(e) => (filter.value = { ...filter.value, text: e.currentTarget.value })}
+        onBlur={() => (searchOpen.value = false)}
         onKeyDown={(e) => {
           if (e.key === 'Escape') {
             e.stopPropagation()

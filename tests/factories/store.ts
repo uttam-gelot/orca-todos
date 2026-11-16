@@ -1,6 +1,7 @@
 // Puts the app store back to a fresh, loaded state between tests (the store is a module singleton).
 
 import { DEFAULT_AGENT } from '../../src/agents'
+import { searchOpen } from '../../src/focus'
 import { DEFAULT_STATES, EMPTY_FILTER, type State, type Todo } from '../../src/model'
 import {
   agentChoice,
@@ -35,6 +36,7 @@ export function resetStore(seed: { todos?: Todo[]; states?: State[] } = {}): voi
   sheet.value = null
   menuOpen.value = false
   lastUndoable.value = null
+  searchOpen.value = false
   notice.value = null
   filter.value = EMPTY_FILTER
   sort.value = 'manual'

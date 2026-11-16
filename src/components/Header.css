@@ -100,7 +100,14 @@
   color: var(--fg);
   box-shadow: var(--shadow-xs);
 }
+/* Wide panes always show the search field, so the icon is for narrow ones only. */
+.header__search {
+  display: none;
+}
 @media (max-width: 520px) {
+  .header__search {
+    display: inline-flex;
+  }
   .seg__btn {
     padding: 0 7px;
   }
@@ -201,4 +208,10 @@
 .menu__meta,
 .menu__kbd {
   margin-left: auto;
+}
+/* Folded into the header icon: the first to-do moves up a row. After .search, so it wins. */
+@media (max-width: 520px) {
+  .search--folded {
+    display: none;
+  }
 }

@@ -281,3 +281,19 @@ describe('add slot', () => {
     expect(root.querySelector('.group[aria-label="ToDo"] .add-slot')).toBeNull()
   })
 })
+
+describe('search', () => {
+  test('folds into the header icon while empty, and / unfolds and focuses it', async () => {
+    await mount()
+    expect(root.querySelector('.search')?.classList.contains('search--folded')).toBe(true)
+    await act(async () => {
+      document.body.dispatchEvent(new KeyboardEvent('keydown', { key: '/', bubbles: true, cancelable: true }))
+      await new Promise((r) => requestAnimationFrame(r))
+    })
+    const input = root.querySelector<HTMLInputElement>('.search__input')!
+    expect(root.querySelector('.search')?.classList.contains('search--folded')).toBe(false)
+    expect(document.activeElement).toBe(input)
+    await act(() => input.blur())
+    expect(root.querySelector('.search')?.classList.contains('search--folded')).toBe(true)
+  })
+})

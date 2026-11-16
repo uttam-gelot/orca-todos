@@ -2,7 +2,7 @@
 // own Escape and Enter and stop propagation, so Esc backs out one layer at a time.
 
 import { latestRun } from './agents'
-import { focusRequest, searchRef } from './focus'
+import { focusRequest, focusSearch } from './focus'
 import {
   composer,
   copyPrompt,
@@ -132,7 +132,7 @@ export function onKeyDown(e: KeyboardEvent): void {
       case 'c':
         return (openComposer(), true)
       case '/':
-        return (searchRef.current?.focus(), true)
+        return (focusSearch(), true)
       case 'v':
         return ((view.value = view.value === 'list' ? 'board' : 'list'), true)
       case '?':

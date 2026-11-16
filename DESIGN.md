@@ -47,6 +47,8 @@ in a frame.
   - Columns: priority, state toggle, title, notes hint, tags, age.
 - **Notes hint:** checklist progress (`ListChecks` + `2/5`, success-tinted when all are done) when
   the notes hold task items, else a note icon (`NotepadText`). Nothing for empty notes.
+- **Search:** a full-width field under the header row. Below 520px it folds into a header icon while
+  empty, so the first to-do moves up a row; the icon or `/` opens it, and it folds again on blur.
 - **Header:** "N high" (open high-priority to-dos in view) toggles the priority filter. The display
   options icon gets a dot while a filter or order is on, and the menu offers a reset.
 - **Columns:** flex from 260px to 360px, so a wide tab fills; more states scroll sideways. Each
