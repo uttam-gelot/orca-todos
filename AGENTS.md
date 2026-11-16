@@ -32,6 +32,7 @@ src/log.ts        logger; src/errors.ts typed errors
 src/styles.css    global tokens and resets only
 tests/            setup.ts, factories/, fixtures/, unit/, integration/
 scripts/shots/    `bun run shots`: Orca screenshots of a demo copy with sample data
+scripts/cover/    `bun run cover`: the catalog cover (images/cover.png) from cover.html, headless Chrome
 dist/             committed build output that Orca loads (app.js, app.css, worker.js)
 ```
 

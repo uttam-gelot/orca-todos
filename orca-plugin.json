@@ -16,7 +16,7 @@
   "icon": "images/icon.png",
   "cover": {
     "path": "images/cover.png",
-    "alt": "The ToDos board in dark mode, with one column for each state"
+    "alt": "ToDos Board: your next steps beside your agents. The board tab with a column for each state, and the sidebar list"
   },
   "screenshots": [
     {

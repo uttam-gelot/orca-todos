@@ -217,6 +217,7 @@ lefthook install
 | `bun run format:check`     | Check the format, but do not change files                                                 |
 | `bun run pack`             | Build and write an installable copy to `release/`                                         |
 | `bun run shots`            | Take screenshots in Orca, in light and dark mode                                          |
+| `bun run cover`            | Draw the catalog cover, `images/cover.png`, in headless Chrome                            |
 
 GitHub Actions (`.github/workflows/ci.yml`) runs the type check, ESLint, the Prettier check, the tests, a secret scan, and a check that `dist/` matches the source. It runs on each push to `main` and on each pull request.
 
@@ -229,6 +230,8 @@ Before each push, `lefthook` runs a secret scan (gitleaks), the tests, ESLint, a
 The script does not use your to-dos. It loads a demo copy of the plugin (`local.todos-demo`) with sample data, and removes the copy when it is done. It approves the demo copy for you. The copy asks for the same access as the plugin.
 
 You need the Orca desktop app 1.4.247 or later, open on this machine. Orca must be hidden while the shots run. If the terminal cannot hide Orca, the script waits up to two minutes for you to hide it (Cmd+H).
+
+`bun run cover` draws the catalog cover, `images/cover.png`: the name, a line about the plugin, and the board and panel with sample data. It builds the board from the current code and renders `scripts/cover/cover.html` in headless Chrome, so Orca is not needed. It needs Google Chrome, Playwright's Chromium, or a browser named by `CHROME_PATH`.
 
 ### Why `dist/` is in the repository
 
