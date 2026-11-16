@@ -9,7 +9,7 @@ export type WorkspaceOption = {
   branch: string | null
   /** The last segment of the workspace's path: the repo or folder name, which `name` often is not. */
   folder: string
-  /** Orca's project (repo) name. Orca before host API 1.7 does not send it. */
+  /** Orca's project (repo) name. Older Orca versions do not send it. */
   project: string | null
 }
 
