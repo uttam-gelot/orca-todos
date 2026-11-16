@@ -69,7 +69,8 @@ in a frame.
   - Title: Enter or blur saves; Esc reverts.
   - Tags: Enter or comma adds; Backspace removes the last one.
   - Notes: the markdown preview has an edit control. The editor saves as you type, and ⌘↵ or Esc
-    finishes. Checklist boxes in the preview tick in place; the format bar inserts `- [ ] `.
+    finishes. Checklist boxes in the preview tick in place; the format bar inserts `- [ ] `. In the
+    editor, Enter continues a list or checklist, and Enter on an empty item ends it.
 - **Overlays:** sheets for edge panels (details when narrow, states, shortcuts). A popover holds the
   display options. The one centered dialog is **Start agent**, laid out like Orca's New Workspace
   composer. Sheets and the dialog are modal: `aria-modal`, Tab stays inside, Esc or the scrim

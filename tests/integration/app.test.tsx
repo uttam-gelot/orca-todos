@@ -334,3 +334,20 @@ describe('unseen runs', () => {
     expect(badge()?.classList.contains('run-badge--unseen')).toBe(false)
   })
 })
+
+describe('notes editor', () => {
+  test('Enter continues a checklist', async () => {
+    resetStore({ todos: [makeTodo({ id: 'a', description: '- [x] one' })] })
+    selectedId.value = 'a'
+    detailOpen.value = true
+    await mount()
+    await act(() => root.querySelector<HTMLButtonElement>('.description__edit')!.click())
+    const area = root.querySelector<HTMLTextAreaElement>('.description__input')!
+    area.setSelectionRange(9, 9)
+    await act(
+      () => void area.dispatchEvent(new KeyboardEvent('keydown', { key: 'Enter', bubbles: true, cancelable: true }))
+    )
+    expect(area.value).toBe('- [x] one\n- [ ] ')
+    expect(area.selectionStart).toBe(16)
+  })
+})

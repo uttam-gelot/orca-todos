@@ -20,6 +20,7 @@ import {
 } from 'lucide-preact'
 import { focusRequest } from '../focus'
 import { checklist, normalizeTags, PRIORITIES, PRIORITY_LABEL, toggleTask, type Todo } from '../model'
+import { continueList } from '../editing'
 import { onMarkdownClick, renderMarkdown, taskIndex } from '../markdown'
 import {
   copyPrompt,
@@ -336,7 +337,7 @@ function Description({ todo }: { todo: Todo }) {
         ref={area}
         class="description__input"
         aria-label="Description (markdown)"
-        placeholder="Markdown: **bold**, - lists, [links](https://…)"
+        placeholder="Markdown: **bold**, - lists, - [ ] tasks, [links](https://…)"
         value={draft.value}
         onInput={(e) => {
           draft.value = e.currentTarget.value
@@ -351,6 +352,20 @@ function Description({ todo }: { todo: Todo }) {
             e.stopPropagation()
             done()
             return
+          }
+          // Enter continues a list; not while an input method is composing, nor with Shift.
+          if (e.key === 'Enter' && !mod && !e.shiftKey && !e.altKey && !e.isComposing) {
+            const el = e.currentTarget
+            const next = continueList(el.value, el.selectionStart, el.selectionEnd)
+            if (next) {
+              e.preventDefault()
+              draft.value = next.value
+              el.value = next.value
+              el.setSelectionRange(next.caret, next.caret)
+              clearTimeout(timer.current)
+              timer.current = window.setTimeout(save, 600)
+              return
+            }
           }
           const f = mod && FORMATS.find((x) => x.key && x.key === e.key.toLowerCase())
           if (f) {

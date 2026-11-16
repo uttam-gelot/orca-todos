@@ -57,7 +57,7 @@ the Orca theme, fonts, and control sizes, so it looks like a part of Orca.
 - **To-dos.** Each to-do has a title, markdown notes, tags, and a priority. You can archive a to-do. You can undo a delete.
 - **Links.** Links in notes open in your default browser.
 - **Checklists.** Write `- [ ] step` in the notes. Rows and cards show the progress, such as
-  `2/5`. Tick an item in the details pane without opening the editor.
+  `2/5`. Tick an item in the details pane without opening the editor. In the editor, Enter starts the next item.
 - **Quick add.** Type tags and a priority in the title: `Fix login #auth !high` adds the to-do
   with the tag `auth` and high priority. `!med`, `!low`, `!h`, `!m` and `!l` also work. `#123`
   stays in the title.
