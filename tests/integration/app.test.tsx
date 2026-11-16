@@ -4,7 +4,7 @@ import { afterEach, beforeEach, describe, expect, spyOn, test } from 'bun:test'
 import { render } from 'preact'
 import { act } from 'preact/test-utils'
 import { App } from '../../src/App'
-import { loadError, loaded, selectedId, todos } from '../../src/store'
+import { filter, loadError, loaded, selectedId, sort, todos } from '../../src/store'
 import { StorageError } from '../../src/errors'
 import { makeTodo } from '../factories/todo'
 import { resetStore } from '../factories/store'
@@ -75,6 +75,48 @@ describe('App', () => {
     })
     expect(root.querySelector('[role="alert"]')).toBeNull()
     error.mockRestore()
+  })
+
+  describe('header', () => {
+    test('counts open high-priority to-dos and filters by them', async () => {
+      resetStore({
+        todos: [
+          makeTodo({ id: 'a', title: 'A', priority: 'high' }),
+          makeTodo({ id: 'b', title: 'B', priority: 'high', stateId: 'done' }),
+          makeTodo({ id: 'c', title: 'C', priority: 'low' })
+        ]
+      })
+      mount()
+      const chip = () => root.querySelector<HTMLButtonElement>('.header__high')
+      expect(chip()?.textContent).toBe('1high')
+      await act(() => chip()!.click())
+      expect(chip()?.getAttribute('aria-pressed')).toBe('true')
+      expect(root.querySelectorAll('.row').length).toBe(2)
+      await act(() => chip()!.click())
+      expect(root.querySelectorAll('.row').length).toBe(3)
+    })
+
+    test('hides the count when nothing open is high priority', () => {
+      resetStore({ todos: [makeTodo({ id: 'a', priority: 'med' })] })
+      mount()
+      expect(root.querySelector('.header__high')).toBeNull()
+    })
+
+    test('the display menu resets a changed priority and order', async () => {
+      resetStore({ todos: [makeTodo({ id: 'a' })] })
+      filter.value = { ...filter.value, priority: 'low' }
+      sort.value = 'priority'
+      mount()
+      const menu = root.querySelector<HTMLButtonElement>('[aria-haspopup]')!
+      expect(menu.getAttribute('aria-label')).toBe('Display options (filter or order on)')
+      await act(() => menu.click())
+      const reset = [...root.querySelectorAll<HTMLButtonElement>('.menu__item')].find((b) =>
+        b.textContent?.includes('Reset')
+      )!
+      await act(() => reset.click())
+      expect(filter.value.priority).toBe('')
+      expect(sort.value).toBe('manual')
+    })
   })
 
   describe('copy as agent prompt', () => {

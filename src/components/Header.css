@@ -54,6 +54,20 @@
 .scope-title__count {
   font-weight: 400;
 }
+.header__high {
+  --icon-size: var(--icon-sm);
+  flex: none;
+  color: var(--muted-fg);
+}
+@media (max-width: 420px) {
+  .header__high-label {
+    display: none;
+  }
+}
+.header__high[aria-pressed='true'] {
+  background: var(--accent);
+  color: var(--fg);
+}
 
 /* ---------- segmented view switch ---------- */
 
