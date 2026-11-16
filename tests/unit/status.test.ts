@@ -72,3 +72,20 @@ describe('followStatus', () => {
     expect(orca.logs).toEqual(['Could not update the status bar item (not_permitted)'])
   })
 })
+
+describe('the status language', () => {
+  test('follows the language setting', async () => {
+    const orca = withStatusBar()
+    orca.setting.set('language', 'de')
+    orca.stored.set(TODO_KEY + 'a', makeTodo({ id: 'a' }))
+    await updateStatus(orca)
+    expect(updates(orca)[0]).toMatchObject({ text: '1 offen' })
+  })
+
+  test('follows the locale a panel stored when the setting is auto', async () => {
+    const orca = withStatusBar()
+    orca.stored.set('locale', 'es-ES')
+    await updateStatus(orca)
+    expect(updates(orca)[0]).toMatchObject({ text: 'No hay tareas abiertas' })
+  })
+})

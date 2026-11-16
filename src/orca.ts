@@ -23,10 +23,19 @@ export type FrameStorage = {
   onDidChange(fn: (e: { key: string }) => void): Disposable
 }
 
+/** The plugin's settings (`settings:own`), as declared in the manifest. */
+export type FrameSettings = {
+  get(): Promise<Record<string, unknown>>
+  /** Also hears the person changing a setting in Orca's Settings. */
+  onDidChange(fn: (e: { key: string }) => void): Disposable
+}
+
 export type OrcaFrame = {
   /** Orca's interface language, a BCP-47 tag such as `en-US`. */
   locale?: string
   storage: FrameStorage
+  /** Present on Orca versions with plugin settings. */
+  settings?: FrameSettings
   shell?: { openExternal(url: string): Promise<{ opened: boolean }> }
   host?: { has(method: string): boolean }
   /** Requests to this plugin's own worker. Present when the plugin has one. */
@@ -71,6 +80,31 @@ export const storage: FrameStorage = window.orca?.storage ?? browserStorage
 
 /** Orca's interface language, or the browser's outside Orca. */
 export const orcaLocale = (): string => window.orca?.locale || navigator.language
+
+const SETTINGS_KEY = PREFIX + 'settings'
+
+/**
+ * The browser-preview stand-in for Orca's settings: a JSON object in localStorage, which a preview
+ * can seed (`{"language":"de"}`). Unreadable means none set. Exported for tests.
+ */
+export const browserSettings: FrameSettings = {
+  async get() {
+    const value: unknown = JSON.parse(localStorage.getItem(SETTINGS_KEY) ?? '{}')
+    return typeof value === 'object' && value !== null && !Array.isArray(value)
+      ? (value as Record<string, unknown>)
+      : {}
+  },
+  onDidChange(fn) {
+    const listener = (e: StorageEvent): void => {
+      if (e.key === SETTINGS_KEY) fn({ key: '*' })
+    }
+    window.addEventListener('storage', listener)
+    return { dispose: () => window.removeEventListener('storage', listener) }
+  }
+}
+
+/** Orca's settings, or the preview stand-in outside Orca. Null on an Orca without plugin settings. */
+export const settings: FrameSettings | null = window.orca ? (window.orca.settings ?? null) : browserSettings
 
 /** Opens http(s)/mailto links in the OS browser; Orca needs this to come from a click. */
 export function openExternal(url: string): void {

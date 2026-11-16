@@ -280,15 +280,27 @@ async function onStorageChange(key: string): Promise<void> {
 
 let subscription: { dispose(): void } | null = null
 
+/** The default states, named in the interface language: a first run stores these. */
+function localDefaultStates(): State[] {
+  const names: Record<string, string> = {
+    backlog: t.stateBacklog,
+    todo: t.stateTodo,
+    doing: t.stateDoing,
+    done: t.stateDone
+  }
+  return DEFAULT_STATES.map((s) => ({ ...s, name: names[s.id] ?? s.name }))
+}
+
 /** Reads every todo and the state list, then follows changes. Safe to call again to retry. */
 export async function load(): Promise<void> {
   loadError.value = null
   try {
     const keys = await storage.keys()
     const saved = await readStates()
-    if (!saved) persist('write', STATES_KEY, storage.set(STATES_KEY, DEFAULT_STATES))
+    const fresh = saved ? null : localDefaultStates()
+    if (fresh) persist('write', STATES_KEY, storage.set(STATES_KEY, fresh))
     const list = await Promise.all(keys.filter((k) => k.startsWith(TODO_KEY)).map(readTodo))
-    states.value = saved ?? DEFAULT_STATES
+    states.value = saved ?? fresh ?? DEFAULT_STATES
     todos.value = list.filter((t): t is Todo => t !== null)
   } catch (cause) {
     const error = new StorageError('load', undefined, { cause })

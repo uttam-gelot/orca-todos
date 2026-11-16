@@ -99,6 +99,15 @@
     ],
     "settings": [
       {
+        "key": "language",
+        "title": "Language",
+        "description": "The language of the board, the panel, the status bar item and reminders.",
+        "type": "string",
+        "default": "auto",
+        "enum": ["auto", "en", "es", "fr", "de", "ja", "zh-CN"],
+        "enumLabels": ["Same as Orca", "English", "Español", "Français", "Deutsch", "日本語", "简体中文"]
+      },
+      {
         "key": "autoArchiveDays",
         "title": "Archive closed to-dos",
         "description": "Move a to-do to the archive this many days after it was closed. Archived to-dos stay searchable under Archived, and you can restore them.",

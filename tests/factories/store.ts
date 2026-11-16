@@ -2,6 +2,7 @@
 
 import { DEFAULT_AGENT } from '../../src/agents'
 import { searchOpen } from '../../src/focus'
+import { languageSetting } from '../../src/i18n/t'
 import { seen } from '../../src/seen'
 import { DEFAULT_STATES, EMPTY_FILTER, type State, type Todo } from '../../src/model'
 import {
@@ -46,4 +47,5 @@ export function resetStore(seed: { todos?: Todo[]; states?: State[] } = {}): voi
   collapsed.value = new Set()
   agentChoice.value = { agent: DEFAULT_AGENT, workspaceId: '' }
   workspaceList.value = { status: 'loading' }
+  languageSetting.value = 'auto'
 }

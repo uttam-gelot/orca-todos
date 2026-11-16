@@ -1,6 +1,7 @@
 // Reading and writing the plugin's storage from the worker, and its settings. Every stored value
 // is parsed before use: storage holds whatever any version of the plugin wrote.
 
+import { LOCALE_KEY, messagesFor, resolveLang, type Messages } from '../i18n'
 import { DEFAULT_STATES, parseStates, parseTodo, STATES_KEY, TODO_KEY, type State, type Todo } from '../model'
 import { parseSettings, type Settings } from '../settings'
 import type { WorkerOrca } from './host'
@@ -38,4 +39,19 @@ export async function readSettings(orca: WorkerOrca): Promise<Settings> {
     orca.log(`Could not read settings; using the defaults (${errorCode(error)})`)
     return parseSettings(null)
   }
+}
+
+/**
+ * The words for what the worker writes (the status bar, notifications): the language setting, else
+ * the locale a panel last stored, else English.
+ */
+export async function readMessages(orca: WorkerOrca): Promise<Messages> {
+  const { language } = await readSettings(orca)
+  let locale: unknown = null
+  try {
+    locale = await readValue(orca, LOCALE_KEY)
+  } catch (error) {
+    orca.log(`Could not read the stored locale (${errorCode(error)})`)
+  }
+  return messagesFor(resolveLang(language, typeof locale === 'string' ? locale : undefined))
 }

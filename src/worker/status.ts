@@ -3,9 +3,10 @@
 // follows every write from either surface without a panel open. Pressing the item runs a manifest
 // command that shows or hides the right sidebar, where the ToDos panel lives.
 
+import { LOCALE_KEY } from '../i18n'
 import { en, type Messages } from '../i18n/en'
 import { inDueFilter, STATES_KEY, TODO_KEY, type State, type Todo } from '../model'
-import { errorCode, readAll } from './data'
+import { errorCode, readAll, readMessages } from './data'
 import type { Disposable, WorkerOrca } from './host'
 
 /** The item's id in the manifest's `contributes.statusBarItems`. */
@@ -31,7 +32,8 @@ export function statusFor(
 /** Counts the to-dos again and shows the result on the item. */
 export async function updateStatus(orca: WorkerOrca): Promise<void> {
   const { todos, states } = await readAll(orca)
-  await orca.host.call('statusBar.update', { id: STATUS_ITEM, ...statusFor(todos, states), visible: true })
+  const m = await readMessages(orca)
+  await orca.host.call('statusBar.update', { id: STATUS_ITEM, ...statusFor(todos, states, m), visible: true })
 }
 
 /**
@@ -44,11 +46,15 @@ export function followStatus(orca: WorkerOrca, delayMs = 300, everyMs = 60_000):
   const run = (): void => {
     updateStatus(orca).catch((error: unknown) => orca.log(`Could not update the status bar item (${errorCode(error)})`))
   }
-  const listening = orca.storage.onDidChange((change) => {
-    if (!change.key.startsWith(TODO_KEY) && change.key !== STATES_KEY) return
+  const soon = (): void => {
     clearTimeout(timer)
     timer = setTimeout(run, delayMs)
+  }
+  const listening = orca.storage.onDidChange((change) => {
+    if (change.key.startsWith(TODO_KEY) || change.key === STATES_KEY || change.key === LOCALE_KEY) soon()
   })
+  // The language setting changes the item's words.
+  const settingsChanges = orca.settings.onDidChange(soon)
   // A to-do becomes overdue with no write at all, so the count also refreshes each minute.
   const clock = setInterval(run, everyMs)
   run()
@@ -57,6 +63,7 @@ export function followStatus(orca: WorkerOrca, delayMs = 300, everyMs = 60_000):
       clearTimeout(timer)
       clearInterval(clock)
       listening.dispose()
+      settingsChanges.dispose()
     }
   }
 }

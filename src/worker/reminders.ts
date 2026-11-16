@@ -9,7 +9,7 @@
 import { hasTime, remindAt } from '../due'
 import { en, type Messages } from '../i18n/en'
 import type { Todo } from '../model'
-import { errorCode, readAll, readSettings, readValue, writeValue } from './data'
+import { errorCode, readAll, readMessages, readSettings, readValue, writeValue } from './data'
 import type { Disposable, WorkerOrca } from './host'
 
 export const REMINDERS_KEY = 'reminders'
@@ -38,9 +38,9 @@ export function notificationsFor(due: Todo[], m: Messages = en): { title: string
 
 /**
  * Shows the reminders that are due and records them. Answers how many to-dos it reminded about.
- * `m` is the language of the notification text.
+ * `m` is the language of the notification text; by default the plugin's language.
  */
-export async function remind(orca: WorkerOrca, now = Date.now(), m: Messages = en): Promise<number> {
+export async function remind(orca: WorkerOrca, now = Date.now(), m?: Messages): Promise<number> {
   const { dueReminders, reminderTime } = await readSettings(orca)
   if (!dueReminders) return 0
   const { todos, states } = await readAll(orca)
@@ -57,7 +57,8 @@ export async function remind(orca: WorkerOrca, now = Date.now(), m: Messages = e
     after[todo.id] = todo.due
     if (now - at <= GRACE_MS) fresh.push(todo)
   }
-  for (const note of notificationsFor(fresh, m)) {
+  const words = fresh.length ? (m ?? (await readMessages(orca))) : en
+  for (const note of notificationsFor(fresh, words)) {
     try {
       await orca.host.call('notifications.show', note)
     } catch (error) {

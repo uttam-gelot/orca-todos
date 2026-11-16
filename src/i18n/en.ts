@@ -66,7 +66,7 @@ export const en = {
   nothingArchivedBody: (archiveKey: Node): Node[] => [
     'Archive a to-do with ',
     archiveKey,
-    ', or archive every closed one from the display menu.'
+    ', or every closed one from the display menu. Settings can archive closed ones automatically.'
   ],
   noOpenTagged: (tag: string) => `No open to-dos tagged #${tag}.`,
   showAllTodos: 'Show all to-dos',
