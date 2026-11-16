@@ -18,22 +18,28 @@ import type { WorkerOrca } from './host'
 const isRecord = (v: unknown): v is Record<string, unknown> => typeof v === 'object' && v !== null && !Array.isArray(v)
 const isString = (v: unknown): v is string => typeof v === 'string'
 
-type FocusedContext = { displayName: string; branch: string }
+type FocusedContext = { workspaceId: string | null; displayName: string; branch: string }
 
 /** `refs/heads/main` and `main` name the same branch; a folder has none. */
 const branchName = (branch: string | null | undefined): string => branch?.replace(/^refs\/heads\//, '') ?? ''
 
 function parseContext(value: unknown): FocusedContext | null {
   if (!isRecord(value) || !isString(value.displayName)) return null
-  return { displayName: value.displayName, branch: isString(value.branch) ? value.branch : '' }
+  return {
+    workspaceId: isString(value.workspaceId) && value.workspaceId ? value.workspaceId : null,
+    displayName: value.displayName,
+    branch: isString(value.branch) ? value.branch : ''
+  }
 }
 
 /**
- * The id of the focused workspace. Orca's focus answer has no id, only a name and a branch, so this
- * is the one listed workspace with both. Null when none or several match.
+ * The id of the focused workspace. Newer Orca names it. An older Orca gives only a name and a
+ * branch, so this is then the one listed workspace with both. Null when none or several match.
  */
 export function focusedWorkspaceId(workspaces: WorkspaceOption[], context: FocusedContext | null): string | null {
   if (!context) return null
+  const { workspaceId } = context
+  if (workspaceId && workspaces.some((w) => w.id === workspaceId)) return workspaceId
   const same = workspaces.filter(
     (w) => w.name === context.displayName && branchName(w.branch) === branchName(context.branch)
   )

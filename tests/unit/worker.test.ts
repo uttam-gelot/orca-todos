@@ -28,13 +28,19 @@ describe('focusedWorkspaceId', () => {
   const list = [ws('a', 'app', 'refs/heads/main'), ws('b', 'app', 'feature/x'), ws('c', 'notes', null)]
 
   test('matches name and branch, with or without refs/heads/', () => {
-    expect(focusedWorkspaceId(list, { displayName: 'app', branch: 'main' })).toBe('a')
-    expect(focusedWorkspaceId(list, { displayName: 'notes', branch: '' })).toBe('c')
+    expect(focusedWorkspaceId(list, { workspaceId: null, displayName: 'app', branch: 'main' })).toBe('a')
+    expect(focusedWorkspaceId(list, { workspaceId: null, displayName: 'notes', branch: '' })).toBe('c')
+  })
+  test("uses Orca's id when it is listed, and else the name and branch", () => {
+    expect(focusedWorkspaceId(list, { workspaceId: 'b', displayName: 'app', branch: 'main' })).toBe('b')
+    expect(focusedWorkspaceId(list, { workspaceId: 'gone', displayName: 'app', branch: 'main' })).toBe('a')
   })
   test('is null when nothing or several match', () => {
     expect(focusedWorkspaceId(list, null)).toBeNull()
-    expect(focusedWorkspaceId(list, { displayName: 'other', branch: 'main' })).toBeNull()
-    expect(focusedWorkspaceId([...list, ws('d', 'app', 'main')], { displayName: 'app', branch: 'main' })).toBeNull()
+    expect(focusedWorkspaceId(list, { workspaceId: null, displayName: 'other', branch: 'main' })).toBeNull()
+    expect(
+      focusedWorkspaceId([...list, ws('d', 'app', 'main')], { workspaceId: null, displayName: 'app', branch: 'main' })
+    ).toBeNull()
   })
 })
 

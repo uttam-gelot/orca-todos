@@ -145,11 +145,18 @@ var branchName = (branch) => branch?.replace(/^refs\/heads\//, "") ?? "";
 function parseContext(value) {
   if (!isRecord3(value) || !isString3(value.displayName))
     return null;
-  return { displayName: value.displayName, branch: isString3(value.branch) ? value.branch : "" };
+  return {
+    workspaceId: isString3(value.workspaceId) && value.workspaceId ? value.workspaceId : null,
+    displayName: value.displayName,
+    branch: isString3(value.branch) ? value.branch : ""
+  };
 }
 function focusedWorkspaceId(workspaces, context) {
   if (!context)
     return null;
+  const { workspaceId } = context;
+  if (workspaceId && workspaces.some((w) => w.id === workspaceId))
+    return workspaceId;
   const same = workspaces.filter((w) => w.name === context.displayName && branchName(w.branch) === branchName(context.branch));
   return same.length === 1 ? same[0].id : null;
 }
