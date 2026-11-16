@@ -277,3 +277,7 @@
   box-shadow: var(--focus-ring);
   font: 12.5px / 1.6 var(--font-mono);
 }
+.picker--empty {
+  --icon-color: var(--muted-fg);
+  color: var(--muted-fg);
+}

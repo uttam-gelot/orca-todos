@@ -25,6 +25,7 @@ type Sample = {
   age: number
   description?: string
   archived?: boolean
+  project?: string
   /** Due this many days from today (negative: past due). */
   dueIn?: number
   /** The newest agent run's state and how long ago it changed. */
@@ -36,6 +37,7 @@ const SAMPLES: Sample[] = [
     id: 'a',
     title: 'Rate limit the agent launch endpoint',
     dueIn: 0,
+    project: 'orca',
     stateId: 'doing',
     tags: ['api'],
     priority: 'high',
@@ -59,6 +61,7 @@ const SAMPLES: Sample[] = [
     id: 'c',
     title: 'Write release notes for 1.4.247',
     dueIn: 2,
+    project: 'website',
     stateId: 'todo',
     tags: ['docs'],
     priority: 'med',
@@ -69,6 +72,7 @@ const SAMPLES: Sample[] = [
     id: 'd',
     title: 'Flaky worktree cleanup test on CI',
     dueIn: -1,
+    project: 'orca',
     stateId: 'todo',
     tags: ['ci', 'bug'],
     priority: 'high',

@@ -11,6 +11,7 @@ import {
   CalendarClock,
   Code,
   Copy,
+  FolderGit2,
   Italic,
   Link,
   List,
@@ -28,8 +29,10 @@ import { onMarkdownClick, renderMarkdown, taskIndex } from '../markdown'
 import {
   copyPrompt,
   deleteTodo,
+  ensureWorkspaces,
   moveTodo,
   now,
+  projectNames,
   select,
   setScope,
   stateById,
@@ -118,6 +121,10 @@ export function Detail({ todo }: { todo: Todo }) {
               </select>
             </label>
           </dd>
+          <dt class="detail__prop-term">{t.project}</dt>
+          <dd class="detail__prop-value">
+            <ProjectPicker todo={todo} />
+          </dd>
           <dt class="detail__prop-term">{t.due}</dt>
           <dd class="detail__prop-value">
             <DueEditor todo={todo} closed={Boolean(state?.closed)} />
@@ -141,6 +148,30 @@ export function Detail({ todo }: { todo: Todo }) {
         </p>
       </div>
     </div>
+  )
+}
+
+/** The project: Orca's projects (fetched on first use), plus the to-do's own if Orca lacks it. */
+function ProjectPicker({ todo }: { todo: Todo }) {
+  useEffect(() => void ensureWorkspaces(), [])
+  const names = [...new Set([...projectNames.value, ...(todo.project ? [todo.project] : [])])]
+  return (
+    <label class={todo.project ? 'picker' : 'picker picker--empty'}>
+      <FolderGit2 />
+      <select
+        class="picker__select"
+        aria-label={t.project}
+        value={todo.project ?? ''}
+        onChange={(e) => updateTodo(todo.id, { project: e.currentTarget.value || undefined })}
+      >
+        <option value="">{t.noProject}</option>
+        {names.map((name) => (
+          <option key={name} value={name}>
+            {name}
+          </option>
+        ))}
+      </select>
+    </label>
   )
 }
 

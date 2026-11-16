@@ -1,8 +1,18 @@
-// Left navigator: scopes (all, states, tags, archived) with counts, and the week's numbers.
+// Left navigator: scopes (all, states, projects, tags, archived) with counts, and the week's numbers.
 
-import { Archive, Hash, Inbox, Settings2 } from 'lucide-preact'
+import { Archive, FolderGit2, Hash, Inbox, Settings2 } from 'lucide-preact'
 import type { ComponentChildren } from 'preact'
-import { archivedCount, scope, scopeKey, setScope, sheet, summary, tagCounts, type Scope } from '../store'
+import {
+  archivedCount,
+  projectCounts,
+  scope,
+  scopeKey,
+  setScope,
+  sheet,
+  summary,
+  tagCounts,
+  type Scope
+} from '../store'
 import { t } from '../i18n/t'
 import { IconButton, StateIcon } from './ui'
 import './Rail.css'
@@ -50,6 +60,23 @@ export function Rail() {
             count={count}
           />
         ))}
+
+        {projectCounts.value.length > 0 && (
+          <>
+            <div class="rail__section section-label">
+              <span>{t.projects}</span>
+            </div>
+            {projectCounts.value.map(([name, count]) => (
+              <Item
+                key={name}
+                target={{ kind: 'project', id: name }}
+                icon={<FolderGit2 />}
+                label={name}
+                count={count}
+              />
+            ))}
+          </>
+        )}
 
         {tagCounts.value.length > 0 && (
           <>
@@ -118,7 +145,9 @@ export function ScopeSelect() {
       onChange={(e) => {
         const [kind, ...rest] = e.currentTarget.value.split(':')
         const id = rest.join(':')
-        setScope(kind === 'state' || kind === 'tag' ? { kind, id } : { kind: kind as 'all' | 'archived' })
+        setScope(
+          kind === 'state' || kind === 'project' || kind === 'tag' ? { kind, id } : { kind: kind as 'all' | 'archived' }
+        )
       }}
     >
       <option value="all">{label(t.allTodos, s.total)}</option>
@@ -129,6 +158,15 @@ export function ScopeSelect() {
           </option>
         ))}
       </optgroup>
+      {projectCounts.value.length > 0 && (
+        <optgroup label={t.projects}>
+          {projectCounts.value.map(([name, count]) => (
+            <option key={name} value={`project:${name}`}>
+              {label(name, count)}
+            </option>
+          ))}
+        </optgroup>
+      )}
       {tagCounts.value.length > 0 && (
         <optgroup label={t.tags}>
           {tagCounts.value.map(([tag, count]) => (

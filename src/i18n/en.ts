@@ -149,6 +149,14 @@ export const en = {
   /** One notification for several to-dos coming due together. */
   reminderMany: (n: number) => `${n} to-dos are due`,
 
+  // Projects
+  projects: 'Projects',
+  project: 'Project',
+  noProject: 'No project',
+  /** The project chip's button: opens its workspace in Orca. */
+  openProject: (name: string) => `Open ${name} in Orca`,
+  projectNotFound: (name: string) => `No workspace in Orca belongs to ${name}.`,
+
   // The details pane
   archive: 'Archive',
   unarchive: 'Unarchive',

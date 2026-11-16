@@ -155,6 +155,11 @@ var en = {
   reminderDueNow: "Due now",
   reminderDueToday: "Due today",
   reminderMany: (n) => `${n} to-dos are due`,
+  projects: "Projects",
+  project: "Project",
+  noProject: "No project",
+  openProject: (name) => `Open ${name} in Orca`,
+  projectNotFound: (name) => `No workspace in Orca belongs to ${name}.`,
   archive: "Archive",
   unarchive: "Unarchive",
   copyAsPrompt: "Copy as agent prompt",
@@ -359,6 +364,8 @@ function parseTodo(value) {
   const due = parseDue(value.due);
   if (due)
     todo.due = due;
+  if (isString2(value.project) && value.project.trim())
+    todo.project = value.project.trim().slice(0, 200);
   return todo;
 }
 function parseRun(value) {

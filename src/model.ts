@@ -18,6 +18,8 @@ export type Todo = {
   closedAt?: number
   /** When it is due, local time: `2026-03-04` or `2026-03-04T15:30`. See src/due.ts. */
   due?: string
+  /** The Orca project (repository) it belongs to, by name. */
+  project?: string
   /** Agents this to-do was sent to, oldest first. */
   runs: AgentRun[]
 }
@@ -54,6 +56,8 @@ export type Filter = {
   stateId: string
   priority: Priority | ''
   due: DueFilter
+  /** An Orca project name; '' for any. */
+  project: string
   archived: boolean
 }
 export type Sort = 'manual' | 'priority' | 'due' | 'updated' | 'created'
@@ -69,7 +73,15 @@ export const DEFAULT_STATES: State[] = [
   { id: 'done', name: 'Done', color: '#22c55e', closed: true }
 ]
 
-export const EMPTY_FILTER: Filter = { text: '', tags: [], stateId: '', priority: '', due: '', archived: false }
+export const EMPTY_FILTER: Filter = {
+  text: '',
+  tags: [],
+  stateId: '',
+  priority: '',
+  due: '',
+  project: '',
+  archived: false
+}
 
 export const uid = (): string => crypto.randomUUID()
 
@@ -172,6 +184,7 @@ export function matches(todo: Todo, f: Filter, now = Date.now()): boolean {
   if (todo.archived !== f.archived) return false
   if (f.stateId && todo.stateId !== f.stateId) return false
   if (f.priority && todo.priority !== f.priority) return false
+  if (f.project && todo.project !== f.project) return false
   if (!inDueFilter(todo, f.due, now)) return false
   if (f.tags.length && !f.tags.every((t) => todo.tags.includes(t))) return false
   const q = f.text.trim().toLowerCase()
@@ -270,6 +283,7 @@ export function parseTodo(value: unknown): Todo | null {
   if (isNumber(value.closedAt)) todo.closedAt = value.closedAt
   const due = parseDue(value.due)
   if (due) todo.due = due
+  if (isString(value.project) && value.project.trim()) todo.project = value.project.trim().slice(0, 200)
   return todo
 }
 

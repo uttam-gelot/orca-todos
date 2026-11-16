@@ -165,6 +165,16 @@ describe('due', () => {
     expect(parseTodo({ ...VALID_TODO, due: '2026-02-30' })).not.toHaveProperty('due')
   })
 
+  test('parseTodo keeps a project name and drops a blank one', () => {
+    expect(parseTodo({ ...VALID_TODO, project: ' web ' })?.project).toBe('web')
+    expect(parseTodo({ ...VALID_TODO, project: '  ' })).not.toHaveProperty('project')
+  })
+
+  test('a project filter keeps only that project', () => {
+    expect(matches(todo({ project: 'web' }), { ...EMPTY_FILTER, project: 'web' })).toBe(true)
+    expect(matches(todo(), { ...EMPTY_FILTER, project: 'web' })).toBe(false)
+  })
+
   test('due filters match open to-dos only', () => {
     expect(inDueFilter(todo({ due: '2026-03-03' }), 'overdue', now)).toBe(true)
     expect(inDueFilter(todo({ due: '2026-03-03', closedAt: 1 }), 'overdue', now)).toBe(false)

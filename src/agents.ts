@@ -128,7 +128,17 @@ export function indexRun(index: RunIndex, terminalId: string, todoId: string): R
 /** The newest run, which is the one lists and cards show. */
 export const latestRun = (todo: Todo): AgentRun | undefined => todo.runs.at(-1)
 
-const projectName = (w: WorkspaceOption): string => w.project || w.folder || w.name
+/** The project a workspace belongs to: Orca's project, else its folder, else its name. */
+export const projectName = (w: WorkspaceOption): string => w.project || w.folder || w.name
+
+/**
+ * The workspace that stands for a project: its main checkout (the one in the project's own folder),
+ * else its first workspace in Orca's order. Null when no workspace belongs to it.
+ */
+export function projectWorkspace(workspaces: WorkspaceOption[], project: string): WorkspaceOption | null {
+  const own = workspaces.filter((w) => projectName(w) === project)
+  return own.find((w) => w.folder === project) ?? own[0] ?? null
+}
 
 /** The workspaces of one project, as the picker shows them under one heading. */
 export type WorkspaceGroup = { name: string; workspaces: WorkspaceOption[] }

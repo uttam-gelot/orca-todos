@@ -9,6 +9,8 @@ import {
   agentLabel,
   AGENTS,
   buildPrompt,
+  projectName,
+  projectWorkspace,
   DEFAULT_AGENT,
   stateAfterSend,
   workspaceTitle
@@ -74,7 +76,8 @@ function loadPrefs(): Prefs {
       ...EMPTY_FILTER,
       ...saved.filter,
       text: '',
-      due: DUE_FILTERS.includes(saved.filter?.due as Filter['due']) ? saved.filter!.due : ''
+      due: DUE_FILTERS.includes(saved.filter?.due as Filter['due']) ? saved.filter!.due : '',
+      project: typeof saved.filter?.project === 'string' ? saved.filter.project : ''
     },
     collapsed: Array.isArray(saved.collapsed) ? saved.collapsed.filter((id) => typeof id === 'string') : []
   }
@@ -121,14 +124,20 @@ const WIDE = '(min-width: 1040px)'
 export const wide = signal(matchMedia(WIDE).matches)
 matchMedia(WIDE).addEventListener('change', (e) => (wide.value = e.matches))
 
-// --- scope: what the navigator rail selects (all, one state, one tag, or archived) ---
+// --- scope: what the navigator rail selects (all, one state, project or tag, or archived) ---
 
-export type Scope = { kind: 'all' } | { kind: 'state'; id: string } | { kind: 'tag'; id: string } | { kind: 'archived' }
+export type Scope =
+  | { kind: 'all' }
+  | { kind: 'state'; id: string }
+  | { kind: 'project'; id: string }
+  | { kind: 'tag'; id: string }
+  | { kind: 'archived' }
 
 export const scope = computed<Scope>(() => {
   const f = filter.value
   if (f.archived) return { kind: 'archived' }
   if (f.stateId) return { kind: 'state', id: f.stateId }
+  if (f.project) return { kind: 'project', id: f.project }
   if (f.tags[0]) return { kind: 'tag', id: f.tags[0] }
   return { kind: 'all' }
 })
@@ -141,6 +150,7 @@ export function setScope(s: Scope): void {
     ...f,
     archived: s.kind === 'archived',
     stateId: s.kind === 'state' ? s.id : '',
+    project: s.kind === 'project' ? s.id : '',
     tags: s.kind === 'tag' ? [s.id] : []
   }
   composer.value = null
@@ -168,10 +178,18 @@ export const tagCounts = computed(() => {
 })
 export const archivedCount = computed(() => todos.value.length - live.value.length)
 
+/** Projects with live to-dos and how many, by name. */
+export const projectCounts = computed(() => {
+  const counts = new Map<string, number>()
+  for (const t of live.value) if (t.project) counts.set(t.project, (counts.get(t.project) ?? 0) + 1)
+  return [...counts].sort(([a], [b]) => a.localeCompare(b))
+})
+
 /** Every scope in rail order, for `[` and `]`. */
 export const scopes = computed<Scope[]>(() => [
   { kind: 'all' },
   ...states.value.map((s) => ({ kind: 'state' as const, id: s.id })),
+  ...projectCounts.value.map(([id]) => ({ kind: 'project' as const, id })),
   ...tagCounts.value.map(([id]) => ({ kind: 'tag' as const, id })),
   { kind: 'archived' }
 ])
@@ -471,7 +489,46 @@ export async function loadWorkspaces(): Promise<void> {
 export function openAgentDialog(id: string): void {
   select(id)
   sheet.value = 'agent'
-  void loadWorkspaces()
+  void loadWorkspaces().then(() => preferProject(id))
+}
+
+/** Picks a workspace in the to-do's project, unless the chosen one is already there. */
+function preferProject(id: string): void {
+  const project = todos.value.find((t) => t.id === id)?.project
+  const list = workspaceList.value
+  if (!project || list.status !== 'ready') return
+  const chosen = list.answer.workspaces.find((w) => w.id === agentChoice.value.workspaceId)
+  if (chosen && projectName(chosen) === project) return
+  const workspace = projectWorkspace(list.answer.workspaces, project)
+  if (workspace) agentChoice.value = { ...agentChoice.value, workspaceId: workspace.id }
+}
+
+/** Fetches the workspaces unless they are already here. */
+export async function ensureWorkspaces(): Promise<void> {
+  if (workspaceList.value.status !== 'ready') await loadWorkspaces()
+}
+
+/** Project names to offer: those of Orca's workspaces, then any only to-dos still name. */
+export const projectNames = computed(() => {
+  const list = workspaceList.value
+  const fromOrca = list.status === 'ready' ? list.answer.workspaces.map(projectName) : []
+  return [...new Set([...fromOrca, ...projectCounts.value.map(([name]) => name)])]
+})
+
+/** Shows a project's main workspace in Orca. */
+export async function openProject(project: string): Promise<void> {
+  await ensureWorkspaces()
+  const list = workspaceList.value
+  const workspace = list.status === 'ready' ? projectWorkspace(list.answer.workspaces, project) : null
+  if (!workspace) {
+    notice.value = { text: t.projectNotFound(project), error: true }
+    return
+  }
+  try {
+    await openWorkspace(workspace.id)
+  } catch (error) {
+    notice.value = { text: errorMessage('openProject', error, 'open'), error: true }
+  }
 }
 
 /**
@@ -507,6 +564,8 @@ export async function sendToAgent(id: string, prompt: string): Promise<string | 
     const others = todos.value.filter((t) => t.id !== id)
     updateTodo(id, {
       runs: addRun(todo.runs, run),
+      // The first agent's workspace says which project the to-do is about.
+      ...(!todo.project && { project: projectName(workspace) }),
       ...(stateId && { stateId, order: orderBefore(others, stateId, null) })
     })
   }

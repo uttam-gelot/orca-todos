@@ -1,6 +1,15 @@
 import { beforeEach, describe, expect, spyOn, test } from 'bun:test'
 import { REQUEST } from '../../src/protocol'
-import { agentChoice, loadWorkspaces, notice, openRun, sendToAgent, todos, workspaceList } from '../../src/store'
+import {
+  agentChoice,
+  loadWorkspaces,
+  notice,
+  openProject,
+  openRun,
+  sendToAgent,
+  todos,
+  workspaceList
+} from '../../src/store'
 import { resetStore } from '../factories/store'
 import { makeTodo } from '../factories/todo'
 import { serveWorker } from '../factories/workspaces'
@@ -48,6 +57,13 @@ describe('sendToAgent', () => {
       expect.objectContaining({ terminalId: 't1', agent: 'claude', workspaceId: 'w2', state: 'starting' })
     ])
     expect(notice.value?.text).toBe('Started Claude in app · feature/login')
+    expect(todo.project).toBe('app')
+  })
+  test("keeps the to-do's project when it has one", async () => {
+    resetStore({ todos: [makeTodo({ id: 'a', project: 'web' })] })
+    await loadWorkspaces()
+    await sendToAgent('a', 'Do it')
+    expect(byId('a').project).toBe('web')
   })
   test('leaves a to-do that is already further along where it is', async () => {
     resetStore({ todos: [makeTodo({ id: 'a', stateId: 'done' })] })
@@ -98,5 +114,16 @@ describe('openRun', () => {
     await openRun(run)
     expect(notice.value).toEqual({ text: 'Could not open the workspace. Try again.', error: true })
     error.mockRestore()
+  })
+})
+
+describe('openProject', () => {
+  test("opens the project's main workspace", async () => {
+    await openProject('app')
+    expect(fakeOrca.requests.at(-1)).toEqual({ name: REQUEST.open, input: { workspaceId: 'w1' } })
+  })
+  test('says so when no workspace belongs to the project', async () => {
+    await openProject('gone')
+    expect(notice.value).toEqual({ text: 'No workspace in Orca belongs to gone.', error: true })
   })
 })

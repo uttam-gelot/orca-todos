@@ -277,3 +277,33 @@
 .due--today {
   color: var(--due-today);
 }
+
+/* A to-do's project: a quiet chip that opens the project's workspace. */
+.project-chip {
+  --icon-size: var(--icon-sm);
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-1);
+  max-width: 14ch;
+  flex: none;
+  padding: 0 var(--space-1);
+  border-radius: var(--radius-sm);
+  font-size: var(--text-sm);
+  color: var(--muted-fg);
+  white-space: nowrap;
+  transition:
+    background-color var(--duration-fast) var(--ease),
+    color var(--duration-fast) var(--ease);
+}
+.project-chip:hover {
+  background: var(--accent);
+  color: var(--fg);
+}
+.project-chip:focus-visible {
+  box-shadow: var(--focus-ring);
+  outline: none;
+}
+.project-chip__name {
+  overflow: hidden;
+  text-overflow: ellipsis;
+}

@@ -18,7 +18,7 @@ import { isUnseen, seen } from '../seen'
 import { AgentButton, RunBadge } from './AgentRun'
 import { AddSlot } from './Composer'
 import { formatLong, t } from '../i18n/t'
-import { ago, DoneToggle, DueChip, IconButton, NotesHint, PriorityIcon, StateIcon } from './ui'
+import { ago, DoneToggle, DueChip, IconButton, ProjectChip, NotesHint, PriorityIcon, StateIcon } from './ui'
 import './ListView.css'
 
 export function ListView() {
@@ -92,6 +92,7 @@ function Row({ todo }: { todo: Todo }) {
       <NotesHint description={todo.description} />
       {todo.due && <DueChip due={todo.due} closed={state?.closed} />}
       <span class="row__tags">
+        <ProjectChip project={todo.project} />
         {todo.tags.map((tag) => (
           <span key={tag} class="tag">
             #{tag}

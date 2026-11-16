@@ -6,6 +6,7 @@ import {
   CalendarClock,
   Circle,
   CircleCheck,
+  FolderGit2,
   ListChecks,
   NotepadText,
   SignalHigh,
@@ -15,7 +16,7 @@ import {
 } from 'lucide-preact'
 import { dueFull, dueLabel, dueState } from '../due'
 import { lang, t } from '../i18n/t'
-import { now } from '../store'
+import { filter, now, openProject } from '../store'
 import { checklist, type Priority, type State } from '../model'
 import './ui.css'
 
@@ -99,6 +100,29 @@ export function DueChip({ due, closed, class: cls }: { due: string; closed?: boo
       </span>
       <span class="sr-only">{summary}</span>
     </span>
+  )
+}
+
+/**
+ * The to-do's project, as a chip that opens the project's workspace in Orca. Hidden while the list
+ * is already scoped to that project.
+ */
+export function ProjectChip({ project }: { project?: string }) {
+  if (!project || filter.value.project === project) return null
+  return (
+    <button
+      type="button"
+      class="project-chip"
+      title={t.openProject(project)}
+      aria-label={t.openProject(project)}
+      onClick={(e) => {
+        e.stopPropagation()
+        void openProject(project)
+      }}
+    >
+      <FolderGit2 aria-hidden="true" />
+      <span class="project-chip__name">{project}</span>
+    </button>
   )
 }
 

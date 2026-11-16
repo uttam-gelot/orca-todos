@@ -24,6 +24,7 @@ export function Composer({ stateId, variant }: { stateId: string; variant: 'row'
           title: name,
           stateId,
           tags: [...new Set([...filter.value.tags, ...tags])],
+          ...(filter.value.project && { project: filter.value.project }),
           ...(priority && { priority }),
           ...(due && { due })
         })

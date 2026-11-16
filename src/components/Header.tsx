@@ -5,6 +5,7 @@ import {
   Archive,
   CalendarClock,
   Columns3,
+  FolderGit2,
   Hash,
   Inbox,
   Keyboard,
@@ -43,11 +44,13 @@ function ScopeTitle() {
   const [icon, name] =
     s.kind === 'state'
       ? [<StateIcon state={state} />, state?.name ?? t.state]
-      : s.kind === 'tag'
-        ? [<Hash />, s.id]
-        : s.kind === 'archived'
-          ? [<Archive />, t.archived]
-          : [<Inbox />, t.allTodos]
+      : s.kind === 'project'
+        ? [<FolderGit2 />, s.id]
+        : s.kind === 'tag'
+          ? [<Hash />, s.id]
+          : s.kind === 'archived'
+            ? [<Archive />, t.archived]
+            : [<Inbox />, t.allTodos]
   return (
     <h1 class="scope-title">
       {icon}
