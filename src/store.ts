@@ -172,7 +172,7 @@ export const groups = computed(() => {
 
 /** The todos in on-screen order, for j/k. */
 export const navOrder = computed(() =>
-  groups.value.flatMap((g) => (view.value === 'list' && collapsed.value.has(g.state.id) ? [] : g.items))
+  groups.value.flatMap((g) => (collapsed.value.has(g.state.id) && !filter.value.stateId ? [] : g.items))
 )
 
 export const selected = computed(() => todos.value.find((t) => t.id === selectedId.value) ?? null)

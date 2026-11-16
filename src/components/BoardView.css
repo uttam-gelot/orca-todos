@@ -24,6 +24,28 @@
     border-color var(--duration-fast) var(--ease),
     background-color var(--duration-fast) var(--ease);
 }
+.column--shut {
+  flex: 0 0 40px;
+  min-width: 40px;
+}
+.column__strip {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: var(--space-2);
+  width: 100%;
+  padding: var(--space-3) 0;
+  border-radius: var(--radius);
+  text-align: left;
+  transition: background-color var(--duration-fast) var(--ease);
+}
+.column__strip:hover {
+  background: var(--hover-tint);
+}
+.column__strip .column__name {
+  writing-mode: vertical-rl;
+  max-height: 240px;
+}
 .column--over {
   border-color: var(--ring);
   background: color-mix(in oklab, var(--muted) 70%, var(--bg));
@@ -42,16 +64,20 @@
   overflow: hidden;
   text-overflow: ellipsis;
 }
-.column__add {
+.column__collapse {
   margin-left: auto;
+}
+.column__collapse,
+.column__add {
   opacity: 0;
   transition: opacity var(--duration-fast) var(--ease);
 }
-.column__head:hover .column__add,
-.column__add:focus-visible {
+.column__head:hover :is(.column__collapse, .column__add),
+:is(.column__collapse, .column__add):focus-visible {
   opacity: 1;
 }
 @media (hover: none) {
+  .column__collapse,
   .column__add {
     opacity: 1;
   }

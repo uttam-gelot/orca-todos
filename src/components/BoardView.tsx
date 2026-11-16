@@ -1,10 +1,21 @@
 // Board: one column per state. Drag a card onto another card to place it before that card, or onto
-// a column's empty space to put it last. From the keyboard: Shift+←/→ or 1–9 move the selected card.
+// a column's empty space (or its collapsed strip) to put it last. From the keyboard: Shift+←/→ or 1–9 move the selected card.
 
 import { signal } from '@preact/signals'
-import { Plus } from 'lucide-preact'
+import { ChevronsRightLeft, Plus } from 'lucide-preact'
 import type { State, Todo } from '../model'
-import { filter, groups, moveTodo, openComposer, select, selectedId, stateById, toggleDone } from '../store'
+import {
+  collapsed,
+  filter,
+  groups,
+  moveTodo,
+  openComposer,
+  select,
+  selectedId,
+  stateById,
+  toggleCollapsed,
+  toggleDone
+} from '../store'
 import { latestRun } from '../agents'
 import { AgentButton, RunBadge } from './AgentRun'
 import { AddSlot } from './Composer'
@@ -33,9 +44,13 @@ function drop(e: DragEvent, stateId: string, beforeId: string | null) {
 }
 
 function Column({ state, items }: { state: State; items: Todo[] }) {
+  // A board narrowed to one state shows it open, as the list does.
+  const shut = collapsed.value.has(state.id) && !filter.value.stateId
   return (
     <section
-      class={dropTarget.value === state.id ? 'column column--over' : 'column'}
+      class={['column', shut && 'column--shut', dropTarget.value === state.id && 'column--over']
+        .filter(Boolean)
+        .join(' ')}
       style={{ '--column-color': state.color }}
       aria-label={state.name}
       onDragOver={(e) => {
@@ -47,10 +62,40 @@ function Column({ state, items }: { state: State; items: Todo[] }) {
       }}
       onDrop={(e) => drop(e, state.id, null)}
     >
+      {shut ? (
+        <button
+          type="button"
+          class="column__strip"
+          aria-expanded="false"
+          title={`Expand ${state.name}`}
+          onClick={() => toggleCollapsed(state.id)}
+        >
+          <StateIcon state={state} />
+          <span class="count">{items.length}</span>
+          <span class="column__name">{state.name}</span>
+        </button>
+      ) : (
+        <ColumnBody state={state} items={items} />
+      )}
+    </section>
+  )
+}
+
+function ColumnBody({ state, items }: { state: State; items: Todo[] }) {
+  return (
+    <>
       <header class="column__head">
         <StateIcon state={state} />
         <span class="column__name">{state.name}</span>
         <span class="count">{items.length}</span>
+        <IconButton
+          label={`Collapse ${state.name}`}
+          class="btn--icon-xs column__collapse"
+          aria-expanded="true"
+          onClick={() => toggleCollapsed(state.id)}
+        >
+          <ChevronsRightLeft />
+        </IconButton>
         {!filter.value.archived && (
           <IconButton
             label={`Add to ${state.name}`}
@@ -67,7 +112,7 @@ function Column({ state, items }: { state: State; items: Todo[] }) {
         ))}
         <AddSlot stateId={state.id} variant="card" />
       </div>
-    </section>
+    </>
   )
 }
 

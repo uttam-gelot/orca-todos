@@ -4,7 +4,7 @@ import { afterEach, beforeEach, describe, expect, spyOn, test } from 'bun:test'
 import { render } from 'preact'
 import { act } from 'preact/test-utils'
 import { App } from '../../src/App'
-import { detailOpen, filter, loadError, loaded, selectedId, sort, todos } from '../../src/store'
+import { detailOpen, filter, loadError, loaded, navOrder, selectedId, sort, todos, view } from '../../src/store'
 import { StorageError } from '../../src/errors'
 import { makeTodo } from '../factories/todo'
 import { resetStore } from '../factories/store'
@@ -295,5 +295,20 @@ describe('search', () => {
     expect(document.activeElement).toBe(input)
     await act(() => input.blur())
     expect(root.querySelector('.search')?.classList.contains('search--folded')).toBe(true)
+  })
+})
+
+describe('board columns', () => {
+  test('collapse to a strip that j/k skip, and expand again', async () => {
+    resetStore({ todos: [makeTodo({ id: 'a', stateId: 'todo' }), makeTodo({ id: 'b', stateId: 'backlog' })] })
+    view.value = 'board'
+    await mount()
+    await act(() => root.querySelector<HTMLButtonElement>('.column[aria-label="ToDo"] .column__collapse')!.click())
+    const strip = root.querySelector<HTMLButtonElement>('.column[aria-label="ToDo"] .column__strip')!
+    expect(strip.textContent).toContain('1')
+    expect(root.querySelector('.card[data-id="a"]')).toBeNull()
+    expect(navOrder.value.map((t) => t.id)).toEqual(['b'])
+    await act(() => strip.click())
+    expect(root.querySelector('.card[data-id="a"]')).not.toBeNull()
   })
 })

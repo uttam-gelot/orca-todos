@@ -52,7 +52,9 @@ in a frame.
 - **Header:** "N high" (open high-priority to-dos in view) toggles the priority filter. The display
   options icon gets a dot while a filter or order is on, and the menu offers a reset.
 - **Columns:** flex from 260px to 360px, so a wide tab fills; more states scroll sideways. Each
-  column has a 2px top edge in its state color.
+  column has a 2px top edge in its state color. A column collapses to a 40px strip (icon, count, vertical
+  name) from its head; the strip expands it and still takes drops. Collapsing a state applies to the
+  list group too.
 - **Cards:** a state toggle before the title (marks done, as on rows), then one meta line under
   the title: priority, notes hint, run, tags (cut first when narrow), and Agent/Open plus the age at
   the right. The selected card gets a ring. The drop target shows a 2px ring-colored line above the
