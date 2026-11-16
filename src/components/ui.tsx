@@ -40,9 +40,23 @@ export function IconButton({ label, children, class: cls, ...rest }: IconButtonP
   )
 }
 
+const FOCUSABLE = 'a[href], button:not(:disabled), input:not(:disabled), select:not(:disabled), textarea:not(:disabled)'
+
+/** Keeps Tab inside `panel`: from the last control it goes to the first, and back. */
+function trapTab(e: KeyboardEvent, panel: HTMLElement): void {
+  const items = [...panel.querySelectorAll<HTMLElement>(FOCUSABLE)]
+  const first = items[0]
+  const last = items[items.length - 1]
+  if (!first || !last) return
+  const edge = e.shiftKey ? first : last
+  if (document.activeElement !== edge) return
+  e.preventDefault()
+  ;(e.shiftKey ? last : first).focus()
+}
+
 /**
- * An edge panel, or with `center` a dialog in the middle (as Orca's composer opens). Esc and the
- * scrim close it; focus returns to where it was.
+ * A modal edge panel, or with `center` a dialog in the middle (as Orca's composer opens). Esc and
+ * the scrim close it, Tab stays inside it, and focus returns to where it was.
  */
 export function Sheet({
   label,
@@ -59,9 +73,7 @@ export function Sheet({
   useEffect(() => {
     const before = document.activeElement as HTMLElement | null
     const panel = ref.current
-    const first =
-      panel?.querySelector<HTMLElement>('[autofocus]') ??
-      panel?.querySelector<HTMLElement>('input, textarea, select, button')
+    const first = panel?.querySelector<HTMLElement>('[autofocus]') ?? panel?.querySelector<HTMLElement>(FOCUSABLE)
     first?.focus()
     return () => before?.focus?.()
   }, [])
@@ -72,8 +84,10 @@ export function Sheet({
         ref={ref}
         class={center ? 'sheet__panel sheet__panel--center' : 'sheet__panel'}
         role="dialog"
+        aria-modal="true"
         aria-label={label}
         onKeyDown={(e) => {
+          if (e.key === 'Tab') trapTab(e, e.currentTarget)
           if (e.key === 'Escape' && !e.defaultPrevented) {
             e.stopPropagation()
             onClose()
