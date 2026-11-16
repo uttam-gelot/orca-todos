@@ -36,6 +36,7 @@ function Column({ state, items }: { state: State; items: Todo[] }) {
   return (
     <section
       class={dropTarget.value === state.id ? 'column column--over' : 'column'}
+      style={{ '--column-color': state.color }}
       aria-label={state.name}
       onDragOver={(e) => {
         e.preventDefault()
