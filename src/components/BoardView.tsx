@@ -21,7 +21,7 @@ import { isUnseen, seen } from '../seen'
 import { AgentButton, RunBadge } from './AgentRun'
 import { AddSlot } from './Composer'
 import { formatLong, t } from '../i18n/t'
-import { ago, DoneToggle, IconButton, NotesHint, PriorityIcon, StateIcon } from './ui'
+import { ago, DoneToggle, DueChip, IconButton, NotesHint, PriorityIcon, StateIcon } from './ui'
 import './BoardView.css'
 
 const dragging = signal<string | null>(null)
@@ -150,6 +150,7 @@ function Card({ todo }: { todo: Todo }) {
       </div>
       <div class="card__meta">
         {todo.priority !== 'none' && <PriorityIcon priority={todo.priority} />}
+        {todo.due && <DueChip due={todo.due} closed={state?.closed} />}
         <NotesHint description={todo.description} />
         {todo.tags.length > 0 && (
           <span class="card__tags" title={todo.tags.map((t) => `#${t}`).join(' ')}>

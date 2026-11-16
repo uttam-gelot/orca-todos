@@ -116,7 +116,7 @@ function Empty() {
         </p>
       </div>
     )
-  if (f.text.trim() || f.priority)
+  if (f.text.trim() || f.priority || f.due)
     return (
       <div class="empty">
         <p class="empty__title">{t.noMatchesTitle}</p>
@@ -125,7 +125,7 @@ function Empty() {
           <button
             type="button"
             class="btn btn--outline btn--sm"
-            onClick={() => (filter.value = { ...f, text: '', priority: '' })}
+            onClick={() => (filter.value = { ...f, text: '', priority: '', due: '' })}
           >
             {t.clearSearchAndFilter}
           </button>

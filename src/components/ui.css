@@ -258,3 +258,22 @@
   font-size: var(--text-sm);
   color: var(--muted-fg);
 }
+
+/* A due date on a row or card. Color only when it asks for action: past due, or due today. */
+.due {
+  --icon-size: var(--icon-sm);
+  --icon-color: currentColor;
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-1);
+  flex: none;
+  font-size: var(--text-sm);
+  color: var(--muted-fg);
+  white-space: nowrap;
+}
+.due--overdue {
+  color: var(--due-overdue);
+}
+.due--today {
+  color: var(--due-today);
+}

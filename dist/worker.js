@@ -80,8 +80,8 @@ var en = {
   ],
   addATodo: "Add a to-do",
   noMatchesTitle: "No matches",
-  noMatchesBody: "Nothing here matches the search or priority filter.",
-  clearSearchAndFilter: "Clear search and filter",
+  noMatchesBody: "Nothing here matches the search or filters.",
+  clearSearchAndFilter: "Clear search and filters",
   nothingArchivedTitle: "Nothing archived",
   nothingArchivedBody: (archiveKey) => [
     "Archive a to-do with ",
@@ -113,7 +113,16 @@ var en = {
   orderPriority: "Priority",
   orderUpdated: "Recently updated",
   orderCreated: "Newest",
-  resetDisplay: "Reset priority and order",
+  orderDue: "Due date",
+  dueFilter: "Due",
+  dueAny: "Any",
+  dueOverdue: "Overdue",
+  dueByToday: "Today or earlier",
+  dueWeek: "Within 7 days",
+  showOnlyOverdue: "Show only overdue to-dos",
+  showEveryDue: "Show every to-do",
+  overdueWord: "overdue",
+  resetDisplay: "Reset filters and order",
   archiveClosed: "Archive closed to-dos",
   editStates: "Edit states",
   keyboardShortcuts: "Keyboard shortcuts",
@@ -124,7 +133,7 @@ var en = {
   collapse: (state) => `Collapse ${state}`,
   updatedOn: (date) => `Updated ${date}`,
   newTodoIn: (state) => `New to-do in ${state}`,
-  composerPlaceholder: "To-do title (#tag !high)",
+  composerPlaceholder: "To-do title (#tag !high @fri)",
   reopen: "Reopen",
   markDone: "Mark done",
   priorities: { none: "No priority", low: "Low", med: "Medium", high: "High" },
@@ -133,6 +142,16 @@ var en = {
   hasNotes: "Has notes",
   agoNow: "now",
   ago: { s: "s", m: "m", h: "h", d: "d", w: "w", mo: "mo", y: "y" },
+  dueToday: "Today",
+  dueTomorrow: "Tomorrow",
+  dueYesterday: "Yesterday",
+  due: "Due",
+  dueDate: "Due date",
+  dueTime: "Due time",
+  addDue: "Add a due date",
+  addTime: "Add time",
+  clearDue: "Clear due date",
+  dueTitle: (full, overdue) => overdue ? `Overdue: was due ${full}` : `Due ${full}`,
   archive: "Archive",
   unarchive: "Unarchive",
   copyAsPrompt: "Copy as agent prompt",
@@ -229,9 +248,43 @@ var en = {
   errStartAgent: "Could not start the agent. Try again.",
   errOpenWorkspace: "Could not open the workspace. Try again.",
   statusNone: "No open to-dos",
-  statusOpen: (open, high) => high ? `${open} open · ${high} high` : `${open} open`,
-  statusTip: (open, high) => open ? `ToDos: ${open} open to-do${open === 1 ? "" : "s"}${high ? `, ${high} high priority` : ""}. Press to show or hide the right sidebar.` : "ToDos: nothing open. Press to show or hide the right sidebar."
+  statusOpen: (open, high, overdue) => [`${open} open`, high ? `${high} high` : "", overdue ? `${overdue} overdue` : ""].filter(Boolean).join(" · "),
+  statusTip: (open, high, overdue) => open ? `ToDos: ${open} open to-do${open === 1 ? "" : "s"}${high ? `, ${high} high priority` : ""}${overdue ? `, ${overdue} overdue` : ""}. Press to show or hide the right sidebar.` : "ToDos: nothing open. Press to show or hide the right sidebar."
 };
+
+// src/due.ts
+var DUE = /^(\d{4})-(\d{2})-(\d{2})(?:T(\d{2}):(\d{2}))?$/;
+var DAY_MS = 24 * 60 * 60 * 1000;
+function parseDue(value) {
+  if (typeof value !== "string")
+    return null;
+  const m = DUE.exec(value);
+  if (!m)
+    return null;
+  const [y, mo, d, h, mi] = m.slice(1).map((part) => Number(part ?? 0));
+  const date = new Date(y, mo - 1, d);
+  const real = date.getFullYear() === y && date.getMonth() === mo - 1 && date.getDate() === d && h < 24 && mi < 60;
+  return real ? value : null;
+}
+var hasTime = (due) => due.length > 10;
+var dueDay = (due) => due.slice(0, 10);
+var dueTime = (due) => hasTime(due) ? due.slice(11, 16) : "";
+function dayStart(due) {
+  const [y, m, d] = dueDay(due).split("-").map(Number);
+  return new Date(y, m - 1, d).getTime();
+}
+function dueAt(due) {
+  if (!hasTime(due))
+    return dayStart(due) + DAY_MS - 1;
+  const [h, mi] = dueTime(due).split(":").map(Number);
+  const [y, m, d] = dueDay(due).split("-").map(Number);
+  return new Date(y, m - 1, d, h, mi).getTime();
+}
+function daysUntil(due, now) {
+  const today = new Date(now);
+  const start = new Date(today.getFullYear(), today.getMonth(), today.getDate()).getTime();
+  return Math.round((dayStart(due) - start) / DAY_MS);
+}
 
 // src/model.ts
 var TODO_KEY = "todo:";
@@ -252,12 +305,21 @@ var QUICK_PRIORITY = new Map([
   ["low", "low"],
   ["l", "low"]
 ]);
-var DAY_MS = 24 * 60 * 60 * 1000;
+function inDueFilter(todo, due, now) {
+  if (!due)
+    return true;
+  if (!todo.due || todo.closedAt !== undefined)
+    return false;
+  if (due === "overdue")
+    return dueAt(todo.due) < now;
+  return daysUntil(todo.due, now) < (due === "today" ? 1 : 7);
+}
+var DAY_MS2 = 24 * 60 * 60 * 1000;
 function staleClosed(todos, states, days, now) {
   if (days <= 0)
     return [];
   const closed = new Set(states.filter((s) => s.closed).map((s) => s.id));
-  const cutoff = now - days * DAY_MS;
+  const cutoff = now - days * DAY_MS2;
   return todos.filter((t) => !t.archived && closed.has(t.stateId) && t.closedAt !== undefined && t.closedAt <= cutoff);
 }
 var isRecord2 = (v) => typeof v === "object" && v !== null && !Array.isArray(v);
@@ -287,6 +349,9 @@ function parseTodo(value) {
   };
   if (isNumber(value.closedAt))
     todo.closedAt = value.closedAt;
+  const due = parseDue(value.due);
+  if (due)
+    todo.due = due;
   return todo;
 }
 function parseRun(value) {
@@ -541,31 +606,40 @@ function followArchive(orca, everyMs = HOUR_MS) {
 
 // src/worker/status.ts
 var STATUS_ITEM = "open-count";
-function statusFor(todos, states, m = en) {
+function statusFor(todos, states, m = en, now = Date.now()) {
   const closed = new Set(states.filter((s) => s.closed).map((s) => s.id));
   const open = todos.filter((t) => !t.archived && !closed.has(t.stateId));
   const high = open.filter((t) => t.priority === "high").length;
+  const overdue = open.filter((t) => inDueFilter(t, "overdue", now)).length;
   return {
-    text: open.length ? m.statusOpen(open.length, high) : m.statusNone,
-    tooltip: m.statusTip(open.length, high)
+    text: open.length ? m.statusOpen(open.length, high, overdue) : m.statusNone,
+    tooltip: m.statusTip(open.length, high, overdue)
   };
 }
 async function updateStatus(orca) {
   const { todos, states } = await readAll(orca);
   await orca.host.call("statusBar.update", { id: STATUS_ITEM, ...statusFor(todos, states), visible: true });
 }
-function followStatus(orca, delayMs = 300) {
+function followStatus(orca, delayMs = 300, everyMs = 60000) {
   let timer;
   const run = () => {
     updateStatus(orca).catch((error) => orca.log(`Could not update the status bar item (${errorCode(error)})`));
   };
-  orca.storage.onDidChange((change) => {
+  const listening = orca.storage.onDidChange((change) => {
     if (!change.key.startsWith(TODO_KEY) && change.key !== STATES_KEY)
       return;
     clearTimeout(timer);
     timer = setTimeout(run, delayMs);
   });
+  const clock = setInterval(run, everyMs);
   run();
+  return {
+    dispose() {
+      clearTimeout(timer);
+      clearInterval(clock);
+      listening.dispose();
+    }
+  };
 }
 
 // src/worker/main.ts

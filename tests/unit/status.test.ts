@@ -28,6 +28,13 @@ describe('statusFor', () => {
   test('leaves out the high count when there is none', () => {
     expect(statusFor([makeTodo()], DEFAULT_STATES).text).toBe('1 open')
   })
+
+  test('counts open to-dos past their due', () => {
+    const todos = [makeTodo({ id: 'a', due: '2020-01-01' }), makeTodo({ id: 'b', due: '2020-01-01', stateId: 'done' })]
+    const status = statusFor(todos, DEFAULT_STATES)
+    expect(status.text).toBe('1 open · 1 overdue')
+    expect(status.tooltip).toStartWith('ToDos: 1 open to-do, 1 overdue.')
+  })
 })
 
 describe('updateStatus', () => {

@@ -3,6 +3,7 @@ import {
   DEFAULT_STATES,
   EMPTY_FILTER,
   checklist,
+  inDueFilter,
   matches,
   normalizeTags,
   orderBefore,
@@ -144,6 +145,42 @@ describe('parseQuickAdd', () => {
 
   test('keeps the whole line as the title when only marks were typed', () => {
     expect(parseQuickAdd('#later !high')).toEqual({ title: '#later !high', tags: [] })
+  })
+
+  test('takes one due word and leaves names in the title', () => {
+    const now = new Date(2026, 2, 4, 10, 0).getTime()
+    expect(parseQuickAdd('Ping @alex @fri @mon', now)).toEqual({
+      title: 'Ping @alex @mon',
+      tags: [],
+      due: '2026-03-06'
+    })
+  })
+})
+
+describe('due', () => {
+  const now = new Date(2026, 2, 4, 10, 0).getTime()
+
+  test('parseTodo keeps a valid due and drops a broken one', () => {
+    expect(parseTodo({ ...VALID_TODO, due: '2026-03-04T15:30' })?.due).toBe('2026-03-04T15:30')
+    expect(parseTodo({ ...VALID_TODO, due: '2026-02-30' })).not.toHaveProperty('due')
+  })
+
+  test('due filters match open to-dos only', () => {
+    expect(inDueFilter(todo({ due: '2026-03-03' }), 'overdue', now)).toBe(true)
+    expect(inDueFilter(todo({ due: '2026-03-03', closedAt: 1 }), 'overdue', now)).toBe(false)
+    expect(inDueFilter(todo({ due: '2026-03-04' }), 'today', now)).toBe(true)
+    expect(inDueFilter(todo({ due: '2026-03-05' }), 'today', now)).toBe(false)
+    expect(inDueFilter(todo({ due: '2026-03-10' }), 'week', now)).toBe(true)
+    expect(inDueFilter(todo(), 'week', now)).toBe(false)
+    expect(matches(todo(), { ...EMPTY_FILTER, due: 'overdue' }, now)).toBe(false)
+  })
+
+  test('sorting by due puts the soonest first and no due last', () => {
+    const sorted = sortTodos(
+      [todo({ id: 'none' }), todo({ id: 'later', due: '2026-04-01' }), todo({ id: 'soon', due: '2026-03-05' })],
+      'due'
+    )
+    expect(sorted.map((t) => t.id)).toEqual(['soon', 'later', 'none'])
   })
 })
 

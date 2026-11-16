@@ -3,6 +3,7 @@
 import { useEffect, useRef } from 'preact/hooks'
 import {
   Archive,
+  CalendarClock,
   Columns3,
   Hash,
   Inbox,
@@ -16,12 +17,13 @@ import {
   X
 } from 'lucide-preact'
 import { t } from '../i18n/t'
-import { EMPTY_FILTER, PRIORITIES, type Priority, type Sort } from '../model'
+import { EMPTY_FILTER, PRIORITIES, type DueFilter, type Priority, type Sort } from '../model'
 import {
   archiveClosed,
   filter,
   menuOpen,
   openComposer,
+  overdueCount,
   scope,
   sheet,
   sort,
@@ -78,6 +80,26 @@ function HighCount() {
   )
 }
 
+/** "1 overdue": open to-dos past their due, as a toggle for the due filter. Shown only when any are. */
+function OverdueCount() {
+  const on = filter.value.due === 'overdue'
+  const count = overdueCount.value
+  if (!count && !on) return null
+  return (
+    <button
+      type="button"
+      class="btn btn--ghost btn--xs header__overdue"
+      aria-pressed={on}
+      title={on ? t.showEveryDue : t.showOnlyOverdue}
+      onClick={() => (filter.value = { ...filter.value, due: on ? '' : 'overdue' })}
+    >
+      <CalendarClock />
+      {count}
+      <span class="header__high-label">{t.overdueWord}</span>
+    </button>
+  )
+}
+
 export function Header() {
   return (
     <header class="header">
@@ -89,6 +111,7 @@ export function Header() {
           <ScopeSelect />
         </div>
         <HighCount />
+        <OverdueCount />
         <span class="spacer" />
         <div class="seg" role="group" aria-label={t.view}>
           <button
@@ -181,9 +204,10 @@ function SearchBox() {
 function DisplayMenu() {
   const ref = useRef<HTMLDivElement>(null)
   const open = menuOpen.value
-  const changed = filter.value.priority !== EMPTY_FILTER.priority || sort.value !== 'manual'
+  const changed =
+    filter.value.priority !== EMPTY_FILTER.priority || filter.value.due !== EMPTY_FILTER.due || sort.value !== 'manual'
   const reset = () => {
-    filter.value = { ...filter.value, priority: EMPTY_FILTER.priority }
+    filter.value = { ...filter.value, priority: EMPTY_FILTER.priority, due: EMPTY_FILTER.due }
     sort.value = 'manual'
   }
   useEffect(() => {
@@ -236,6 +260,19 @@ function DisplayMenu() {
             </select>
           </label>
           <label class="menu__field">
+            <span>{t.dueFilter}</span>
+            <select
+              class="select menu__select"
+              value={filter.value.due}
+              onChange={(e) => (filter.value = { ...filter.value, due: e.currentTarget.value as DueFilter })}
+            >
+              <option value="">{t.dueAny}</option>
+              <option value="overdue">{t.dueOverdue}</option>
+              <option value="today">{t.dueByToday}</option>
+              <option value="week">{t.dueWeek}</option>
+            </select>
+          </label>
+          <label class="menu__field">
             <span>{t.order}</span>
             <select
               class="select menu__select"
@@ -244,6 +281,7 @@ function DisplayMenu() {
             >
               <option value="manual">{t.orderManual}</option>
               <option value="priority">{t.orderPriority}</option>
+              <option value="due">{t.orderDue}</option>
               <option value="updated">{t.orderUpdated}</option>
               <option value="created">{t.orderCreated}</option>
             </select>

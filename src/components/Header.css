@@ -54,17 +54,22 @@
 .scope-title__count {
   font-weight: 400;
 }
-.header__high {
+.header__high,
+.header__overdue {
   --icon-size: var(--icon-sm);
   flex: none;
   color: var(--muted-fg);
+}
+.header__overdue {
+  --icon-color: var(--due-overdue);
 }
 @media (max-width: 420px) {
   .header__high-label {
     display: none;
   }
 }
-.header__high[aria-pressed='true'] {
+.header__high[aria-pressed='true'],
+.header__overdue[aria-pressed='true'] {
   background: var(--accent);
   color: var(--fg);
 }

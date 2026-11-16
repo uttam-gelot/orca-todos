@@ -21,7 +21,9 @@ import { launchAgent, listWorkspaces, openWorkspace, storage } from './orca'
 import type { LaunchAnswer, WorkspacesAnswer } from './protocol'
 import {
   DEFAULT_STATES,
+  DUE_FILTERS,
   EMPTY_FILTER,
+  inDueFilter,
   matches,
   orderBefore,
   parseStates,
@@ -53,7 +55,7 @@ type View = 'list' | 'board'
 type Prefs = { view: View; sort: Sort; filter: Filter; collapsed: string[] }
 const PREFS_KEY = `orca-todos:prefs:${mode}`
 const VIEWS: View[] = ['list', 'board']
-const SORTS: Sort[] = ['manual', 'priority', 'updated', 'created']
+const SORTS: Sort[] = ['manual', 'priority', 'due', 'updated', 'created']
 
 // Prefs are a convenience: on any problem the surface opens with defaults, and the reason is logged.
 function loadPrefs(): Prefs {
@@ -68,7 +70,12 @@ function loadPrefs(): Prefs {
   return {
     view: VIEWS.includes(saved.view as View) ? (saved.view as View) : fallback.view,
     sort: SORTS.includes(saved.sort as Sort) ? (saved.sort as Sort) : fallback.sort,
-    filter: { ...EMPTY_FILTER, ...saved.filter, text: '' },
+    filter: {
+      ...EMPTY_FILTER,
+      ...saved.filter,
+      text: '',
+      due: DUE_FILTERS.includes(saved.filter?.due as Filter['due']) ? saved.filter!.due : ''
+    },
     collapsed: Array.isArray(saved.collapsed) ? saved.collapsed.filter((id) => typeof id === 'string') : []
   }
 }
@@ -94,6 +101,10 @@ export function toggleCollapsed(id: string): void {
   else next.add(id)
   collapsed.value = next
 }
+
+/** The time, a minute at most behind: due chips, overdue counts and filters follow it. */
+export const now = signal(Date.now())
+setInterval(() => (now.value = Date.now()), 60_000)
 
 // --- UI state ---
 
@@ -141,10 +152,13 @@ const live = computed(() => todos.value.filter((t) => !t.archived))
 export const stateById = computed(() => new Map(states.value.map((s) => [s.id, s])))
 export const visible = computed(() =>
   sortTodos(
-    todos.value.filter((t) => matches(t, filter.value)),
+    todos.value.filter((t) => matches(t, filter.value, now.value)),
     sort.value
   )
 )
+
+/** Open, live to-dos past their due, whatever the filters: the header's "overdue" count. */
+export const overdueCount = computed(() => live.value.filter((t) => inDueFilter(t, 'overdue', now.value)).length)
 export const summary = computed(() => stats(todos.value, states.value))
 
 export const tagCounts = computed(() => {
@@ -165,7 +179,7 @@ export const scopes = computed<Scope[]>(() => [
 /** Todos grouped by state, in state order. Empty groups hide while searching or filtering. */
 export const groups = computed(() => {
   const f = filter.value
-  const narrowed = Boolean(f.text.trim() || f.priority || f.archived)
+  const narrowed = Boolean(f.text.trim() || f.priority || f.due || f.archived)
   return states.value
     .filter((s) => !f.stateId || s.id === f.stateId)
     .map((state) => ({ state, items: visible.value.filter((t) => t.stateId === state.id) }))

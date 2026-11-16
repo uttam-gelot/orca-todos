@@ -60,7 +60,8 @@ export const MAX_RUNS = 10
 export function buildPrompt(todo: Todo): string {
   const facts = [
     todo.tags.length ? `Tags: ${todo.tags.map((t) => `#${t}`).join(' ')}` : '',
-    todo.priority !== 'none' ? `Priority: ${PRIORITY_LABEL[todo.priority]}` : ''
+    todo.priority !== 'none' ? `Priority: ${PRIORITY_LABEL[todo.priority]}` : '',
+    todo.due ? `Due: ${todo.due.replace('T', ' ')}` : ''
   ].filter(Boolean)
   return [`# ${todo.title}`, todo.description.trim(), facts.join('\n')].filter(Boolean).join('\n\n')
 }

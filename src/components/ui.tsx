@@ -2,8 +2,20 @@
 
 import type { ButtonHTMLAttributes, ComponentChildren } from 'preact'
 import { useEffect, useRef } from 'preact/hooks'
-import { Circle, CircleCheck, ListChecks, NotepadText, SignalHigh, SignalLow, SignalMedium, X } from 'lucide-preact'
-import { t } from '../i18n/t'
+import {
+  CalendarClock,
+  Circle,
+  CircleCheck,
+  ListChecks,
+  NotepadText,
+  SignalHigh,
+  SignalLow,
+  SignalMedium,
+  X
+} from 'lucide-preact'
+import { dueFull, dueLabel, dueState } from '../due'
+import { lang, t } from '../i18n/t'
+import { now } from '../store'
 import { checklist, type Priority, type State } from '../model'
 import './ui.css'
 
@@ -67,6 +79,25 @@ export function NotesHint({ description, class: cls }: { description: string; cl
     <span class={['notes-hint', cls].filter(Boolean).join(' ')} title={t.hasNotes}>
       <NotepadText aria-hidden="true" />
       <span class="sr-only">{t.hasNotes}</span>
+    </span>
+  )
+}
+
+/**
+ * When a to-do is due, as "Today", "Fri" or "Mar 4". Past due reads in the destructive color and
+ * due today in amber, unless the to-do is closed: then it is only a quiet date.
+ */
+export function DueChip({ due, closed, class: cls }: { due: string; closed?: boolean; class?: string }) {
+  const state = dueState(due, now.value)
+  const tone = closed ? 'closed' : state
+  const summary = t.dueTitle(dueFull(due, lang.value), !closed && state === 'overdue')
+  return (
+    <span class={['due', `due--${tone}`, cls].filter(Boolean).join(' ')} title={summary}>
+      <CalendarClock aria-hidden="true" />
+      <span class="due__label" aria-hidden="true">
+        {dueLabel(due, now.value, lang.value, t)}
+      </span>
+      <span class="sr-only">{summary}</span>
     </span>
   )
 }

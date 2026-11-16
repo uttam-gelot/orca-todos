@@ -60,8 +60,8 @@ export const en = {
   ],
   addATodo: 'Add a to-do',
   noMatchesTitle: 'No matches',
-  noMatchesBody: 'Nothing here matches the search or priority filter.',
-  clearSearchAndFilter: 'Clear search and filter',
+  noMatchesBody: 'Nothing here matches the search or filters.',
+  clearSearchAndFilter: 'Clear search and filters',
   nothingArchivedTitle: 'Nothing archived',
   nothingArchivedBody: (archiveKey: Node): Node[] => [
     'Archive a to-do with ',
@@ -95,7 +95,16 @@ export const en = {
   orderPriority: 'Priority',
   orderUpdated: 'Recently updated',
   orderCreated: 'Newest',
-  resetDisplay: 'Reset priority and order',
+  orderDue: 'Due date',
+  dueFilter: 'Due',
+  dueAny: 'Any',
+  dueOverdue: 'Overdue',
+  dueByToday: 'Today or earlier',
+  dueWeek: 'Within 7 days',
+  showOnlyOverdue: 'Show only overdue to-dos',
+  showEveryDue: 'Show every to-do',
+  overdueWord: 'overdue',
+  resetDisplay: 'Reset filters and order',
   archiveClosed: 'Archive closed to-dos',
   editStates: 'Edit states',
   keyboardShortcuts: 'Keyboard shortcuts',
@@ -108,7 +117,7 @@ export const en = {
   collapse: (state: string) => `Collapse ${state}`,
   updatedOn: (date: string) => `Updated ${date}`,
   newTodoIn: (state: string) => `New to-do in ${state}`,
-  composerPlaceholder: 'To-do title (#tag !high)',
+  composerPlaceholder: 'To-do title (#tag !high @fri)',
 
   // Small shared pieces
   reopen: 'Reopen',
@@ -120,6 +129,19 @@ export const en = {
   /** Compact ages: "now", then a number and a unit such as "5m" or "3d". */
   agoNow: 'now',
   ago: { s: 's', m: 'm', h: 'h', d: 'd', w: 'w', mo: 'mo', y: 'y' },
+
+  // Due dates
+  dueToday: 'Today',
+  dueTomorrow: 'Tomorrow',
+  dueYesterday: 'Yesterday',
+  due: 'Due',
+  dueDate: 'Due date',
+  dueTime: 'Due time',
+  addDue: 'Add a due date',
+  addTime: 'Add time',
+  clearDue: 'Clear due date',
+  /** A due chip's tooltip. `full` is the date in words. */
+  dueTitle: (full: string, overdue: boolean) => (overdue ? `Overdue: was due ${full}` : `Due ${full}`),
 
   // The details pane
   archive: 'Archive',
@@ -233,10 +255,11 @@ export const en = {
 
   // The Orca status bar item (written by the worker)
   statusNone: 'No open to-dos',
-  statusOpen: (open: number, high: number) => (high ? `${open} open · ${high} high` : `${open} open`),
-  statusTip: (open: number, high: number) =>
+  statusOpen: (open: number, high: number, overdue: number) =>
+    [`${open} open`, high ? `${high} high` : '', overdue ? `${overdue} overdue` : ''].filter(Boolean).join(' · '),
+  statusTip: (open: number, high: number, overdue: number) =>
     open
-      ? `ToDos: ${open} open to-do${open === 1 ? '' : 's'}${high ? `, ${high} high priority` : ''}. Press to show or hide the right sidebar.`
+      ? `ToDos: ${open} open to-do${open === 1 ? '' : 's'}${high ? `, ${high} high priority` : ''}${overdue ? `, ${overdue} overdue` : ''}. Press to show or hide the right sidebar.`
       : 'ToDos: nothing open. Press to show or hide the right sidebar.'
 }
 

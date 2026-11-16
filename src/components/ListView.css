@@ -115,6 +115,13 @@
   .row__tags {
     display: none;
   }
+  /* A due that asks for action keeps its tinted icon; a later one waits for the details pane. */
+  .row .due__label,
+  .row .due--soon,
+  .row .due--later,
+  .row .due--closed {
+    display: none;
+  }
   /* The dot alone: the title needs the room. Its tooltip still names the state. */
   .row__run .run-badge__label {
     display: none;

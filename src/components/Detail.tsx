@@ -8,6 +8,7 @@ import {
   ArchiveArrowUp,
   ArrowLeft,
   Bold,
+  CalendarClock,
   Code,
   Copy,
   Italic,
@@ -19,6 +20,7 @@ import {
   X
 } from 'lucide-preact'
 import { focusRequest } from '../focus'
+import { dueDay, dueState, dueTime, joinDue } from '../due'
 import { formatDate, t } from '../i18n/t'
 import { checklist, normalizeTags, PRIORITIES, toggleTask, type Todo } from '../model'
 import { continueList } from '../editing'
@@ -27,6 +29,7 @@ import {
   copyPrompt,
   deleteTodo,
   moveTodo,
+  now,
   select,
   setScope,
   stateById,
@@ -115,6 +118,10 @@ export function Detail({ todo }: { todo: Todo }) {
               </select>
             </label>
           </dd>
+          <dt class="detail__prop-term">{t.due}</dt>
+          <dd class="detail__prop-value">
+            <DueEditor todo={todo} closed={Boolean(state?.closed)} />
+          </dd>
           <dt class="detail__prop-term">{t.tags}</dt>
           <dd class="detail__prop-value">
             <TagEditor todo={todo} />
@@ -133,6 +140,46 @@ export function Detail({ todo }: { todo: Todo }) {
           )}
         </p>
       </div>
+    </div>
+  )
+}
+
+/**
+ * The due date: a date field, then a time field once there is a date. Clearing the date clears the
+ * due; clearing the time leaves a whole-day due. Native fields, so the picker and the date format
+ * are the platform's and keyboard entry works.
+ */
+function DueEditor({ todo, closed }: { todo: Todo; closed: boolean }) {
+  const due = todo.due
+  const tone = due && !closed ? dueState(due, now.value) : 'later'
+  const set = (next: string | undefined) => updateTodo(todo.id, { due: next })
+  return (
+    <div class={`due-editor due-editor--${tone}`}>
+      <CalendarClock class="due-editor__icon" aria-hidden="true" />
+      <input
+        type="date"
+        class="due-editor__field"
+        aria-label={t.dueDate}
+        value={due ? dueDay(due) : ''}
+        onChange={(e) => {
+          const day = e.currentTarget.value
+          set(day ? joinDue(day, due ? dueTime(due) : '') : undefined)
+        }}
+      />
+      {due && (
+        <>
+          <input
+            type="time"
+            class="due-editor__field"
+            aria-label={t.dueTime}
+            value={dueTime(due)}
+            onChange={(e) => set(joinDue(dueDay(due), e.currentTarget.value))}
+          />
+          <IconButton label={t.clearDue} class="btn--icon-xs" onClick={() => set(undefined)}>
+            <X />
+          </IconButton>
+        </>
+      )}
     </div>
   )
 }

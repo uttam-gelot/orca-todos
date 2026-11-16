@@ -111,6 +111,57 @@
   min-width: 0;
 }
 
+/* ---------- due editor: native date and time fields dressed like a picker ---------- */
+
+.due-editor {
+  --icon-size: var(--icon-md);
+  display: flex;
+  align-items: center;
+  gap: var(--space-1);
+  padding-left: var(--space-2);
+  min-height: var(--control-sm);
+}
+.due-editor__icon {
+  --icon-color: var(--muted-fg);
+  flex: none;
+  margin-right: var(--space-1);
+}
+.due-editor--overdue .due-editor__icon {
+  --icon-color: var(--due-overdue);
+}
+.due-editor--today .due-editor__icon {
+  --icon-color: var(--due-today);
+}
+/* Native fields keep a wide fixed width; these fit a date and a time and may shrink. */
+.due-editor__field {
+  flex: 0 1 auto;
+  width: 9.5em;
+  min-width: 0;
+  height: var(--control-sm);
+  padding: 0 var(--space-1-5);
+  border: 0;
+  border-radius: var(--radius-md);
+  background: none;
+  font-size: var(--text-base);
+  color: var(--fg);
+  outline: none;
+  transition: background-color var(--duration-fast) var(--ease);
+}
+.due-editor__field[type='time'] {
+  width: 7.5em;
+}
+.due-editor__field:hover {
+  background: var(--accent);
+}
+.due-editor__field:focus-visible {
+  box-shadow: 0 0 0 2px color-mix(in oklab, var(--ring) 60%, transparent);
+}
+/* The platform's picker button, quieter: the field itself opens it too. */
+.due-editor__field::-webkit-calendar-picker-indicator {
+  opacity: 0.5;
+  cursor: pointer;
+}
+
 /* ---------- tag editor ---------- */
 
 .tag-editor {

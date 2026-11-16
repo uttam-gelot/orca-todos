@@ -1,5 +1,5 @@
-// Inline capture: a title and Enter. Stays open for the next one; Esc closes. `#tag` and `!high`
-// words in the title set tags and the priority.
+// Inline capture: a title and Enter. Stays open for the next one; Esc closes. `#tag`, `!high` and
+// `@fri` words in the title set tags, the priority and the due date.
 
 import { useSignal } from '@preact/signals'
 import { Plus } from 'lucide-preact'
@@ -19,12 +19,13 @@ export function Composer({ stateId, variant }: { stateId: string; variant: 'row'
         e.preventDefault()
         const text = title.value.trim()
         if (!text) return
-        const { title: name, tags, priority } = parseQuickAdd(text)
+        const { title: name, tags, priority, due } = parseQuickAdd(text)
         const todo = createTodo({
           title: name,
           stateId,
           tags: [...new Set([...filter.value.tags, ...tags])],
-          ...(priority && { priority })
+          ...(priority && { priority }),
+          ...(due && { due })
         })
         select(todo.id, false)
         title.value = ''
