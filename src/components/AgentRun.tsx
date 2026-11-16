@@ -22,22 +22,30 @@ export function RunBadge({
   run,
   dot,
   decorative,
+  unseen,
   class: cls = ''
 }: {
   run: AgentRun
   dot?: boolean
   decorative?: boolean
+  /** The state changed after the to-do was last looked at: the badge stands out until it is. */
+  unseen?: boolean
   class?: string
 }) {
+  const summary = unseen ? `${runSummary(run)}. New since you last looked.` : runSummary(run)
   return (
-    <span class={`run-badge run-badge--${run.state} ${cls}`} title={runSummary(run)} aria-hidden={decorative}>
+    <span
+      class={['run-badge', `run-badge--${run.state}`, unseen && 'run-badge--unseen', cls].filter(Boolean).join(' ')}
+      title={summary}
+      aria-hidden={decorative}
+    >
       <span class="run-badge__dot" />
       {!dot && (
         <span class="run-badge__label" aria-hidden="true">
           {RUN_LABEL[run.state]}
         </span>
       )}
-      {!decorative && <span class="sr-only">{runSummary(run)}</span>}
+      {!decorative && <span class="sr-only">{summary}</span>}
     </span>
   )
 }

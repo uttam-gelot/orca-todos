@@ -56,9 +56,9 @@ in a frame.
   name) from its head; the strip expands it and still takes drops. Collapsing a state applies to the
   list group too.
 - **Cards:** a state toggle before the title (marks done, as on rows), then one meta line under
-  the title: priority, notes hint, run, tags (cut first when narrow), and Agent/Open plus the age at
-  the right. The selected card gets a ring. The drop target shows a 2px ring-colored line above the
-  card.
+  the title: priority, notes hint, tags (cut first when narrow), and Agent → plus the age at the
+  right. A card with a run adds a line with the run badge and Open →. The selected card gets a ring.
+  The drop target shows a 2px ring-colored line above the card.
 - **Add slot:** open groups and columns end with a quiet **+ Add to-do** row (muted, hover tint)
   that opens the composer in its place. Closed states and the archive have none; the head's + still
   adds.
@@ -78,6 +78,9 @@ in a frame.
   - Rows and cards: a ghost **Agent →** (on hover or selection in rows) opens the dialog. Once a
     run exists it becomes an outline **Open →** with the run's dot and label next to it. Below
     420px, rows show the dot alone.
+  - Not seen yet: when the newest run needs you, waits or finishes after the to-do was last
+    selected, its badge label turns to the text color in medium weight and the dot gets a halo,
+    until the to-do is selected. The times live in localStorage, shared by panel and tab.
   - The dialog: workspace (grouped by project), agent, then the prompt as a read-only preview with
     **Edit**. An edited prompt is kept per to-do until it starts. The footer names the side
     effects ("New terminal · moves to In Progress"). Without the worker, Copy prompt is the

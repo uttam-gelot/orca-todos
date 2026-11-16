@@ -312,3 +312,25 @@ describe('board columns', () => {
     expect(root.querySelector('.card[data-id="a"]')).not.toBeNull()
   })
 })
+
+describe('unseen runs', () => {
+  test('a finished run stands out until its to-do is selected', async () => {
+    const run = {
+      terminalId: 't1',
+      agent: 'claude',
+      workspaceId: 'w1',
+      workspaceName: 'app',
+      startedAt: 1,
+      state: 'done' as const,
+      stateAt: 2
+    }
+    resetStore({ todos: [makeTodo({ id: 'a', runs: [run] }), makeTodo({ id: 'b', order: 2 })] })
+    await mount()
+    const badge = () => root.querySelector('.row[data-id="a"] .run-badge')
+    expect(badge()?.classList.contains('run-badge--unseen')).toBe(true)
+    await act(() => root.querySelector<HTMLElement>('.row[data-id="a"]')!.click())
+    expect(badge()?.classList.contains('run-badge--unseen')).toBe(false)
+    await act(() => root.querySelector<HTMLElement>('.row[data-id="b"]')!.click())
+    expect(badge()?.classList.contains('run-badge--unseen')).toBe(false)
+  })
+})

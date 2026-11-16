@@ -38,6 +38,7 @@ import {
   type State,
   type Todo
 } from './model'
+import { lookAt } from './seen'
 
 /** `board` is the center editor tab, `panel` the right sidebar. */
 export const mode = (document.body.dataset.mode ?? 'panel') as 'panel' | 'board'
@@ -178,6 +179,10 @@ export const navOrder = computed(() =>
 export const selected = computed(() => todos.value.find((t) => t.id === selectedId.value) ?? null)
 
 export function select(id: string | null, open = detailOpen.value): void {
+  // Leaving a to-do counts as looking at it until now, so changes seen in the details clear.
+  const before = selectedId.value
+  if (before && before !== id) lookAt(before)
+  if (id) lookAt(id)
   selectedId.value = id
   detailOpen.value = id !== null && open
 }

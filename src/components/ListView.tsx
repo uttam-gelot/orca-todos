@@ -14,6 +14,7 @@ import {
   toggleDone
 } from '../store'
 import { latestRun } from '../agents'
+import { isUnseen, seen } from '../seen'
 import { AgentButton, RunBadge } from './AgentRun'
 import { AddSlot } from './Composer'
 import { ago, DoneToggle, IconButton, NotesHint, PriorityIcon, StateIcon } from './ui'
@@ -95,7 +96,7 @@ function Row({ todo }: { todo: Todo }) {
           </span>
         ))}
       </span>
-      {run && <RunBadge run={run} class="row__run" />}
+      {run && <RunBadge run={run} unseen={!current && isUnseen(todo, seen.value)} class="row__run" />}
       <AgentButton todo={todo} class="row__agent" />
       <span class="row__age count" title={`Updated ${new Date(todo.updatedAt).toLocaleString()}`}>
         {ago(todo.updatedAt)}

@@ -17,6 +17,7 @@ import {
   toggleDone
 } from '../store'
 import { latestRun } from '../agents'
+import { isUnseen, seen } from '../seen'
 import { AgentButton, RunBadge } from './AgentRun'
 import { AddSlot } from './Composer'
 import { ago, DoneToggle, IconButton, NotesHint, PriorityIcon, StateIcon } from './ui'
@@ -149,7 +150,6 @@ function Card({ todo }: { todo: Todo }) {
       <div class="card__meta">
         {todo.priority !== 'none' && <PriorityIcon priority={todo.priority} />}
         <NotesHint description={todo.description} />
-        {run && <RunBadge run={run} />}
         {todo.tags.length > 0 && (
           <span class="card__tags" title={todo.tags.map((t) => `#${t}`).join(' ')}>
             {todo.tags.map((tag) => (
@@ -160,12 +160,18 @@ function Card({ todo }: { todo: Todo }) {
           </span>
         )}
         <span class="card__end">
-          <AgentButton todo={todo} class="card__agent" />
+          {!run && <AgentButton todo={todo} class="card__agent" />}
           <span class="count" title={`Updated ${new Date(todo.updatedAt).toLocaleString()}`}>
             {ago(todo.updatedAt)}
           </span>
         </span>
       </div>
+      {run && (
+        <div class="card__run">
+          <RunBadge run={run} unseen={selectedId.value !== todo.id && isUnseen(todo, seen.value)} />
+          <AgentButton todo={todo} />
+        </div>
+      )}
     </div>
   )
 }

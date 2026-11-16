@@ -2,6 +2,7 @@
 
 import { DEFAULT_AGENT } from '../../src/agents'
 import { searchOpen } from '../../src/focus'
+import { seen } from '../../src/seen'
 import { DEFAULT_STATES, EMPTY_FILTER, type State, type Todo } from '../../src/model'
 import {
   agentChoice,
@@ -37,6 +38,7 @@ export function resetStore(seed: { todos?: Todo[]; states?: State[] } = {}): voi
   menuOpen.value = false
   lastUndoable.value = null
   searchOpen.value = false
+  seen.value = { since: 0, todos: {} }
   notice.value = null
   filter.value = EMPTY_FILTER
   sort.value = 'manual'
