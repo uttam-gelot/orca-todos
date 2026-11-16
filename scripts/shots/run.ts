@@ -75,15 +75,15 @@ async function buildDemo(dir: string): Promise<string> {
   await cp(join(ROOT, 'src/fonts/Geist-Variable.woff2'), join(dir, 'dist/Geist-Variable.woff2'))
 
   // The demo only shows the UI: no worker, so it needs no trusted-worker approval and cannot start
-  // agents or follow their status.
+  // agents, follow their status, or keep a status bar item.
   const { main: _main, ...manifest } = await Bun.file(join(ROOT, 'orca-plugin.json')).json()
   const demo = {
     ...manifest,
     id: DEMO_ID,
     name: 'ToDos (demo)',
     execution: 'sandboxed-ui',
-    capabilities: ['storage:own'],
-    contributes: { ...manifest.contributes, events: undefined }
+    capabilities: [{ kind: 'storage:own' }],
+    contributes: { ...manifest.contributes, events: undefined, statusBarItems: undefined }
   }
   await writeFile(join(dir, 'orca-plugin.json'), JSON.stringify(demo, null, 2))
 
