@@ -115,7 +115,7 @@ describe('App', () => {
       )!
       await act(() => reset.click())
       expect(filter.value.priority).toBe('')
-      expect(sort.value).toBe('manual')
+      expect(sort.peek() as string).toBe('manual')
     })
   })
 
