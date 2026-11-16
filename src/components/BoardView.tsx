@@ -2,13 +2,13 @@
 // a column's empty space to put it last. From the keyboard: Shift+←/→ or 1–9 move the selected card.
 
 import { signal } from '@preact/signals'
-import { Plus, TextAlignStart } from 'lucide-preact'
+import { Plus } from 'lucide-preact'
 import type { State, Todo } from '../model'
-import { composer, filter, groups, moveTodo, openComposer, select, selectedId } from '../store'
+import { composer, filter, groups, moveTodo, openComposer, select, selectedId, stateById, toggleDone } from '../store'
 import { latestRun } from '../agents'
 import { AgentButton, RunBadge } from './AgentRun'
 import { Composer } from './Composer'
-import { IconButton, PriorityIcon, StateIcon } from './ui'
+import { ago, DoneToggle, IconButton, NotesHint, PriorityIcon, StateIcon } from './ui'
 import './BoardView.css'
 
 const dragging = signal<string | null>(null)
@@ -73,7 +73,7 @@ function Column({ state, items }: { state: State; items: Todo[] }) {
 
 function Card({ todo }: { todo: Todo }) {
   const run = latestRun(todo)
-  const hasMeta = todo.priority !== 'none' || todo.tags.length > 0 || todo.description.trim()
+  const state = stateById.value.get(todo.stateId)
   return (
     <div
       data-id={todo.id}
@@ -97,25 +97,30 @@ function Card({ todo }: { todo: Todo }) {
       onDrop={(e) => drop(e, todo.stateId, todo.id)}
       onClick={() => select(todo.id, true)}
     >
-      <div class="card__title">{todo.title}</div>
-      {!run && <AgentButton todo={todo} class="card__start" />}
-      {hasMeta && (
-        <div class="card__meta">
-          {todo.priority !== 'none' && <PriorityIcon priority={todo.priority} />}
-          {todo.description.trim() && <TextAlignStart class="card__note" aria-label="Has notes" />}
-          {todo.tags.map((tag) => (
-            <span key={tag} class="tag">
-              #{tag}
-            </span>
-          ))}
-        </div>
-      )}
-      {run && (
-        <div class="card__run">
-          <RunBadge run={run} />
-          <AgentButton todo={todo} />
-        </div>
-      )}
+      <div class="card__head">
+        <DoneToggle state={state} onToggle={() => toggleDone(todo.id)} class="card__toggle" />
+        <div class="card__title">{todo.title}</div>
+      </div>
+      <div class="card__meta">
+        {todo.priority !== 'none' && <PriorityIcon priority={todo.priority} />}
+        <NotesHint description={todo.description} />
+        {run && <RunBadge run={run} />}
+        {todo.tags.length > 0 && (
+          <span class="card__tags" title={todo.tags.map((t) => `#${t}`).join(' ')}>
+            {todo.tags.map((tag) => (
+              <span key={tag} class="tag">
+                #{tag}
+              </span>
+            ))}
+          </span>
+        )}
+        <span class="card__end">
+          <AgentButton todo={todo} class="card__agent" />
+          <span class="count" title={`Updated ${new Date(todo.updatedAt).toLocaleString()}`}>
+            {ago(todo.updatedAt)}
+          </span>
+        </span>
+      </div>
     </div>
   )
 }

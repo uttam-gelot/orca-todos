@@ -1,6 +1,6 @@
 // List: state groups → rows. Selecting a row opens it in the detail pane.
 
-import { ChevronRight, Plus, TextAlignStart } from 'lucide-preact'
+import { ChevronRight, Plus } from 'lucide-preact'
 import type { State, Todo } from '../model'
 import {
   collapsed,
@@ -17,7 +17,7 @@ import {
 import { latestRun } from '../agents'
 import { AgentButton, RunBadge } from './AgentRun'
 import { Composer } from './Composer'
-import { ago, IconButton, PriorityIcon, StateIcon } from './ui'
+import { ago, DoneToggle, IconButton, NotesHint, PriorityIcon, StateIcon } from './ui'
 import './ListView.css'
 
 export function ListView() {
@@ -86,20 +86,9 @@ function Row({ todo }: { todo: Todo }) {
       onClick={() => select(todo.id, true)}
     >
       <PriorityIcon priority={todo.priority} />
-      <button
-        type="button"
-        class="row__toggle"
-        aria-label={state?.closed ? 'Reopen' : 'Mark done'}
-        title={state?.closed ? 'Reopen (X)' : 'Mark done (X)'}
-        onClick={(e) => {
-          e.stopPropagation()
-          toggleDone(todo.id)
-        }}
-      >
-        <StateIcon state={state} />
-      </button>
+      <DoneToggle state={state} onToggle={() => toggleDone(todo.id)} />
       <span class="row__title">{todo.title}</span>
-      {todo.description.trim() && <TextAlignStart class="row__note" aria-label="Has notes" />}
+      <NotesHint description={todo.description} />
       <span class="row__tags">
         {todo.tags.map((tag) => (
           <span key={tag} class="tag">

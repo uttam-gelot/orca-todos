@@ -13,13 +13,14 @@ import {
   Italic,
   Link,
   List,
+  ListChecks,
   Pencil,
   Trash,
   X
 } from 'lucide-preact'
 import { focusRequest } from '../focus'
-import { normalizeTags, PRIORITIES, PRIORITY_LABEL, type Todo } from '../model'
-import { onMarkdownClick, renderMarkdown } from '../markdown'
+import { checklist, normalizeTags, PRIORITIES, PRIORITY_LABEL, toggleTask, type Todo } from '../model'
+import { onMarkdownClick, renderMarkdown, taskIndex } from '../markdown'
 import {
   copyPrompt,
   deleteTodo,
@@ -233,7 +234,8 @@ const FORMATS = [
   { icon: Italic, label: 'Italic', key: 'i', wrap: ['_', '_', 'italic'] },
   { icon: Code, label: 'Code', key: 'e', wrap: ['`', '`', 'code'] },
   { icon: Link, label: 'Link', key: 'k', wrap: ['[', '](https://)', 'text'] },
-  { icon: List, label: 'Bulleted list', key: '', wrap: ['\n- ', '', 'item'] }
+  { icon: List, label: 'Bulleted list', key: '', wrap: ['\n- ', '', 'item'] },
+  { icon: ListChecks, label: 'Checklist', key: '', wrap: ['\n- [ ] ', '', 'item'] }
 ] as const
 
 function Description({ todo }: { todo: Todo }) {
@@ -281,9 +283,18 @@ function Description({ todo }: { todo: Todo }) {
           <div class="description__preview">
             <div
               class="md"
-              onClick={onMarkdownClick}
-              onDblClick={() => (editing.value = true)}
-              dangerouslySetInnerHTML={{ __html: renderMarkdown(todo.description) }}
+              onClick={(e) => {
+                const index = taskIndex(e.target, e.currentTarget)
+                if (index < 0) return onMarkdownClick(e)
+                // Only when the page and the notes agree on the items, so the right one is ticked.
+                const boxes = e.currentTarget.querySelectorAll('li > input[type="checkbox"]').length
+                if (boxes !== checklist(todo.description).total) return e.preventDefault()
+                const next = toggleTask(todo.description, index)
+                draft.value = next
+                updateTodo(todo.id, { description: next })
+              }}
+              onDblClick={(e) => taskIndex(e.target, e.currentTarget) < 0 && (editing.value = true)}
+              dangerouslySetInnerHTML={{ __html: renderMarkdown(todo.description, { tasks: true }) }}
             />
             <IconButton
               label="Edit description (E)"

@@ -44,12 +44,16 @@ in a frame.
 
 - **Rows:** 34px.
   - Hover is a 60% accent tint; selected is full accent.
-  - Columns: priority, state toggle, title, notes marker, tags, age.
+  - Columns: priority, state toggle, title, notes hint, tags, age.
+- **Notes hint:** checklist progress (`ListChecks` + `2/5`, success-tinted when all are done) when
+  the notes hold task items, else a note icon (`NotepadText`). Nothing for empty notes.
 - **Header:** "N high" (open high-priority to-dos in view) toggles the priority filter. The display
   options icon gets a dot while a filter or order is on, and the menu offers a reset.
 - **Columns:** flex from 260px to 360px, so a wide tab fills; more states scroll sideways. Each
   column has a 2px top edge in its state color.
-- **Cards:** the selected card gets a ring. The drop target shows a 2px ring-colored line above the
+- **Cards:** a state toggle before the title (marks done, as on rows), then one meta line under
+  the title: priority, notes hint, run, tags (cut first when narrow), and Agent/Open plus the age at
+  the right. The selected card gets a ring. The drop target shows a 2px ring-colored line above the
   card.
 - **Composer:** inline, at the end of the target group or column. Enter adds and keeps it open; Esc
   closes it.
@@ -58,7 +62,7 @@ in a frame.
   - Title: Enter or blur saves; Esc reverts.
   - Tags: Enter or comma adds; Backspace removes the last one.
   - Notes: the markdown preview has an edit control. The editor saves as you type, and ⌘↵ or Esc
-    finishes.
+    finishes. Checklist boxes in the preview tick in place; the format bar inserts `- [ ] `.
 - **Overlays:** sheets for edge panels (details when narrow, states, shortcuts). A popover holds the
   display options. The one centered dialog is **Start agent**, laid out like Orca's New Workspace
   composer. Sheets and the dialog are modal: `aria-modal`, Tab stays inside, Esc or the scrim

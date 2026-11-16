@@ -4,7 +4,7 @@ import { afterEach, beforeEach, describe, expect, spyOn, test } from 'bun:test'
 import { render } from 'preact'
 import { act } from 'preact/test-utils'
 import { App } from '../../src/App'
-import { filter, loadError, loaded, selectedId, sort, todos } from '../../src/store'
+import { detailOpen, filter, loadError, loaded, selectedId, sort, todos } from '../../src/store'
 import { StorageError } from '../../src/errors'
 import { makeTodo } from '../factories/todo'
 import { resetStore } from '../factories/store'
@@ -243,5 +243,28 @@ describe('App', () => {
       await settle()
       expect(fakeOrca.requests.at(-1)).toEqual({ name: 'workspace.open', input: { workspaceId: 'w2' } })
     })
+  })
+})
+
+describe('checklist', () => {
+  const notes = 'Steps\n- [x] Write it\n- [ ] Test it\n- [ ] Ship it'
+
+  test('rows show the progress of the checklist in the notes', async () => {
+    resetStore({ todos: [makeTodo({ id: 'a', description: notes })] })
+    await mount()
+    expect(root.querySelector('.row .checklist')?.textContent).toContain('1/3')
+    expect(root.querySelector('.row .checklist .sr-only')?.textContent).toBe('Checklist: 1 of 3 done')
+  })
+
+  test('ticking an item in the details pane saves it in the notes', async () => {
+    resetStore({ todos: [makeTodo({ id: 'a', description: notes })] })
+    selectedId.value = 'a'
+    detailOpen.value = true
+    await mount()
+    const boxes = root.querySelectorAll<HTMLInputElement>('.description .md input[type="checkbox"]')
+    expect([...boxes].map((b) => b.getAttribute('aria-label'))).toEqual(['Write it', 'Test it', 'Ship it'])
+    expect(boxes[1].disabled).toBe(false)
+    await act(() => boxes[1].click())
+    expect(todos.value[0].description).toBe(notes.replace('- [ ] Test it', '- [x] Test it'))
   })
 })

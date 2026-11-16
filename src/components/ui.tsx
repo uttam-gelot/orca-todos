@@ -2,8 +2,8 @@
 
 import type { ButtonHTMLAttributes, ComponentChildren } from 'preact'
 import { useEffect, useRef } from 'preact/hooks'
-import { Circle, CircleCheck, SignalHigh, SignalLow, SignalMedium, X } from 'lucide-preact'
-import { PRIORITY_LABEL, type Priority, type State } from '../model'
+import { Circle, CircleCheck, ListChecks, NotepadText, SignalHigh, SignalLow, SignalMedium, X } from 'lucide-preact'
+import { checklist, PRIORITY_LABEL, type Priority, type State } from '../model'
 import './ui.css'
 
 export const isMac = /Mac|iPhone|iPad/.test(navigator.platform)
@@ -14,12 +14,58 @@ export function StateIcon({ state }: { state?: State }) {
   return <Icon class="state-icon" style={{ color: state?.color }} aria-hidden="true" />
 }
 
+/** The state icon as a button that marks the to-do done, or reopens it. Used on rows and cards. */
+export function DoneToggle({ state, onToggle, class: cls }: { state?: State; onToggle: () => void; class?: string }) {
+  const label = state?.closed ? 'Reopen' : 'Mark done'
+  return (
+    <button
+      type="button"
+      class={['done-toggle', cls].filter(Boolean).join(' ')}
+      aria-label={label}
+      title={`${label} (X)`}
+      onClick={(e) => {
+        e.stopPropagation()
+        onToggle()
+      }}
+    >
+      <StateIcon state={state} />
+    </button>
+  )
+}
+
 export function PriorityIcon({ priority }: { priority: Priority }) {
   if (priority === 'none') return <span class="prio prio--none" aria-hidden="true" />
   const Icon = { low: SignalLow, med: SignalMedium, high: SignalHigh }[priority]
   return (
     <span class={`prio prio--${priority}`} title={`${PRIORITY_LABEL[priority]} priority`}>
       <Icon aria-hidden="true" />
+    </span>
+  )
+}
+
+/**
+ * What the notes hold, on a row or card: checklist progress such as `2/5` when they hold task
+ * items, else a note icon when they hold anything. Nothing for empty notes.
+ */
+export function NotesHint({ description, class: cls }: { description: string; class?: string }) {
+  const { done, total } = checklist(description)
+  if (total) {
+    const summary = `Checklist: ${done} of ${total} done`
+    return (
+      <span class={['checklist', done === total && 'checklist--done', cls].filter(Boolean).join(' ')} title={summary}>
+        <ListChecks aria-hidden="true" />
+        <span aria-hidden="true">
+          {done}/{total}
+        </span>
+        <span class="sr-only">{summary}</span>
+      </span>
+    )
+  }
+  if (!description.trim()) return null
+  return (
+    <span class={['notes-hint', cls].filter(Boolean).join(' ')} title="Has notes">
+      <NotepadText aria-hidden="true" />
+      <span class="sr-only">Has notes</span>
     </span>
   )
 }

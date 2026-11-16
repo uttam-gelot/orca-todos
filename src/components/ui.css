@@ -155,6 +155,31 @@
   color: var(--muted-fg);
   white-space: nowrap;
 }
+.done-toggle {
+  display: inline-flex;
+  flex: none;
+  padding: var(--space-0-5);
+  margin: calc(-1 * var(--space-0-5));
+  border-radius: 50%;
+}
+.done-toggle:hover {
+  --icon-scale: 1.12;
+}
+.notes-hint,
+.checklist {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-1);
+  flex: none;
+  font-size: var(--text-sm);
+  color: var(--muted-fg);
+  font-variant-numeric: tabular-nums;
+  --icon-size: var(--icon-sm);
+  --icon-color: currentColor;
+}
+.checklist--done {
+  color: color-mix(in oklab, var(--run-done) 75%, var(--fg));
+}
 .count {
   font-size: var(--text-sm);
   color: var(--muted-fg);
