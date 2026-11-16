@@ -2,7 +2,7 @@
 
 ## Project Overview
 
-Personal to-do plugin for Orca, the agent-orchestrator IDE: a center tab (list or board) and a right-sidebar panel over the same to-dos, kept in Orca plugin storage. This file is the only agent instruction file in the repo (there is no CLAUDE.md).
+Personal to-do plugin for Orca, the agent-orchestrator IDE: a center tab (list or board) and a right-sidebar panel over the same to-dos, kept in Orca plugin storage. A small worker starts coding agents on to-dos and follows their status. This file is the only agent instruction file in the repo (there is no CLAUDE.md).
 
 ## Tech Stack
 
@@ -23,12 +23,16 @@ src/components/   one .tsx + its own .css each; ui.tsx/.css hold shared primitiv
 src/model.ts      types, pure rules, parseTodo/parseStates
 src/store.ts      signals, actions, persistence, cross-surface sync
 src/orca.ts       the only window.orca access (localStorage fallback for previews)
+src/agents.ts     pure agent rules: agents, prompt, run bookkeeping, workspace labels
+src/protocol.ts   panel ↔ worker requests and their parsers (both sides import it)
+src/clipboard.ts  copy from a frame (execCommand: frames refuse navigator.clipboard)
+src/worker/       the trusted worker (dist/worker.js): workspaces, launches, status events
 src/keys.ts       keyboard map; src/focus.ts shared focus requests
 src/log.ts        logger; src/errors.ts typed errors
 src/styles.css    global tokens and resets only
 tests/            setup.ts, factories/, fixtures/, unit/, integration/
 scripts/shots/    `bun run shots`: Orca screenshots of a demo copy with sample data
-dist/             committed build output that Orca loads
+dist/             committed build output that Orca loads (app.js, app.css, worker.js)
 ```
 
 ## Coding Standards
@@ -37,7 +41,8 @@ dist/             committed build output that Orca loads
 - modular
 - soc
 - Validate stored data with `parseTodo` / `parseStates` before use; never trust a cast.
-- UI calls store actions; only `src/orca.ts` touches `window.orca`.
+- UI calls store actions; only `src/orca.ts` touches `window.orca`. Only `src/worker/` calls the worker host API.
+- Check every value that crosses the panel ↔ worker boundary with the parsers in `src/protocol.ts`.
 
 ## Documentation
 

@@ -43,13 +43,14 @@ local: no accounts and no sync service.
 - Views: List (state → todo → expandable details) and Board (drag between columns). No table.
 - Search; filter by state, priority, tags; sort by manual order, priority, updated, created.
 - Stats: total, open, closed, done this week, per state.
-- Technical: an Orca `sandboxed-ui` plugin. The UI runs in an isolated frame with no network:
-  every asset is bundled (including Geist, Orca's UI font, under the OFL), and the only
-  permission is `storage:own`.
+- Technical: an Orca `trusted-worker` plugin. The UI runs in isolated frames with no network:
+  every asset is bundled (including Geist, Orca's UI font, under the OFL). A small worker lists
+  workspaces, starts agents and follows their status. Permissions: `storage:own`,
+  `workspace:read`, `workspace:write`, `agent:launch`, `agent:read`, `terminal:send`.
   Colors come only from Orca's `--orca-*` frame variables. Sidebar panels and the center tab are
-  separate frames; a panel cannot open the center tab without a full-access worker.
+  separate frames.
 - Stack: Preact + @preact/signals, plain CSS, marked + DOMPurify, built with Bun.
-- Not yet: due dates, quick-add syntax, checklists, per-project lists, sending a to-do to an agent.
+- Not yet: due dates, quick-add syntax, checklists, per-project lists.
 
 ## Product Principles
 

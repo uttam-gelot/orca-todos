@@ -10,8 +10,10 @@ in a frame.
 - **Colors:** only Orca's `--orca-*` frame variables, mapped in `src/styles.css`. The fallbacks
   exist only for browser previews.
 - **Color carries state, nothing else.** Each state's color appears on its circle icon, the rail
-  and the progress bar. Everything else is monochrome. High priority is the foreground color, not
-  red.
+  and the progress bar. An agent run's state is a dot in its own fixed colors (`--run-*`: blue
+  working, amber needs you, green finished, gray otherwise). Only "Needs you" also colors its text,
+  mixed toward the foreground for contrast. Everything else is monochrome. High priority is the
+  foreground color, not red.
 - **Type:** Geist (bundled, OFL) at 13px for rows and items, 12px for secondary text, 14px semibold
   for titles, and 18px semibold for the detail title. Section labels are 11px uppercase semibold
   with 0.05em tracking. Numbers use tabular figures.
@@ -19,7 +21,8 @@ in a frame.
 - **Controls:** shadcn sizes, as Orca uses them.
   - Buttons: `btn` 36px, `btn-sm` 32px, `btn-xs` 24px. Icon buttons are 32px or 24px.
   - Inputs and selects: 28px, 12px text.
-  - Primary is only for **New**. Ghost is for icon buttons. Outline is for secondary actions.
+  - Primary is only for **New** and for the one submit action of a dialog (**Start agent**). Ghost
+    is for icon buttons. Outline is for secondary actions.
   - Destructive appears only for confirming a state delete.
 - **Elevation:**
   - Panes and cards use hairline borders. Cards and primary buttons also get `shadow-xs`.
@@ -51,7 +54,17 @@ in a frame.
   - Notes: the markdown preview has an edit control. The editor saves as you type, and ⌘↵ or Esc
     finishes.
 - **Overlays:** sheets for edge panels (details when narrow, states, shortcuts). A popover holds the
-  display options. There are no blocking dialogs.
+  display options. The one centered dialog is **Start agent**, laid out like Orca's New Workspace
+  composer. Sheets and the dialog are modal: `aria-modal`, Tab stays inside, Esc or the scrim
+  closes them, and focus returns.
+- **Agents:**
+  - Rows and cards: a ghost **Agent →** (on hover or selection in rows) opens the dialog. Once a
+    run exists it becomes an outline **Open →** with the run's dot and label next to it. Below
+    420px, rows show the dot alone.
+  - The dialog: workspace (grouped by project), agent, then the prompt as a read-only preview with
+    **Edit**. An edited prompt is kept per to-do until it starts. The footer names the side
+    effects ("New terminal · moves to In Progress"). Without the worker, Copy prompt is the
+    primary action.
 - **Empty states teach:** they name the key to press (N, ↵, 1–9, A) and offer a single action.
 - **Keyboard:** see `src/keys.ts` and the shortcut sheet (`?`). Esc backs out one layer at a time:
   sheet → menu → composer → details → selection → search.

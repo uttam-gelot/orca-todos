@@ -11,7 +11,7 @@ compact list in the sidebar. No account, no sync service, no network.
 
 [![CI](https://github.com/uttam-gelot/orca-todos/actions/workflows/ci.yml/badge.svg)](https://github.com/uttam-gelot/orca-todos/actions/workflows/ci.yml)
 [![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](LICENSE)
-[![Orca](https://img.shields.io/badge/Orca-%3E%3D1.4.246-111)](https://github.com/stablyai/orca)
+[![Orca](https://img.shields.io/badge/Orca-%3E%3D1.4.248-111)](https://github.com/stablyai/orca)
 [![Bun](https://img.shields.io/badge/Bun-1.4-black?logo=bun)](https://bun.sh)
 [![TypeScript](https://img.shields.io/badge/TypeScript-strict-3178c6?logo=typescript&logoColor=white)](https://www.typescriptlang.org/)
 
@@ -56,6 +56,9 @@ the Orca theme, fonts, and control sizes, so it looks like a part of Orca.
 - **States.** Add, rename, recolor, reorder, and delete states. A state that is marked "closed" counts as done.
 - **To-dos.** Each to-do has a title, markdown notes, tags, and a priority. You can archive a to-do. You can undo a delete.
 - **Links.** Links in notes open in your default browser.
+- **Agents.** Start a coding agent on a to-do in any Orca workspace. The to-do moves to your first
+  "in progress" state, and its row and card show the agent's status. You can also copy a to-do as an
+  agent prompt.
 - **List view.** The list shows to-dos in groups, one group for each state.
 - **Board view.** The board shows one column for each state. Drag a card to move it to a different state.
 - **Navigator.** Show all to-dos, one state, one tag, or the archive. Each item shows a count. The navigator also shows the numbers for the current week.
@@ -73,10 +76,20 @@ Orca draws these screenshots. To take them again, run `bun run shots` (see [Scre
 
 ## Requirements
 
-- Orca 1.4.246 or later.
+- Orca 1.4.248 or later.
 - [Bun](https://bun.sh) 1.4 or later, only if you change the code.
 
 ## Install in Orca
+
+The plugin is in the Orca community catalog.
+
+1. In Orca, open **Settings → Plugins**.
+2. Search for **ToDos Board**, then select **Install**.
+3. Review the permissions (see [Data and privacy](#data-and-privacy)), then approve them.
+
+Or open [ToDos Board in Orca](https://onorca.dev/plugins/uttam-gelot.todos?catalog=community).
+
+### Install from source
 
 1. In Orca, open **Settings → Plugins**.
 2. Select **Turn on plugins**.
@@ -107,7 +120,16 @@ The file stays empty. The plugin keeps your to-dos in Orca plugin storage, not i
 
 Select the ToDos icon in the right sidebar.
 
-The sidebar panel cannot open the center tab. That action needs the `workspace:write` permission. This plugin asks only for `storage:own`.
+### Start an agent on a to-do
+
+1. Select a to-do, then press `S`. Or select **Agent →** on its row, card, or details.
+2. Pick a workspace and an agent. Workspaces are grouped by project.
+3. Check the prompt. To change it, select **Edit**.
+4. Press `⌘↵` / `Ctrl+↵`.
+
+The agent starts in a new terminal of that workspace, with the to-do as its first message. Press `O`
+to open that workspace. Press `Y` to copy the to-do as a prompt instead, for an agent you started
+yourself.
 
 ### Keyboard shortcuts
 
@@ -127,6 +149,9 @@ The plugin does not use shortcuts with `⌘` or `Ctrl`, except `⌘Z` / `Ctrl+Z`
 | `Shift+H` `Shift+L` | Move the to-do to the previous or next state |
 | `X`                 | Mark done, or open again                     |
 | `P`                 | Change the priority                          |
+| `S`                 | Start an agent on the to-do                  |
+| `O`                 | Open the workspace of the to-do's agent      |
+| `Y`                 | Copy the to-do as an agent prompt            |
 | `A`                 | Archive, or restore from the archive         |
 | `⌫`                 | Delete. Press `⌘Z` / `Ctrl+Z` to undo        |
 | `Esc`               | Close, clear, or go back                     |
@@ -134,8 +159,18 @@ The plugin does not use shortcuts with `⌘` or `Ctrl`, except `⌘Z` / `Ctrl+Z`
 ## Data and privacy
 
 - The plugin keeps all data in Orca plugin storage on your computer.
-- The plugin does not use the network. Orca runs the plugin in a sandboxed frame with no network access.
-- The plugin asks for one permission: `storage:own`. This permission gives access only to the plugin's own storage.
+- The plugin does not use the network. Orca runs its views in sandboxed frames with no network access.
+- The plugin has a small worker. Orca runs it to list workspaces, start agents, and follow their
+  status. The worker does not read your files or run other commands.
+
+| Permission        | Used for                                            |
+| ----------------- | --------------------------------------------------- |
+| `storage:own`     | Your to-dos and states, in the plugin's own storage |
+| `workspace:read`  | The workspace list in **Start agent**               |
+| `workspace:write` | Opening the workspace an agent runs in (`O`)        |
+| `agent:launch`    | Starting an agent with a to-do as its prompt        |
+| `agent:read`      | Showing the agent's status on the to-do             |
+| `terminal:send`   | Starting the agent's command in a new terminal      |
 
 ## Upcoming features
 
@@ -146,8 +181,6 @@ These features are planned. They are not available yet.
   `Fix login #auth !high`.
 - **Checklists.** Show the progress of a markdown checklist on the row and on the card.
 - **Lists for each project.** Keep a separate list for each repository or workspace.
-- **Send a to-do to an agent.** Start an Orca agent from a to-do. This feature needs a future Orca
-  host API.
 
 Do you want a different feature? [Open an issue](https://github.com/uttam-gelot/orca-todos/issues).
 
