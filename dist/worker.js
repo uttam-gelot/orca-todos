@@ -252,6 +252,14 @@ var QUICK_PRIORITY = new Map([
   ["low", "low"],
   ["l", "low"]
 ]);
+var DAY_MS = 24 * 60 * 60 * 1000;
+function staleClosed(todos, states, days, now) {
+  if (days <= 0)
+    return [];
+  const closed = new Set(states.filter((s) => s.closed).map((s) => s.id));
+  const cutoff = now - days * DAY_MS;
+  return todos.filter((t) => !t.archived && closed.has(t.stateId) && t.closedAt !== undefined && t.closedAt <= cutoff);
+}
 var isRecord2 = (v) => typeof v === "object" && v !== null && !Array.isArray(v);
 var isString2 = (v) => typeof v === "string";
 var isNumber = (v) => typeof v === "number" && Number.isFinite(v);
@@ -461,9 +469,78 @@ async function onAgentStatus(orca, payload) {
   orca.log(`To-do ${todoId}: terminal ${event.terminalId} is ${event.state}`);
 }
 
+// src/settings.ts
+var DEFAULT_SETTINGS = {
+  language: "auto",
+  autoArchiveDays: 0
+};
+var ARCHIVE_DAYS = [0, 1, 3, 7, 14, 30];
+var isRecord4 = (v) => typeof v === "object" && v !== null && !Array.isArray(v);
+function parseSettings(value) {
+  const raw = isRecord4(value) ? value : {};
+  return {
+    language: typeof raw.language === "string" ? raw.language : DEFAULT_SETTINGS.language,
+    autoArchiveDays: ARCHIVE_DAYS.includes(raw.autoArchiveDays) ? raw.autoArchiveDays : DEFAULT_SETTINGS.autoArchiveDays
+  };
+}
+
+// src/worker/data.ts
+var isRecord5 = (v) => typeof v === "object" && v !== null && !Array.isArray(v);
+var errorCode = (error) => isRecord5(error) && typeof error.code === "string" ? error.code : "action_failed";
+async function readValue(orca, key) {
+  const answer = await orca.host.call("storage.get", { key });
+  return isRecord5(answer) ? answer.value : null;
+}
+async function writeValue(orca, key, value) {
+  await orca.host.call("storage.set", { key, value });
+}
+async function readAll(orca) {
+  const answer = await orca.host.call("storage.keys", {});
+  const keys = isRecord5(answer) && Array.isArray(answer.keys) ? answer.keys.filter((k) => typeof k === "string") : [];
+  const values = await Promise.all(keys.filter((k) => k.startsWith(TODO_KEY)).map((k) => readValue(orca, k)));
+  const todos = values.map(parseTodo).filter((t) => t !== null);
+  return { todos, states: parseStates(await readValue(orca, STATES_KEY)) ?? DEFAULT_STATES };
+}
+async function readSettings(orca) {
+  try {
+    return parseSettings(await orca.settings.get());
+  } catch (error) {
+    orca.log(`Could not read settings; using the defaults (${errorCode(error)})`);
+    return parseSettings(null);
+  }
+}
+
+// src/worker/archive.ts
+var HOUR_MS = 60 * 60 * 1000;
+async function autoArchive(orca, now = Date.now()) {
+  const { autoArchiveDays } = await readSettings(orca);
+  if (!autoArchiveDays)
+    return 0;
+  const { todos, states } = await readAll(orca);
+  const stale = staleClosed(todos, states, autoArchiveDays, now);
+  for (const todo of stale)
+    await writeValue(orca, TODO_KEY + todo.id, { ...todo, archived: true, updatedAt: now });
+  if (stale.length)
+    orca.log(`Auto-archived ${stale.length} closed to-dos`);
+  return stale.length;
+}
+function followArchive(orca, everyMs = HOUR_MS) {
+  const run = () => {
+    autoArchive(orca).catch((error) => orca.log(`Could not archive closed to-dos (${errorCode(error)})`));
+  };
+  const timer = setInterval(run, everyMs);
+  const listening = orca.settings.onDidChange(run);
+  run();
+  return {
+    dispose() {
+      clearInterval(timer);
+      listening.dispose();
+    }
+  };
+}
+
 // src/worker/status.ts
 var STATUS_ITEM = "open-count";
-var isRecord4 = (v) => typeof v === "object" && v !== null && !Array.isArray(v);
 function statusFor(todos, states, m = en) {
   const closed = new Set(states.filter((s) => s.closed).map((s) => s.id));
   const open = todos.filter((t) => !t.archived && !closed.has(t.stateId));
@@ -473,17 +550,6 @@ function statusFor(todos, states, m = en) {
     tooltip: m.statusTip(open.length, high)
   };
 }
-var read = async (orca, key) => {
-  const answer = await orca.host.call("storage.get", { key });
-  return isRecord4(answer) ? answer.value : null;
-};
-async function readAll(orca) {
-  const answer = await orca.host.call("storage.keys", {});
-  const keys = isRecord4(answer) && Array.isArray(answer.keys) ? answer.keys.filter((k) => typeof k === "string") : [];
-  const values = await Promise.all(keys.filter((k) => k.startsWith(TODO_KEY)).map((k) => read(orca, k)));
-  const todos = values.map(parseTodo).filter((t) => t !== null);
-  return { todos, states: parseStates(await read(orca, STATES_KEY)) ?? DEFAULT_STATES };
-}
 async function updateStatus(orca) {
   const { todos, states } = await readAll(orca);
   await orca.host.call("statusBar.update", { id: STATUS_ITEM, ...statusFor(todos, states), visible: true });
@@ -491,10 +557,7 @@ async function updateStatus(orca) {
 function followStatus(orca, delayMs = 300) {
   let timer;
   const run = () => {
-    updateStatus(orca).catch((error) => {
-      const code = isRecord4(error) && typeof error.code === "string" ? error.code : "action_failed";
-      orca.log(`Could not update the status bar item (${code})`);
-    });
+    updateStatus(orca).catch((error) => orca.log(`Could not update the status bar item (${errorCode(error)})`));
   };
   orca.storage.onDidChange((change) => {
     if (!change.key.startsWith(TODO_KEY) && change.key !== STATES_KEY)
@@ -512,6 +575,7 @@ function activate(orca) {
   orca.panels.handle(REQUEST.open, (input) => openWorkspace(orca, input));
   orca.events.on("agent.status.changed", (payload) => onAgentStatus(orca, payload));
   followStatus(orca);
+  followArchive(orca);
 }
 export {
   activate as default

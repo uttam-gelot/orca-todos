@@ -96,6 +96,17 @@
         "tooltip": "ToDos: open to-dos. Press to show or hide the right sidebar.",
         "command": "todos.toggleSidebar"
       }
+    ],
+    "settings": [
+      {
+        "key": "autoArchiveDays",
+        "title": "Archive closed to-dos",
+        "description": "Move a to-do to the archive this many days after it was closed. Archived to-dos stay searchable under Archived, and you can restore them.",
+        "type": "integer",
+        "default": 0,
+        "enum": [0, 1, 3, 7, 14, 30],
+        "enumLabels": ["Never", "After 1 day", "After 3 days", "After 7 days", "After 14 days", "After 30 days"]
+      }
     ]
   },
   "capabilities": [
@@ -116,6 +127,9 @@
     },
     {
       "kind": "terminal:send"
+    },
+    {
+      "kind": "settings:own"
     }
   ]
 }

@@ -4,6 +4,7 @@
 
 import { REQUEST } from '../protocol'
 import { launchAgent, listWorkspaces, onAgentStatus, openWorkspace } from './handlers'
+import { followArchive } from './archive'
 import type { WorkerOrca } from './host'
 import { followStatus } from './status'
 
@@ -13,4 +14,5 @@ export default function activate(orca: WorkerOrca): void {
   orca.panels.handle(REQUEST.open, (input) => openWorkspace(orca, input))
   orca.events.on('agent.status.changed', (payload) => onAgentStatus(orca, payload))
   followStatus(orca)
+  followArchive(orca)
 }

@@ -198,6 +198,19 @@ export function stats(todos: Todo[], states: State[], now = Date.now()): Stats {
   }
 }
 
+const DAY_MS = 24 * 60 * 60 * 1000
+
+/**
+ * The live to-dos in a closed state that were closed at least `days` days before `now`: the ones
+ * auto-archive moves. None when `days` is 0 (auto-archive off).
+ */
+export function staleClosed(todos: Todo[], states: State[], days: number, now: number): Todo[] {
+  if (days <= 0) return []
+  const closed = new Set(states.filter((s) => s.closed).map((s) => s.id))
+  const cutoff = now - days * DAY_MS
+  return todos.filter((t) => !t.archived && closed.has(t.stateId) && t.closedAt !== undefined && t.closedAt <= cutoff)
+}
+
 export function allTags(todos: Todo[]): string[] {
   return [...new Set(todos.flatMap((t) => t.tags))].sort()
 }
