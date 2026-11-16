@@ -8,3 +8,6 @@ release/
 .vscode/
 .idea/
 *.swp
+
+# Local links to .agents/skills. Plugin Git trees cannot contain symlinks.
+.claude/skills/
