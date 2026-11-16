@@ -1,6 +1,7 @@
 // Pure rules for handing a to-do to an agent: the agents to offer, the prompt, and run bookkeeping.
 // No Orca and no DOM, so the panel and the worker share it and tests call it directly.
 
+import { en, type Messages } from './i18n/en'
 import { PRIORITY_LABEL, type AgentRun, type RunState, type State, type Todo } from './model'
 import type { WorkspaceOption } from './protocol'
 
@@ -49,18 +50,13 @@ export function startCommand(agentId: string, prompt: string): string | null {
   return [agent.command, agent.promptFlag, shellQuote(prompt)].filter(Boolean).join(' ')
 }
 
-export const RUN_LABEL: Record<RunState, string> = {
-  starting: 'Starting',
-  working: 'Working',
-  blocked: 'Needs you',
-  waiting: 'Waiting',
-  done: 'Finished'
-}
-
 /** Runs kept per to-do. Older ones drop off: they only record history. */
 export const MAX_RUNS = 10
 
-/** The prompt an agent gets for a to-do: its title, notes, tags and priority, as markdown. */
+/**
+ * The prompt an agent gets for a to-do: its title, notes, tags and priority, as markdown. It stays
+ * in English whatever the interface language: agents read it, and the to-do's words stay as typed.
+ */
 export function buildPrompt(todo: Todo): string {
   const facts = [
     todo.tags.length ? `Tags: ${todo.tags.map((t) => `#${t}`).join(' ')}` : '',
@@ -160,23 +156,23 @@ export function workspaceTitle(w: WorkspaceOption): string {
 }
 
 /**
- * What to tell the person when a request to the worker failed, by Orca's error code. `what` names
- * the request in the fallback text.
+ * What to tell the person when a request to the worker failed, by Orca's error code, in the
+ * language of `m`. `what` picks the fallback text: starting an agent or opening a workspace.
  */
-export function agentErrorText(code: string, what = 'start the agent'): string {
+export function agentErrorText(code: string, m: Messages = en, what: 'start' | 'open' = 'start'): string {
   switch (code) {
     case 'not_permitted':
     case 'approval_required':
-      return 'Orca did not allow it. In Settings → Plugins, approve the access of ToDos Board again.'
+      return m.errNotPermitted
     case 'unavailable':
     case 'unknown_method':
-      return 'This Orca cannot reach the plugin worker. Update Orca, or copy the prompt instead.'
+      return m.errUnreachable
     case 'timeout':
-      return 'The plugin worker did not answer in time. Try again.'
+      return m.errTimeout
     case 'invalid_params':
-      return 'Pick a workspace and write a prompt first.'
+      return m.errInvalid
     default:
       // The code goes to the log, not to the user: it names no step they can take.
-      return `Could not ${what}. Try again.`
+      return what === 'open' ? m.errOpenWorkspace : m.errStartAgent
   }
 }

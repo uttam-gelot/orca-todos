@@ -15,6 +15,7 @@ import {
 } from './agents'
 import { copyText } from './clipboard'
 import { AgentError, StorageError } from './errors'
+import { t } from './i18n/t'
 import { log } from './log'
 import { launchAgent, listWorkspaces, openWorkspace, storage } from './orca'
 import type { LaunchAnswer, WorkspacesAnswer } from './protocol'
@@ -354,7 +355,7 @@ export function deleteTodo(id: string): void {
   const todo = todos.value.find((t) => t.id === id)
   if (!todo) return
   selectNeighbour(id)
-  lastUndoable.value = { text: `Deleted “${todo.title}”`, before: [todo] }
+  lastUndoable.value = { text: t.deleted(todo.title), before: [todo] }
   todos.value = todos.value.filter((t) => t.id !== id)
   persist('delete', TODO_KEY + id, storage.delete(TODO_KEY + id))
 }
@@ -364,7 +365,10 @@ export function toggleArchived(id: string): void {
   const todo = todos.value.find((t) => t.id === id)
   if (!todo) return
   selectNeighbour(id)
-  lastUndoable.value = { text: `${todo.archived ? 'Restored' : 'Archived'} “${todo.title}”`, before: [todo] }
+  lastUndoable.value = {
+    text: todo.archived ? t.restoredTodo(todo.title) : t.archivedTodo(todo.title),
+    before: [todo]
+  }
   updateTodo(id, { archived: !todo.archived })
 }
 
@@ -388,11 +392,11 @@ export function copyPrompt(id: string, text?: string): void {
   const todo = todos.value.find((t) => t.id === id)
   if (!todo) return
   if (copyText(text ?? buildPrompt(todo))) {
-    notice.value = { text: 'Copied as an agent prompt' }
+    notice.value = { text: t.copiedPrompt }
     return
   }
   log.warn('The clipboard refused the copy', { op: 'copyPrompt', id })
-  notice.value = { text: 'Could not copy. Orca did not allow the clipboard.', error: true }
+  notice.value = { text: t.clipboardRefused, error: true }
 }
 
 // --- handing a to-do to an agent ---
@@ -431,9 +435,9 @@ export type WorkspaceList =
 /** The workspaces the agent dialog offers, fetched from the worker each time it opens. */
 export const workspaceList = signal<WorkspaceList>({ status: 'loading' })
 
-const errorMessage = (op: string, error: unknown, what?: string): string => {
+const errorMessage = (op: string, error: unknown, what?: 'start' | 'open'): string => {
   log.error('Agent request failed', { op }, error)
-  return agentErrorText(error instanceof AgentError ? error.code : 'action_failed', what)
+  return agentErrorText(error instanceof AgentError ? error.code : 'action_failed', t, what)
 }
 
 /** Fetches the workspaces and picks one: the remembered one, else the focused one, else the first. */
@@ -464,7 +468,7 @@ export async function sendToAgent(id: string, prompt: string): Promise<string | 
   const { agent, workspaceId } = agentChoice.value
   const list = workspaceList.value
   const workspace = list.status === 'ready' ? list.answer.workspaces.find((w) => w.id === workspaceId) : undefined
-  if (!workspace || !prompt.trim()) return agentErrorText('invalid_params')
+  if (!workspace || !prompt.trim()) return agentErrorText('invalid_params', t)
   let launched: LaunchAnswer
   try {
     launched = await launchAgent({ todoId: id, workspaceId, agent, prompt })
@@ -492,11 +496,9 @@ export async function sendToAgent(id: string, prompt: string): Promise<string | 
       ...(stateId && { stateId, order: orderBefore(others, stateId, null) })
     })
   }
-  const started = `Started ${agentLabel(agent)} in ${workspaceTitle(workspace)}`
+  const started = t.startedAgent(agentLabel(agent), workspaceTitle(workspace))
   // Orca types the prompt in for CLIs that take none on their command line, and that can miss.
-  notice.value = {
-    text: launched.prompt === 'typed' ? `${started}. If the prompt does not show up there, copy it with Y.` : started
-  }
+  notice.value = { text: launched.prompt === 'typed' ? t.promptMayMiss(started) : started }
   return null
 }
 
@@ -505,7 +507,7 @@ export async function openRun(run: AgentRun): Promise<void> {
   try {
     await openWorkspace(run.workspaceId)
   } catch (error) {
-    notice.value = { text: errorMessage('openRun', error, 'open the workspace'), error: true }
+    notice.value = { text: errorMessage('openRun', error, 'open'), error: true }
   }
 }
 
@@ -514,7 +516,7 @@ export function archiveClosed(): number {
   const list = live.value.filter((t) => closed.has(t.stateId))
   if (!list.length) return 0
   const n = list.length
-  lastUndoable.value = { text: `Archived ${n} closed to-do${n === 1 ? '' : 's'}`, before: list }
+  lastUndoable.value = { text: t.archivedClosed(n), before: list }
   for (const t of list) updateTodo(t.id, { archived: true })
   return n
 }

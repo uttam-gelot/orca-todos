@@ -6,6 +6,7 @@ import { useSignal } from '@preact/signals'
 import { Copy, Pencil, RotateCw, X } from 'lucide-preact'
 import { AGENTS, buildPrompt, groupWorkspaces, stateAfterSend, workspaceLabel } from '../agents'
 import type { Todo } from '../model'
+import { t } from '../i18n/t'
 import { workerAvailable } from '../orca'
 import {
   agentChoice,
@@ -30,7 +31,7 @@ export function AgentDialog() {
   const todo = selected.value
   if (sheet.value !== 'agent' || !todo) return null
   return (
-    <Sheet label="Start agent" onClose={close} center>
+    <Sheet label={t.startAgent} onClose={close} center>
       <AgentForm key={todo.id} todo={todo} />
     </Sheet>
   )
@@ -76,12 +77,12 @@ function AgentForm({ todo }: { todo: Todo }) {
     >
       <header class="agent-dialog__head">
         <div class="agent-dialog__heading">
-          <h2 class="agent-dialog__title">Start agent</h2>
+          <h2 class="agent-dialog__title">{t.startAgent}</h2>
           <p class="agent-dialog__subject" title={todo.title}>
             {todo.title}
           </p>
         </div>
-        <IconButton label="Close (Esc)" onClick={close}>
+        <IconButton label={`${t.close} (Esc)`} onClick={close}>
           <X />
         </IconButton>
       </header>
@@ -91,13 +92,13 @@ function AgentForm({ todo }: { todo: Todo }) {
           <>
             <div class="agent-dialog__field">
               <label class="agent-dialog__label" for="agent-workspace">
-                Workspace
+                {t.workspace}
               </label>
               <WorkspacePicker />
             </div>
             <div class="agent-dialog__field">
               <label class="agent-dialog__label" for="agent-agent">
-                Agent
+                {t.agent}
               </label>
               <select
                 id="agent-agent"
@@ -114,15 +115,13 @@ function AgentForm({ todo }: { todo: Todo }) {
             </div>
           </>
         ) : (
-          <p class="agent-dialog__notice">
-            Starting an agent from here needs Orca 1.4.248 or later. Copy the prompt, then paste it into an agent.
-          </p>
+          <p class="agent-dialog__notice">{t.needsNewerOrca}</p>
         )}
 
         <div class="agent-dialog__field">
           <div class="agent-dialog__label-row">
             <label class="agent-dialog__label" for="agent-prompt">
-              Prompt
+              {t.prompt}
             </label>
             {!editing.value && (
               <button
@@ -131,7 +130,7 @@ function AgentForm({ todo }: { todo: Todo }) {
                 onClick={() => (editing.value = true)}
               >
                 <Pencil />
-                Edit
+                {t.edit}
               </button>
             )}
           </div>
@@ -165,11 +164,11 @@ function AgentForm({ todo }: { todo: Todo }) {
         {canSend ? (
           <>
             <span class="agent-dialog__hint">
-              {target ? `New terminal · moves to ${stateById.value.get(target)?.name}` : 'Opens in a new terminal'}
+              {target ? t.movesTo(stateById.value.get(target)?.name ?? '') : t.opensNewTerminal}
             </span>
             <button type="button" class="btn btn--ghost btn--sm" onClick={copy}>
               <Copy />
-              Copy
+              {t.copy}
             </button>
             <button
               type="submit"
@@ -177,7 +176,7 @@ function AgentForm({ todo }: { todo: Todo }) {
               disabled={!ready || !prompt.value.trim() || sending.value}
               aria-busy={sending.value}
             >
-              {sending.value ? 'Starting…' : 'Start agent'}
+              {sending.value ? t.starting : t.startAgent}
               <Kbd small class="agent-dialog__kbd">
                 {MOD}↵
               </Kbd>
@@ -188,7 +187,7 @@ function AgentForm({ todo }: { todo: Todo }) {
             <span class="agent-dialog__hint" />
             <button type="button" class="btn btn--primary btn--sm" autofocus onClick={copy}>
               <Copy />
-              Copy prompt
+              {t.copyPrompt}
               <Kbd small class="agent-dialog__kbd">
                 {MOD}↵
               </Kbd>
@@ -207,12 +206,10 @@ function WorkspacePicker() {
   if (list.status === 'error' || (list.status === 'ready' && !list.answer.workspaces.length))
     return (
       <div class="agent-dialog__error" role="alert">
-        <span>
-          {list.status === 'error' ? list.message : 'Orca has no workspaces yet. Create one in Orca, then retry.'}
-        </span>
+        <span>{list.status === 'error' ? list.message : t.noWorkspaces}</span>
         <button type="button" class="btn btn--ghost btn--xs" autofocus onClick={() => void loadWorkspaces()}>
           <RotateCw />
-          Retry
+          {t.retry}
         </button>
       </div>
     )
@@ -226,14 +223,14 @@ function WorkspacePicker() {
       onChange={(e) => (agentChoice.value = { ...choice, workspaceId: e.currentTarget.value })}
     >
       {list.status === 'loading' ? (
-        <option value="">Loading workspaces…</option>
+        <option value="">{t.loadingWorkspaces}</option>
       ) : (
         groupWorkspaces(list.answer.workspaces).map((group) => (
           <optgroup key={group.name} label={group.name}>
             {group.workspaces.map((w) => (
               <option key={w.id} value={w.id}>
                 {workspaceLabel(w)}
-                {w.id === list.answer.focusedId ? ' (open now)' : ''}
+                {w.id === list.answer.focusedId ? t.openNow : ''}
               </option>
             ))}
           </optgroup>

@@ -4,6 +4,7 @@ import { useSignal } from '@preact/signals'
 import { ArrowDown, ArrowUp, Trash } from 'lucide-preact'
 import type { State } from '../model'
 import { addState, deleteState, moveState, sheet, states, summary, updateState } from '../store'
+import { t } from '../i18n/t'
 import { IconButton, Kbd, MOD, Sheet, SheetHeader } from './ui'
 import './Sheets.css'
 
@@ -12,15 +13,15 @@ const close = () => (sheet.value = null)
 export function Sheets() {
   if (sheet.value === 'states')
     return (
-      <Sheet label="States" onClose={close}>
-        <SheetHeader title="States" onClose={close} />
+      <Sheet label={t.states} onClose={close}>
+        <SheetHeader title={t.states} onClose={close} />
         <StatesBody />
       </Sheet>
     )
   if (sheet.value === 'shortcuts')
     return (
-      <Sheet label="Keyboard shortcuts" onClose={close}>
-        <SheetHeader title="Keyboard shortcuts" onClose={close} />
+      <Sheet label={t.keyboardShortcuts} onClose={close}>
+        <SheetHeader title={t.keyboardShortcuts} onClose={close} />
         <ShortcutsBody />
       </Sheet>
     )
@@ -31,7 +32,7 @@ function StatesBody() {
   const name = useSignal('')
   return (
     <div class="sheet__body state-editor">
-      <p class="sheet__hint">Order here is the order of list groups and board columns. Closed states count as done.</p>
+      <p class="sheet__hint">{t.statesHint}</p>
       <ul class="state-editor__list">
         {states.value.map((s, i) => (
           <StateRow key={s.id} state={s} index={i} />
@@ -48,13 +49,13 @@ function StatesBody() {
       >
         <input
           class="input state-editor__name"
-          placeholder="New state name"
-          aria-label="New state name"
+          placeholder={t.newStateName}
+          aria-label={t.newStateName}
           value={name.value}
           onInput={(e) => (name.value = e.currentTarget.value)}
         />
         <button type="submit" class="btn btn--outline btn--sm" disabled={!name.value.trim()}>
-          Add state
+          {t.addState}
         </button>
       </form>
     </div>
@@ -71,30 +72,30 @@ function StateRow({ state, index }: { state: State; index: number }) {
       <input
         type="color"
         class="state-editor__swatch"
-        aria-label={`${state.name} color`}
+        aria-label={t.stateColor(state.name)}
         value={state.color}
         onChange={(e) => updateState(state.id, { color: e.currentTarget.value })}
       />
       <input
         class="input state-editor__name"
-        aria-label="State name"
+        aria-label={t.stateName}
         value={state.name}
         onChange={(e) => e.currentTarget.value.trim() && updateState(state.id, { name: e.currentTarget.value.trim() })}
       />
-      <label class="state-editor__closed" title="Todos here count as done">
+      <label class="state-editor__closed" title={t.closedHint}>
         <input
           type="checkbox"
           class="state-editor__closed-box"
           checked={state.closed}
           onChange={(e) => updateState(state.id, { closed: e.currentTarget.checked })}
         />
-        Closed
+        {t.closedLabel}
       </label>
-      <IconButton label="Move up" class="btn--icon-xs" disabled={index === 0} onClick={() => moveState(state.id, -1)}>
+      <IconButton label={t.moveUp} class="btn--icon-xs" disabled={index === 0} onClick={() => moveState(state.id, -1)}>
         <ArrowUp />
       </IconButton>
       <IconButton
-        label="Move down"
+        label={t.moveDown}
         class="btn--icon-xs"
         disabled={index === list.length - 1}
         onClick={() => moveState(state.id, 1)}
@@ -108,15 +109,15 @@ function StateRow({ state, index }: { state: State; index: number }) {
             class="btn btn--destructive btn--xs"
             onClick={() => fallback && deleteState(state.id, fallback.id)}
           >
-            {count ? `Delete, move ${count} to ${fallback?.name}` : 'Delete'}
+            {count ? t.deleteAndMove(count, fallback?.name ?? '') : t.delete}
           </button>
           <button type="button" class="btn btn--ghost btn--xs" onClick={() => (confirming.value = false)}>
-            Keep
+            {t.keep}
           </button>
         </span>
       ) : (
         <IconButton
-          label="Delete state"
+          label={t.deleteState}
           class="btn--icon-xs btn--danger"
           disabled={list.length <= 1}
           onClick={() => (confirming.value = true)}
@@ -128,39 +129,40 @@ function StateRow({ state, index }: { state: State; index: number }) {
   )
 }
 
-const SHORTCUTS: [string, string[][]][] = [
+/** The shortcut list: sections of [label, ...keys], in the interface language. */
+const shortcuts = (): [string, string[][]][] => [
   [
-    'Move around',
+    t.keysMove,
     [
-      ['Next / previous to-do', 'J', 'K'],
-      ['Previous / next column (board)', 'H', 'L'],
-      ['Previous / next scope', '[', ']'],
-      ['Open details (again: edit title)', '↵'],
-      ['Close, clear, go back', 'Esc']
+      [t.keysNextPrev, 'J', 'K'],
+      [t.keysColumns, 'H', 'L'],
+      [t.keysScopes, '[', ']'],
+      [t.keysOpen, '↵'],
+      [t.keysBack, 'Esc']
     ]
   ],
   [
-    'Create and find',
+    t.keysCreate,
     [
-      ['New to-do', 'N'],
-      ['Search', '/'],
-      ['Switch list / board', 'V']
+      [t.keysNew, 'N'],
+      [t.keysSearch, '/'],
+      [t.keysView, 'V']
     ]
   ],
   [
-    'Change the selected to-do',
+    t.keysChange,
     [
-      ['Move to state 1–9', '1–9'],
-      ['Move to previous / next state', '⇧H', '⇧L'],
-      ['Mark done / reopen', 'X'],
-      ['Cycle priority', 'P'],
-      ['Edit description', 'E'],
-      ['Start an agent on it', 'S'],
-      ["Open the agent's workspace", 'O'],
-      ['Copy as agent prompt', 'Y'],
-      ['Archive / unarchive', 'A'],
-      ['Delete', '⌫'],
-      ['Undo delete or archive', `${MOD}Z`]
+      [t.keysToState, '1–9'],
+      [t.keysShiftState, '⇧H', '⇧L'],
+      [t.keysDone, 'X'],
+      [t.keysPriority, 'P'],
+      [t.keysNotes, 'E'],
+      [t.keysAgent, 'S'],
+      [t.keysOpenRun, 'O'],
+      [t.keysCopy, 'Y'],
+      [t.keysArchive, 'A'],
+      [t.keysDelete, '⌫'],
+      [t.keysUndo, `${MOD}Z`]
     ]
   ]
 ]
@@ -168,7 +170,7 @@ const SHORTCUTS: [string, string[][]][] = [
 function ShortcutsBody() {
   return (
     <div class="sheet__body shortcuts">
-      {SHORTCUTS.map(([title, rows]) => (
+      {shortcuts().map(([title, rows]) => (
         <section key={title} class="shortcuts__section">
           <h3 class="shortcuts__heading section-label">{title}</h3>
           <dl>

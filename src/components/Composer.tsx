@@ -5,6 +5,7 @@ import { useSignal } from '@preact/signals'
 import { Plus } from 'lucide-preact'
 import { parseQuickAdd } from '../model'
 import { composer, createTodo, filter, openComposer, select, stateById } from '../store'
+import { t } from '../i18n/t'
 import { Kbd, StateIcon } from './ui'
 import './Composer.css'
 
@@ -33,8 +34,8 @@ export function Composer({ stateId, variant }: { stateId: string; variant: 'row'
       <input
         class="composer__input"
         autoFocus
-        aria-label={`New to-do in ${state?.name ?? 'state'}`}
-        placeholder="To-do title (#tag !high)"
+        aria-label={t.newTodoIn(state?.name ?? t.state)}
+        placeholder={t.composerPlaceholder}
         value={title.value}
         onInput={(e) => (title.value = e.currentTarget.value)}
         onBlur={() => !title.value.trim() && (composer.value = null)}
@@ -59,7 +60,7 @@ export function AddSlot({ stateId, variant }: { stateId: string; variant: 'row' 
   return (
     <button type="button" class={`add-slot add-slot--${variant}`} onClick={() => openComposer(stateId)}>
       <Plus aria-hidden="true" />
-      Add to-do
+      {t.addTodo}
     </button>
   )
 }

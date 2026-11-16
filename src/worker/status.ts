@@ -4,6 +4,7 @@
 // shows or hides the right sidebar, where the ToDos panel lives.
 
 import { DEFAULT_STATES, parseStates, parseTodo, STATES_KEY, TODO_KEY, type State, type Todo } from '../model'
+import { en, type Messages } from '../i18n/en'
 import type { WorkerOrca } from './host'
 
 /** The item's id in the manifest's `contributes.statusBarItems`. */
@@ -11,17 +12,14 @@ export const STATUS_ITEM = 'open-count'
 
 const isRecord = (v: unknown): v is Record<string, unknown> => typeof v === 'object' && v !== null && !Array.isArray(v)
 
-/** What the item says for these to-dos: "5 open · 2 high", or "No open to-dos". */
-export function statusFor(todos: Todo[], states: State[]): { text: string; tooltip: string } {
+/** What the item says for these to-dos, in the language of `m`: "5 open · 2 high", or "No open to-dos". */
+export function statusFor(todos: Todo[], states: State[], m: Messages = en): { text: string; tooltip: string } {
   const closed = new Set(states.filter((s) => s.closed).map((s) => s.id))
   const open = todos.filter((t) => !t.archived && !closed.has(t.stateId))
   const high = open.filter((t) => t.priority === 'high').length
-  const press = 'Press to show or hide the right sidebar.'
-  if (!open.length) return { text: 'No open to-dos', tooltip: `ToDos: nothing open. ${press}` }
-  const s = open.length === 1 ? '' : 's'
   return {
-    text: high ? `${open.length} open · ${high} high` : `${open.length} open`,
-    tooltip: `ToDos: ${open.length} open to-do${s}${high ? `, ${high} high priority` : ''}. ${press}`
+    text: open.length ? m.statusOpen(open.length, high) : m.statusNone,
+    tooltip: m.statusTip(open.length, high)
   }
 }
 

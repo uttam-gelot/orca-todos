@@ -3,6 +3,7 @@
 import { Archive, Hash, Inbox, Settings2 } from 'lucide-preact'
 import type { ComponentChildren } from 'preact'
 import { archivedCount, scope, scopeKey, setScope, sheet, summary, tagCounts, type Scope } from '../store'
+import { t } from '../i18n/t'
 import { IconButton, StateIcon } from './ui'
 import './Rail.css'
 
@@ -30,13 +31,13 @@ function Item({
 export function Rail() {
   const s = summary.value
   return (
-    <nav class="rail" aria-label="To-do scopes">
+    <nav class="rail" aria-label={t.todoScopes}>
       <div class="rail__scroll">
-        <Item target={{ kind: 'all' }} icon={<Inbox />} label="All to-dos" count={s.total} />
+        <Item target={{ kind: 'all' }} icon={<Inbox />} label={t.allTodos} count={s.total} />
 
         <div class="rail__section section-label">
-          <span>States</span>
-          <IconButton label="Edit states" class="btn--icon-xs" onClick={() => (sheet.value = 'states')}>
+          <span>{t.states}</span>
+          <IconButton label={t.editStates} class="btn--icon-xs" onClick={() => (sheet.value = 'states')}>
             <Settings2 />
           </IconButton>
         </div>
@@ -53,7 +54,7 @@ export function Rail() {
         {tagCounts.value.length > 0 && (
           <>
             <div class="rail__section section-label">
-              <span>Tags</span>
+              <span>{t.tags}</span>
             </div>
             {tagCounts.value.map(([tag, count]) => (
               <Item key={tag} target={{ kind: 'tag', id: tag }} icon={<Hash />} label={tag} count={count} />
@@ -62,7 +63,7 @@ export function Rail() {
         )}
 
         <div class="rail__gap" />
-        <Item target={{ kind: 'archived' }} icon={<Archive />} label="Archived" count={archivedCount.value} />
+        <Item target={{ kind: 'archived' }} icon={<Archive />} label={t.archived} count={archivedCount.value} />
       </div>
       <Progress />
     </nav>
@@ -88,9 +89,9 @@ export function Progress({ compact = false }: { compact?: boolean }) {
           )}
       </div>
       <dl class="progress__stats">
-        <Stat term="Open" value={s.open} />
-        <Stat term="Closed" value={s.closed} />
-        <Stat term="Done this week" value={s.doneThisWeek} />
+        <Stat term={t.statOpen} value={s.open} />
+        <Stat term={t.statClosed} value={s.closed} />
+        <Stat term={t.statDoneThisWeek} value={s.doneThisWeek} />
       </dl>
     </footer>
   )
@@ -112,7 +113,7 @@ export function ScopeSelect() {
   return (
     <select
       class="scope-select"
-      aria-label="Scope"
+      aria-label={t.scope}
       value={scopeKey(scope.value)}
       onChange={(e) => {
         const [kind, ...rest] = e.currentTarget.value.split(':')
@@ -120,8 +121,8 @@ export function ScopeSelect() {
         setScope(kind === 'state' || kind === 'tag' ? { kind, id } : { kind: kind as 'all' | 'archived' })
       }}
     >
-      <option value="all">{label('All to-dos', s.total)}</option>
-      <optgroup label="States">
+      <option value="all">{label(t.allTodos, s.total)}</option>
+      <optgroup label={t.states}>
         {s.perState.map(({ state, count }) => (
           <option key={state.id} value={`state:${state.id}`}>
             {label(state.name, count)}
@@ -129,7 +130,7 @@ export function ScopeSelect() {
         ))}
       </optgroup>
       {tagCounts.value.length > 0 && (
-        <optgroup label="Tags">
+        <optgroup label={t.tags}>
           {tagCounts.value.map(([tag, count]) => (
             <option key={tag} value={`tag:${tag}`}>
               {label(`#${tag}`, count)}
@@ -137,7 +138,7 @@ export function ScopeSelect() {
           ))}
         </optgroup>
       )}
-      <option value="archived">{label('Archived', archivedCount.value)}</option>
+      <option value="archived">{label(t.archived, archivedCount.value)}</option>
     </select>
   )
 }

@@ -3,7 +3,8 @@
 // or ghost: in this plugin color carries state, and the primary button is only for New.
 
 import { ArrowRight } from 'lucide-preact'
-import { agentLabel, latestRun, RUN_LABEL } from '../agents'
+import { agentLabel, latestRun } from '../agents'
+import { formatLong, t } from '../i18n/t'
 import type { AgentRun, Todo } from '../model'
 import { openAgentDialog, openRun } from '../store'
 import { ago } from './ui'
@@ -11,7 +12,7 @@ import './AgentRun.css'
 
 /** Who runs where, for tooltips and screen readers. */
 export const runSummary = (run: AgentRun): string =>
-  `${agentLabel(run.agent)} in ${run.workspaceName}: ${RUN_LABEL[run.state]}`
+  t.runSummary(agentLabel(run.agent), run.workspaceName, t.runStates[run.state])
 
 /**
  * The run's state as a dot, with its label unless `dot`. Screen readers get the whole summary as
@@ -32,7 +33,7 @@ export function RunBadge({
   unseen?: boolean
   class?: string
 }) {
-  const summary = unseen ? `${runSummary(run)}. New since you last looked.` : runSummary(run)
+  const summary = unseen ? `${runSummary(run)}. ${t.newSinceLooked}` : runSummary(run)
   return (
     <span
       class={['run-badge', `run-badge--${run.state}`, unseen && 'run-badge--unseen', cls].filter(Boolean).join(' ')}
@@ -42,7 +43,7 @@ export function RunBadge({
       <span class="run-badge__dot" />
       {!dot && (
         <span class="run-badge__label" aria-hidden="true">
-          {RUN_LABEL[run.state]}
+          {t.runStates[run.state]}
         </span>
       )}
       {!decorative && <span class="sr-only">{summary}</span>}
@@ -65,10 +66,10 @@ export function AgentButton({ todo, class: cls = '' }: { todo: Todo; class?: str
       <button
         type="button"
         class={`btn btn--outline btn--xs agent-button ${cls}`}
-        title={`Open ${run.workspaceName} (O)`}
+        title={`${t.openWorkspace(run.workspaceName)} (O)`}
         onClick={(e) => click(e, () => void openRun(run))}
       >
-        Open
+        {t.open}
         <ArrowRight />
       </button>
     )
@@ -76,11 +77,11 @@ export function AgentButton({ todo, class: cls = '' }: { todo: Todo; class?: str
     <button
       type="button"
       class={`btn btn--ghost btn--xs agent-button agent-button--idle ${cls}`}
-      title="Start an agent on this to-do (S)"
-      aria-label="Start an agent on this to-do"
+      title={`${t.startAgentOnTodo} (S)`}
+      aria-label={t.startAgentOnTodo}
       onClick={(e) => click(e, () => openAgentDialog(todo.id))}
     >
-      Agent
+      {t.agentButton}
       <ArrowRight />
     </button>
   )
@@ -90,11 +91,11 @@ export function AgentButton({ todo, class: cls = '' }: { todo: Todo; class?: str
 export function RunList({ todo }: { todo: Todo }) {
   if (!todo.runs.length) return null
   return (
-    <section class="run-list" aria-label="Agent runs">
+    <section class="run-list" aria-label={t.agentRuns}>
       <header class="run-list__head">
-        <h3 class="section-label">Agents</h3>
+        <h3 class="section-label">{t.agents}</h3>
         <button type="button" class="btn btn--ghost btn--xs" onClick={() => openAgentDialog(todo.id)}>
-          Start another
+          {t.startAnother}
         </button>
       </header>
       <ul class="run-list__items">
@@ -103,19 +104,19 @@ export function RunList({ todo }: { todo: Todo }) {
             <RunBadge run={run} dot decorative />
             <span class="run-list__name">
               {agentLabel(run.agent)}
-              <span class="run-list__where"> in {run.workspaceName}</span>
+              <span class="run-list__where">{t.inWorkspace(run.workspaceName)}</span>
             </span>
-            <span class="run-list__state">{RUN_LABEL[run.state]}</span>
-            <span class="count" title={new Date(run.startedAt).toLocaleString()}>
+            <span class="run-list__state">{t.runStates[run.state]}</span>
+            <span class="count" title={formatLong(run.startedAt)}>
               {ago(run.startedAt)}
             </span>
             <button
               type="button"
               class="btn btn--ghost btn--xs"
-              title={`Open ${run.workspaceName}`}
+              title={t.openWorkspace(run.workspaceName)}
               onClick={() => void openRun(run)}
             >
-              Open
+              {t.open}
               <ArrowRight />
             </button>
           </li>

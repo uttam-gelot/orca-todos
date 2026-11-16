@@ -24,6 +24,8 @@ export type FrameStorage = {
 }
 
 export type OrcaFrame = {
+  /** Orca's interface language, a BCP-47 tag such as `en-US`. */
+  locale?: string
   storage: FrameStorage
   shell?: { openExternal(url: string): Promise<{ opened: boolean }> }
   host?: { has(method: string): boolean }
@@ -66,6 +68,9 @@ export const browserStorage: FrameStorage = {
 }
 
 export const storage: FrameStorage = window.orca?.storage ?? browserStorage
+
+/** Orca's interface language, or the browser's outside Orca. */
+export const orcaLocale = (): string => window.orca?.locale || navigator.language
 
 /** Opens http(s)/mailto links in the OS browser; Orca needs this to come from a click. */
 export function openExternal(url: string): void {
