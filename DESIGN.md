@@ -53,6 +53,7 @@ in a frame.
   card.
 - **Composer:** inline, at the end of the target group or column. Enter adds and keeps it open; Esc
   closes it.
+  `#tag` and `!high` words in the title set tags and the priority; the placeholder says so.
 - **Editing in place:**
   - Title: Enter or blur saves; Esc reverts.
   - Tags: Enter or comma adds; Backspace removes the last one.

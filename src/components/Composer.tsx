@@ -1,6 +1,8 @@
-// Inline capture: a title and Enter. Stays open for the next one; Esc closes.
+// Inline capture: a title and Enter. Stays open for the next one; Esc closes. `#tag` and `!high`
+// words in the title set tags and the priority.
 
 import { useSignal } from '@preact/signals'
+import { parseQuickAdd } from '../model'
 import { composer, createTodo, filter, select, stateById } from '../store'
 import { Kbd, StateIcon } from './ui'
 import './Composer.css'
@@ -15,7 +17,13 @@ export function Composer({ stateId, variant }: { stateId: string; variant: 'row'
         e.preventDefault()
         const text = title.value.trim()
         if (!text) return
-        const todo = createTodo({ title: text, stateId, tags: [...filter.value.tags] })
+        const { title: name, tags, priority } = parseQuickAdd(text)
+        const todo = createTodo({
+          title: name,
+          stateId,
+          tags: [...new Set([...filter.value.tags, ...tags])],
+          ...(priority && { priority })
+        })
         select(todo.id, false)
         title.value = ''
       }}
@@ -25,7 +33,7 @@ export function Composer({ stateId, variant }: { stateId: string; variant: 'row'
         class="composer__input"
         autoFocus
         aria-label={`New to-do in ${state?.name ?? 'state'}`}
-        placeholder="To-do title"
+        placeholder="To-do title (#tag !high)"
         value={title.value}
         onInput={(e) => (title.value = e.currentTarget.value)}
         onBlur={() => !title.value.trim() && (composer.value = null)}

@@ -5,6 +5,7 @@ import {
   matches,
   normalizeTags,
   orderBefore,
+  parseQuickAdd,
   parseStates,
   parseTodo,
   patchTodo,
@@ -115,5 +116,31 @@ describe('parseStates', () => {
     expect(parseStates([])).toBeNull()
     expect(parseStates([...CUSTOM_STATES, { id: 'x' }])).toBeNull()
     expect(parseStates({ states: CUSTOM_STATES })).toBeNull()
+  })
+})
+
+describe('parseQuickAdd', () => {
+  test('takes tags and a priority out of the title', () => {
+    expect(parseQuickAdd('Fix login #auth #UI !high')).toEqual({
+      title: 'Fix login',
+      tags: ['auth', 'ui'],
+      priority: 'high'
+    })
+  })
+
+  test('reads the short priorities and keeps only the first one', () => {
+    expect(parseQuickAdd('Ship it !l !h')).toEqual({ title: 'Ship it !h', tags: [], priority: 'low' })
+  })
+
+  test('keeps issue numbers, unknown marks, and words with # inside in the title', () => {
+    expect(parseQuickAdd('Fix #123 now! !urgent C#')).toEqual({ title: 'Fix #123 now! !urgent C#', tags: [] })
+  })
+
+  test('ignores names on Object.prototype', () => {
+    expect(parseQuickAdd('Read !constructor')).toEqual({ title: 'Read !constructor', tags: [] })
+  })
+
+  test('keeps the whole line as the title when only marks were typed', () => {
+    expect(parseQuickAdd('#later !high')).toEqual({ title: '#later !high', tags: [] })
   })
 })

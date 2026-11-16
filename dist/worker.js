@@ -38,6 +38,14 @@ function parseOpenInput(value) {
 var TODO_KEY = "todo:";
 var RUN_STATES = ["starting", "working", "blocked", "waiting", "done"];
 var PRIORITIES = ["high", "med", "low", "none"];
+var QUICK_PRIORITY = new Map([
+  ["high", "high"],
+  ["h", "high"],
+  ["med", "med"],
+  ["m", "med"],
+  ["low", "low"],
+  ["l", "low"]
+]);
 var isRecord2 = (v) => typeof v === "object" && v !== null && !Array.isArray(v);
 var isString2 = (v) => typeof v === "string";
 var isNumber = (v) => typeof v === "number" && Number.isFinite(v);

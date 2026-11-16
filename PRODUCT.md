@@ -50,7 +50,7 @@ local: no accounts and no sync service.
   Colors come only from Orca's `--orca-*` frame variables. Sidebar panels and the center tab are
   separate frames.
 - Stack: Preact + @preact/signals, plain CSS, marked + DOMPurify, built with Bun.
-- Not yet: due dates, quick-add syntax, checklists, per-project lists.
+- Not yet: due dates, checklists, per-project lists.
 
 ## Product Principles
 

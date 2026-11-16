@@ -56,6 +56,9 @@ the Orca theme, fonts, and control sizes, so it looks like a part of Orca.
 - **States.** Add, rename, recolor, reorder, and delete states. A state that is marked "closed" counts as done.
 - **To-dos.** Each to-do has a title, markdown notes, tags, and a priority. You can archive a to-do. You can undo a delete.
 - **Links.** Links in notes open in your default browser.
+- **Quick add.** Type tags and a priority in the title: `Fix login #auth !high` adds the to-do
+  with the tag `auth` and high priority. `!med`, `!low`, `!h`, `!m` and `!l` also work. `#123`
+  stays in the title.
 - **Agents.** Start a coding agent on a to-do in any Orca workspace. The to-do moves to your first
   "in progress" state, and its row and card show the agent's status. You can also copy a to-do as an
   agent prompt.
@@ -177,8 +180,6 @@ The plugin does not use shortcuts with `⌘` or `Ctrl`, except `⌘Z` / `Ctrl+Z`
 These features are planned. They are not available yet.
 
 - **Due dates.** Give a to-do a date, and see the to-dos that are due soon.
-- **Quick-add syntax.** Type tags, a priority, and a state in the title, for example
-  `Fix login #auth !high`.
 - **Checklists.** Show the progress of a markdown checklist on the row and on the card.
 - **Lists for each project.** Keep a separate list for each repository or workspace.
 

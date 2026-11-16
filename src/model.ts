@@ -69,6 +69,36 @@ export function normalizeTags(input: string): string[] {
   return [...new Set(tags.filter(Boolean))]
 }
 
+const QUICK_PRIORITY = new Map<string, Priority>([
+  ['high', 'high'],
+  ['h', 'high'],
+  ['med', 'med'],
+  ['m', 'med'],
+  ['low', 'low'],
+  ['l', 'low']
+])
+
+/**
+ * Reads a composer line such as `Fix login #auth !high`: each `#tag` word becomes a tag and one
+ * `!high` / `!med` / `!low` (or `!h` / `!m` / `!l`) the priority; the other words are the title.
+ * A number such as `#123` is not a tag.
+ * A line made only of these keeps its whole text as the title, so nothing typed is lost.
+ */
+export function parseQuickAdd(line: string): { title: string; tags: string[]; priority?: Priority } {
+  const tags: string[] = []
+  const rest: string[] = []
+  let priority: Priority | undefined
+  for (const word of line.trim().split(/\s+/)) {
+    const quick = word.startsWith('!') ? QUICK_PRIORITY.get(word.slice(1).toLowerCase()) : undefined
+    // `#123` stays in the title: it is an issue number, not a tag.
+    if (/^#(?!\d+$)[^#]+$/.test(word)) tags.push(...normalizeTags(word))
+    else if (quick && !priority) priority = quick
+    else rest.push(word)
+  }
+  if (!rest.length) return { title: line.trim(), tags: [] }
+  return { title: rest.join(' '), tags: [...new Set(tags)], ...(priority && { priority }) }
+}
+
 /** Applies a patch and keeps `closedAt` in step with whether the new state is closed. */
 export function patchTodo(todo: Todo, patch: Partial<Todo>, states: State[], now = Date.now()): Todo {
   const next = { ...todo, ...patch, updatedAt: now }

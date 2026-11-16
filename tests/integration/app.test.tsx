@@ -62,6 +62,22 @@ describe('App', () => {
     expect(todos.value.map((t) => t.title)).toContain('From the composer')
   })
 
+  test('the composer reads tags and a priority from the title', async () => {
+    mount()
+    await act(() => {
+      document.body.dispatchEvent(new KeyboardEvent('keydown', { key: 'n', bubbles: true, cancelable: true }))
+    })
+    const input = root.querySelector<HTMLInputElement>('.composer__input')!
+    await act(() => {
+      input.value = 'Fix login #auth !high'
+      input.dispatchEvent(new Event('input', { bubbles: true }))
+      input.form!.requestSubmit()
+    })
+    const added = todos.value.find((t) => t.title === 'Fix login')
+    expect(added?.tags).toEqual(['auth'])
+    expect(added?.priority).toBe('high')
+  })
+
   test('a load failure offers a retry instead of an empty list', async () => {
     loadError.value = new StorageError('load', undefined)
     mount()
