@@ -59,6 +59,8 @@ the Orca theme, fonts, and control sizes, so it looks like a part of Orca.
 - **Quick add.** Type tags and a priority in the title: `Fix login #auth !high` adds the to-do
   with the tag `auth` and high priority. `!med`, `!low`, `!h`, `!m` and `!l` also work. `#123`
   stays in the title.
+- **Status bar count.** Orca's status bar shows how many to-dos are open and how many of them are
+  high priority, for example `5 open · 2 high`. Press it to show or hide the right sidebar.
 - **Agents.** Start a coding agent on a to-do in any Orca workspace. The to-do moves to your first
   "in progress" state, and its row and card show the agent's status. You can also copy a to-do as an
   agent prompt.
@@ -163,8 +165,9 @@ The plugin does not use shortcuts with `⌘` or `Ctrl`, except `⌘Z` / `Ctrl+Z`
 
 - The plugin keeps all data in Orca plugin storage on your computer.
 - The plugin does not use the network. Orca runs its views in sandboxed frames with no network access.
-- The plugin has a small worker. Orca runs it to list workspaces, start agents, and follow their
-  status. The worker does not read your files or run other commands.
+- The plugin has a small worker. Orca keeps it running while the plugin is on. It counts open
+  to-dos for the status bar, lists workspaces, starts agents, and follows their status. The worker
+  does not read your files or run other commands.
 
 | Permission        | Used for                                            |
 | ----------------- | --------------------------------------------------- |

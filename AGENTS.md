@@ -2,7 +2,7 @@
 
 ## Project Overview
 
-Personal to-do plugin for Orca, the agent-orchestrator IDE: a center tab (list or board) and a right-sidebar panel over the same to-dos, kept in Orca plugin storage. A small worker starts coding agents on to-dos and follows their status. This file is the only agent instruction file in the repo (there is no CLAUDE.md).
+Personal to-do plugin for Orca, the agent-orchestrator IDE: a center tab (list or board) and a right-sidebar panel over the same to-dos, kept in Orca plugin storage. A small worker starts coding agents on to-dos, follows their status, and keeps the status bar count of open to-dos. This file is the only agent instruction file in the repo (there is no CLAUDE.md).
 
 ## Tech Stack
 

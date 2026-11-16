@@ -66,6 +66,22 @@
       {
         "on": "agent.status.changed"
       }
+    ],
+    "commands": [
+      {
+        "id": "todos.toggleSidebar",
+        "title": "ToDos: Show or hide the right sidebar",
+        "action": "sidebar.right.toggle"
+      }
+    ],
+    "statusBarItems": [
+      {
+        "id": "open-count",
+        "text": "ToDos",
+        "icon": "check",
+        "tooltip": "ToDos: open to-dos. Press to show or hide the right sidebar.",
+        "command": "todos.toggleSidebar"
+      }
     ]
   },
   "capabilities": [

@@ -208,5 +208,6 @@ describe('activate', () => {
     activate(orca)
     expect([...orca.handlers.keys()].sort()).toEqual(Object.values(REQUEST).sort())
     expect([...orca.listeners.keys()]).toEqual(['agent.status.changed'])
+    expect(orca.calls[0]?.method).toBe('storage.keys')
   })
 })
