@@ -131,15 +131,32 @@ export function indexRun(index: RunIndex, terminalId: string, todoId: string): R
 /** The newest run, which is the one lists and cards show. */
 export const latestRun = (todo: Todo): AgentRun | undefined => todo.runs.at(-1)
 
+const projectName = (w: WorkspaceOption): string => w.project || w.folder || w.name
+
+/** The workspaces of one project, as the picker shows them under one heading. */
+export type WorkspaceGroup = { name: string; workspaces: WorkspaceOption[] }
+
 /**
- * How a workspace reads in a picker. Orca names a repo's main worktree after its branch, so many
- * are just "main"; the folder tells them apart.
+ * The picker's headings: Orca's project, else the folder, since Orca names a repo's main worktree
+ * after its branch and many are just "main". Groups and their workspaces keep Orca's order.
  */
+export function groupWorkspaces(workspaces: WorkspaceOption[]): WorkspaceGroup[] {
+  const groups = new Map<string, WorkspaceOption[]>()
+  for (const w of workspaces) groups.set(projectName(w), [...(groups.get(projectName(w)) ?? []), w])
+  return [...groups].map(([name, items]) => ({ name, workspaces: items }))
+}
+
+/** How a workspace reads under its project heading: its name, and its branch when that differs. */
 export function workspaceLabel(w: WorkspaceOption): string {
   const branch = w.branch?.replace(/^refs\/heads\//, '') ?? ''
-  const base = w.folder || w.name
-  const name = w.name !== base && w.name !== branch ? `${base} (${w.name})` : base
-  return branch && branch !== base ? `${name} · ${branch}` : name
+  return branch && branch !== w.name ? `${w.name} · ${branch}` : w.name
+}
+
+/** How a workspace reads on its own, away from the picker's headings: "app · feature/login". */
+export function workspaceTitle(w: WorkspaceOption): string {
+  const project = projectName(w)
+  const label = workspaceLabel(w)
+  return label === project ? label : `${project} · ${label}`
 }
 
 /**

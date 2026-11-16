@@ -5,8 +5,8 @@ import type { FakeOrcaFrame } from './orca-frame'
 
 export const WORKSPACES: WorkspacesAnswer = {
   workspaces: [
-    { id: 'w1', name: 'main', kind: 'worktree', branch: 'main', folder: 'app' },
-    { id: 'w2', name: 'feature/login', kind: 'worktree', branch: 'feature/login', folder: 'app' }
+    { id: 'w1', name: 'main', kind: 'worktree', branch: 'main', folder: 'app', project: 'app' },
+    { id: 'w2', name: 'feature/login', kind: 'worktree', branch: 'feature/login', folder: 'app', project: 'app' }
   ],
   focusedId: 'w2',
   truncated: false

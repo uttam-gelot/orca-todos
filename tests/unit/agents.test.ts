@@ -7,6 +7,8 @@ import {
   MAX_INDEXED_RUNS,
   parseRunIndex,
   workspaceLabel,
+  groupWorkspaces,
+  workspaceTitle,
   addRun,
   agentLabel,
   buildPrompt,
@@ -17,6 +19,7 @@ import {
   workingStateId
 } from '../../src/agents'
 import { DEFAULT_STATES, type AgentRun, type State } from '../../src/model'
+import type { WorkspaceOption } from '../../src/protocol'
 import { makeTodo as todo } from '../factories/todo'
 import { CUSTOM_STATES } from '../fixtures/stored-records'
 
@@ -89,17 +92,62 @@ describe('runs', () => {
   })
 })
 
-describe('workspaceLabel', () => {
-  const ws = (name: string, branch: string | null, folder: string) =>
-    ({ id: 'w', kind: 'worktree', name, branch, folder }) as const
-  test('names the folder, since many workspaces are called main', () => {
-    expect(workspaceLabel(ws('main', 'main', 'backup'))).toBe('backup · main')
-    expect(workspaceLabel(ws('feature/x', 'refs/heads/feature/x', 'app'))).toBe('app · feature/x')
+describe('groupWorkspaces', () => {
+  const ws = (id: string, project: string | null, folder: string, name = 'main'): WorkspaceOption => ({
+    id,
+    kind: 'worktree',
+    name,
+    branch: name,
+    folder,
+    project
   })
-  test('keeps a renamed workspace and a folder without a branch readable', () => {
-    expect(workspaceLabel(ws('Docs work', 'main', 'app'))).toBe('app (Docs work) · main')
-    expect(workspaceLabel(ws('Notes', null, 'Notes'))).toBe('Notes')
-    expect(workspaceLabel(ws('Notes', null, ''))).toBe('Notes')
+  test("heads each group with Orca's project, in Orca's order", () => {
+    const groups = groupWorkspaces([ws('a', 'web', 'web'), ws('b', 'api', 'api'), ws('c', 'web', 'web-2', 'feat')])
+    expect(groups.map((g) => [g.name, g.workspaces.map((w) => w.id)])).toEqual([
+      ['web', ['a', 'c']],
+      ['api', ['b']]
+    ])
+  })
+  test('falls back to the folder, then the name, when Orca sends no project', () => {
+    expect(groupWorkspaces([ws('a', null, 'backup')])[0].name).toBe('backup')
+    expect(groupWorkspaces([ws('a', null, '', 'Notes')])[0].name).toBe('Notes')
+  })
+})
+
+describe('workspaceLabel', () => {
+  const ws = (name: string, branch: string | null): WorkspaceOption => ({
+    id: 'w',
+    kind: 'worktree',
+    name,
+    branch,
+    folder: 'app',
+    project: 'app'
+  })
+  test('shows the branch once when the workspace is named after it', () => {
+    expect(workspaceLabel(ws('main', 'refs/heads/main'))).toBe('main')
+    expect(workspaceLabel(ws('feature/x', 'feature/x'))).toBe('feature/x')
+  })
+  test('adds the branch to a renamed workspace, and none to a folder', () => {
+    expect(workspaceLabel(ws('Docs work', 'main'))).toBe('Docs work · main')
+    expect(workspaceLabel(ws('Notes', null))).toBe('Notes')
+  })
+})
+
+describe('workspaceTitle', () => {
+  const ws = (name: string, branch: string | null, project: string | null): WorkspaceOption => ({
+    id: 'w',
+    kind: branch ? 'worktree' : 'folder',
+    name,
+    branch,
+    folder: 'app',
+    project
+  })
+  test('puts the project before the workspace', () => {
+    expect(workspaceTitle(ws('feature/login', 'feature/login', 'web'))).toBe('web · feature/login')
+    expect(workspaceTitle(ws('main', 'main', null))).toBe('app · main')
+  })
+  test('names a folder named after its project once', () => {
+    expect(workspaceTitle(ws('Notes', null, 'Notes'))).toBe('Notes')
   })
 })
 

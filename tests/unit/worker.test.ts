@@ -20,7 +20,8 @@ const ws = (id: string, name: string, branch: string | null = 'main'): Workspace
   name,
   kind: branch ? 'worktree' : 'folder',
   branch,
-  folder: ''
+  folder: '',
+  project: null
 })
 
 describe('focusedWorkspaceId', () => {
@@ -42,7 +43,7 @@ describe('listWorkspaces', () => {
     const orca = createFakeWorkerOrca({
       'workspace.list': () => ({
         workspaces: [
-          { id: 'w1', kind: 'worktree', name: 'app', branch: 'main', path: '/src/app/', hostId: null },
+          { id: 'w1', kind: 'worktree', name: 'app', branch: 'main', path: '/src/app/', project: 'App', hostId: null },
           { name: 'no id' }
         ],
         truncated: true
@@ -50,7 +51,7 @@ describe('listWorkspaces', () => {
       'workspace.readContext': () => ({ displayName: 'app', branch: 'refs/heads/main', terminals: [] })
     })
     expect(await listWorkspaces(orca)).toEqual({
-      workspaces: [{ ...ws('w1', 'app', 'main'), folder: 'app' }],
+      workspaces: [{ ...ws('w1', 'app', 'main'), folder: 'app', project: 'App' }],
       focusedId: 'w1',
       truncated: true
     })

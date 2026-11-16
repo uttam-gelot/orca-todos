@@ -9,6 +9,8 @@ export type WorkspaceOption = {
   branch: string | null
   /** The last segment of the workspace's path: the repo or folder name, which `name` often is not. */
   folder: string
+  /** Orca's project (repo) name. Orca before host API 1.7 does not send it. */
+  project: string | null
 }
 
 export type WorkspacesAnswer = {
@@ -58,7 +60,8 @@ export function parseWorkspace(value: unknown): WorkspaceOption | null {
     name: value.name,
     kind: value.kind === 'folder' ? 'folder' : 'worktree',
     branch: isString(value.branch) ? value.branch : null,
-    folder: isString(value.folder) ? value.folder : isString(value.path) ? lastSegment(value.path) : ''
+    folder: isString(value.folder) ? value.folder : isString(value.path) ? lastSegment(value.path) : '',
+    project: isString(value.project) && value.project.trim() ? value.project : null
   }
 }
 

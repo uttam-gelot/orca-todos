@@ -15,7 +15,8 @@ function parseWorkspace(value) {
     name: value.name,
     kind: value.kind === "folder" ? "folder" : "worktree",
     branch: isString(value.branch) ? value.branch : null,
-    folder: isString(value.folder) ? value.folder : isString(value.path) ? lastSegment(value.path) : ""
+    folder: isString(value.folder) ? value.folder : isString(value.path) ? lastSegment(value.path) : "",
+    project: isString(value.project) && value.project.trim() ? value.project : null
   };
 }
 function parseLaunchInput(value) {

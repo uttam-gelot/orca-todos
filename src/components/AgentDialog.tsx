@@ -4,7 +4,7 @@
 
 import { useSignal } from '@preact/signals'
 import { ChevronDown, ChevronRight, Copy, RotateCw, X } from 'lucide-preact'
-import { AGENTS, buildPrompt, stateAfterSend, workspaceLabel } from '../agents'
+import { AGENTS, buildPrompt, groupWorkspaces, stateAfterSend, workspaceLabel } from '../agents'
 import type { Todo } from '../model'
 import { workerAvailable } from '../orca'
 import {
@@ -104,11 +104,15 @@ function AgentForm({ todo }: { todo: Todo }) {
               {list.status === 'loading' ? (
                 <option value="">Loading workspaces…</option>
               ) : (
-                list.answer.workspaces.map((w) => (
-                  <option key={w.id} value={w.id}>
-                    {workspaceLabel(w)}
-                    {w.id === list.answer.focusedId ? ' (open now)' : ''}
-                  </option>
+                groupWorkspaces(list.answer.workspaces).map((group) => (
+                  <optgroup key={group.name} label={group.name}>
+                    {group.workspaces.map((w) => (
+                      <option key={w.id} value={w.id}>
+                        {workspaceLabel(w)}
+                        {w.id === list.answer.focusedId ? ' (open now)' : ''}
+                      </option>
+                    ))}
+                  </optgroup>
                 ))
               )}
             </select>

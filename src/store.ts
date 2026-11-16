@@ -11,7 +11,7 @@ import {
   buildPrompt,
   DEFAULT_AGENT,
   stateAfterSend,
-  workspaceLabel
+  workspaceTitle
 } from './agents'
 import { copyText } from './clipboard'
 import { AgentError, StorageError } from './errors'
@@ -455,7 +455,7 @@ export async function sendToAgent(id: string, prompt: string): Promise<string | 
       terminalId,
       agent,
       workspaceId,
-      workspaceName: workspaceLabel(workspace),
+      workspaceName: workspaceTitle(workspace),
       startedAt: now,
       state: 'starting' as const,
       stateAt: now
@@ -467,7 +467,7 @@ export async function sendToAgent(id: string, prompt: string): Promise<string | 
       ...(stateId && { stateId, order: orderBefore(others, stateId, null) })
     })
   }
-  const started = `Started ${agentLabel(agent)} in ${workspaceLabel(workspace)}`
+  const started = `Started ${agentLabel(agent)} in ${workspaceTitle(workspace)}`
   // Orca types the prompt in for CLIs that take none on their command line, and that can miss.
   notice.value = {
     text: launched.prompt === 'typed' ? `${started}. If the prompt does not show up there, copy it with Y.` : started
