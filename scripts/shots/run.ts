@@ -10,6 +10,8 @@
 // 4. Take the shots into `.orca/shots/`.
 // 5. Show Orca again and unload the demo copy, also when a step fails.
 //
+// `bun run shots tab-list-dark panel-light` takes only the named shots, to retake one that failed.
+//
 // Needs the Orca desktop app 1.4.247 or later, running on this machine, with the `orca` CLI.
 
 import { $ } from 'bun'
@@ -75,7 +77,8 @@ async function buildDemo(dir: string): Promise<string> {
   await cp(join(ROOT, 'src/fonts/Geist-Variable.woff2'), join(dir, 'dist/Geist-Variable.woff2'))
 
   // The demo only shows the UI: no worker, so it needs no trusted-worker approval and cannot start
-  // agents, follow their status, or keep a status bar item.
+  // agents, follow their status, or keep a status bar item. It has no settings page either: Orca
+  // accepts `contributes.settings` only with `settings:own`, and the demo runs on the defaults.
   const { main: _main, ...manifest } = await Bun.file(join(ROOT, 'orca-plugin.json')).json()
   const demo = {
     ...manifest,
@@ -83,7 +86,7 @@ async function buildDemo(dir: string): Promise<string> {
     name: 'ToDos (demo)',
     execution: 'sandboxed-ui',
     capabilities: [{ kind: 'storage:own' }],
-    contributes: { ...manifest.contributes, events: undefined, statusBarItems: undefined }
+    contributes: { ...manifest.contributes, events: undefined, statusBarItems: undefined, settings: undefined }
   }
   await writeFile(join(dir, 'orca-plugin.json'), JSON.stringify(demo, null, 2))
 
@@ -143,6 +146,7 @@ function failureReason(stdout: string, stderr: string): string {
 }
 
 async function main(): Promise<void> {
+  const only = process.argv.slice(2)
   const dir = await mkdtemp(join(tmpdir(), 'orca-todos-shots-'))
   let failed = 0
   try {
@@ -153,7 +157,9 @@ async function main(): Promise<void> {
     // The first panel shot after the demo copy loads fails with "could not be loaded" (Orca
     // 1.4.247), and the next one works. This throwaway shot takes that failure.
     await $`orca plugin shot ${DEMO_KEY} --out ${join(dir, 'warm-up.png')} --json`.nothrow().quiet()
-    for (const shot of allShots(demoFile)) {
+    const shots = allShots(demoFile).filter((shot) => !only.length || only.includes(shot.name))
+    if (!shots.length) throw new Error(`No shot is named ${only.join(', ')}`)
+    for (const shot of shots) {
       const out = join(OUT, `${shot.name}.png`)
       const result = await $`orca plugin shot ${DEMO_KEY} ${shot.args} --out ${out} --json`.nothrow().quiet()
       if (result.exitCode === 0) {
