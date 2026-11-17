@@ -57,6 +57,9 @@
   --run-done: oklch(0.64 0.15 150);
   /* High priority: the one priority with a color, mixed toward the text for contrast in both themes. */
   --prio-high: color-mix(in oklab, oklch(0.63 0.2 35) 80%, var(--fg));
+  /* Due dates: past due, and due today. Mixed toward the text like --prio-high, for contrast. */
+  --due-overdue: var(--destructive);
+  --due-today: color-mix(in oklab, oklch(0.72 0.16 65) 72%, var(--fg));
 
   /* shape and elevation */
   --radius: var(--orca-radius, 0.625rem);

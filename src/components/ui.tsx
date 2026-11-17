@@ -2,8 +2,22 @@
 
 import type { ButtonHTMLAttributes, ComponentChildren } from 'preact'
 import { useEffect, useRef } from 'preact/hooks'
-import { Circle, CircleCheck, ListChecks, NotepadText, SignalHigh, SignalLow, SignalMedium, X } from 'lucide-preact'
-import { checklist, PRIORITY_LABEL, type Priority, type State } from '../model'
+import {
+  CalendarClock,
+  Circle,
+  CircleCheck,
+  FolderGit2,
+  ListChecks,
+  NotepadText,
+  SignalHigh,
+  SignalLow,
+  SignalMedium,
+  X
+} from 'lucide-preact'
+import { dueFull, dueLabel, dueState } from '../due'
+import { lang, t } from '../i18n/t'
+import { filter, now, openProject } from '../store'
+import { checklist, type Priority, type State } from '../model'
 import './ui.css'
 
 export const isMac = /Mac|iPhone|iPad/.test(navigator.platform)
@@ -16,7 +30,7 @@ export function StateIcon({ state }: { state?: State }) {
 
 /** The state icon as a button that marks the to-do done, or reopens it. Used on rows and cards. */
 export function DoneToggle({ state, onToggle, class: cls }: { state?: State; onToggle: () => void; class?: string }) {
-  const label = state?.closed ? 'Reopen' : 'Mark done'
+  const label = state?.closed ? t.reopen : t.markDone
   return (
     <button
       type="button"
@@ -37,7 +51,7 @@ export function PriorityIcon({ priority }: { priority: Priority }) {
   if (priority === 'none') return <span class="prio prio--none" aria-hidden="true" />
   const Icon = { low: SignalLow, med: SignalMedium, high: SignalHigh }[priority]
   return (
-    <span class={`prio prio--${priority}`} title={`${PRIORITY_LABEL[priority]} priority`}>
+    <span class={`prio prio--${priority}`} title={t.priorityTitle(t.priorities[priority])}>
       <Icon aria-hidden="true" />
     </span>
   )
@@ -50,7 +64,7 @@ export function PriorityIcon({ priority }: { priority: Priority }) {
 export function NotesHint({ description, class: cls }: { description: string; class?: string }) {
   const { done, total } = checklist(description)
   if (total) {
-    const summary = `Checklist: ${done} of ${total} done`
+    const summary = t.checklistSummary(done, total)
     return (
       <span class={['checklist', done === total && 'checklist--done', cls].filter(Boolean).join(' ')} title={summary}>
         <ListChecks aria-hidden="true" />
@@ -63,10 +77,52 @@ export function NotesHint({ description, class: cls }: { description: string; cl
   }
   if (!description.trim()) return null
   return (
-    <span class={['notes-hint', cls].filter(Boolean).join(' ')} title="Has notes">
+    <span class={['notes-hint', cls].filter(Boolean).join(' ')} title={t.hasNotes}>
       <NotepadText aria-hidden="true" />
-      <span class="sr-only">Has notes</span>
+      <span class="sr-only">{t.hasNotes}</span>
     </span>
+  )
+}
+
+/**
+ * When a to-do is due, as "Today", "Fri" or "Mar 4". Past due reads in the destructive color and
+ * due today in amber, unless the to-do is closed: then it is only a quiet date.
+ */
+export function DueChip({ due, closed, class: cls }: { due: string; closed?: boolean; class?: string }) {
+  const state = dueState(due, now.value)
+  const tone = closed ? 'closed' : state
+  const summary = t.dueTitle(dueFull(due, lang.value), !closed && state === 'overdue')
+  return (
+    <span class={['due', `due--${tone}`, cls].filter(Boolean).join(' ')} title={summary}>
+      <CalendarClock aria-hidden="true" />
+      <span class="due__label" aria-hidden="true">
+        {dueLabel(due, now.value, lang.value, t)}
+      </span>
+      <span class="sr-only">{summary}</span>
+    </span>
+  )
+}
+
+/**
+ * The to-do's project, as a chip that opens the project's workspace in Orca. Hidden while the list
+ * is already scoped to that project.
+ */
+export function ProjectChip({ project }: { project?: string }) {
+  if (!project || filter.value.project === project) return null
+  return (
+    <button
+      type="button"
+      class="project-chip"
+      title={t.openProject(project)}
+      aria-label={t.openProject(project)}
+      onClick={(e) => {
+        e.stopPropagation()
+        void openProject(project)
+      }}
+    >
+      <FolderGit2 aria-hidden="true" />
+      <span class="project-chip__name">{project}</span>
+    </button>
   )
 }
 
@@ -150,14 +206,14 @@ export function SheetHeader({ title, onClose }: { title: string; onClose: () => 
   return (
     <header class="sheet__head">
       <h2 class="sheet__title">{title}</h2>
-      <IconButton label="Close" onClick={onClose}>
+      <IconButton label={t.close} onClick={onClose}>
         <X />
       </IconButton>
     </header>
   )
 }
 
-const UNITS: [number, string][] = [
+const UNITS: [number, keyof typeof t.ago][] = [
   [60, 's'],
   [60, 'm'],
   [24, 'h'],
@@ -167,21 +223,13 @@ const UNITS: [number, string][] = [
   [Infinity, 'y']
 ]
 
-/** Compact age: "now", "5m", "3d". */
+/** Compact age: "now", "5m", "3d", with the units of the interface language. */
 export function ago(ts: number, now = Date.now()): string {
   let n = Math.max(0, (now - ts) / 1000)
-  if (n < 60) return 'now'
+  if (n < 60) return t.agoNow
   for (const [size, unit] of UNITS) {
-    if (n < size) return `${Math.floor(n)}${unit}`
+    if (n < size) return `${Math.floor(n)}${t.ago[unit]}`
     n /= size
   }
   return ''
 }
-
-const dateFormat = new Intl.DateTimeFormat(undefined, {
-  month: 'short',
-  day: 'numeric',
-  hour: 'numeric',
-  minute: '2-digit'
-})
-export const formatDate = (ts: number): string => dateFormat.format(ts)

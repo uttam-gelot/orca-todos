@@ -9,18 +9,23 @@ import {
   agentLabel,
   AGENTS,
   buildPrompt,
+  projectName,
+  projectWorkspace,
   DEFAULT_AGENT,
   stateAfterSend,
   workspaceTitle
 } from './agents'
 import { copyText } from './clipboard'
 import { AgentError, StorageError } from './errors'
+import { t } from './i18n/t'
 import { log } from './log'
 import { launchAgent, listWorkspaces, openWorkspace, storage } from './orca'
 import type { LaunchAnswer, WorkspacesAnswer } from './protocol'
 import {
   DEFAULT_STATES,
+  DUE_FILTERS,
   EMPTY_FILTER,
+  inDueFilter,
   matches,
   orderBefore,
   parseStates,
@@ -52,7 +57,7 @@ type View = 'list' | 'board'
 type Prefs = { view: View; sort: Sort; filter: Filter; collapsed: string[] }
 const PREFS_KEY = `orca-todos:prefs:${mode}`
 const VIEWS: View[] = ['list', 'board']
-const SORTS: Sort[] = ['manual', 'priority', 'updated', 'created']
+const SORTS: Sort[] = ['manual', 'priority', 'due', 'updated', 'created']
 
 // Prefs are a convenience: on any problem the surface opens with defaults, and the reason is logged.
 function loadPrefs(): Prefs {
@@ -67,7 +72,13 @@ function loadPrefs(): Prefs {
   return {
     view: VIEWS.includes(saved.view as View) ? (saved.view as View) : fallback.view,
     sort: SORTS.includes(saved.sort as Sort) ? (saved.sort as Sort) : fallback.sort,
-    filter: { ...EMPTY_FILTER, ...saved.filter, text: '' },
+    filter: {
+      ...EMPTY_FILTER,
+      ...saved.filter,
+      text: '',
+      due: DUE_FILTERS.includes(saved.filter?.due as Filter['due']) ? saved.filter!.due : '',
+      project: typeof saved.filter?.project === 'string' ? saved.filter.project : ''
+    },
     collapsed: Array.isArray(saved.collapsed) ? saved.collapsed.filter((id) => typeof id === 'string') : []
   }
 }
@@ -94,6 +105,10 @@ export function toggleCollapsed(id: string): void {
   collapsed.value = next
 }
 
+/** The time, a minute at most behind: due chips, overdue counts and filters follow it. */
+export const now = signal(Date.now())
+setInterval(() => (now.value = Date.now()), 60_000)
+
 // --- UI state ---
 
 export const selectedId = signal<string | null>(null)
@@ -109,14 +124,20 @@ const WIDE = '(min-width: 1040px)'
 export const wide = signal(matchMedia(WIDE).matches)
 matchMedia(WIDE).addEventListener('change', (e) => (wide.value = e.matches))
 
-// --- scope: what the navigator rail selects (all, one state, one tag, or archived) ---
+// --- scope: what the navigator rail selects (all, one state, project or tag, or archived) ---
 
-export type Scope = { kind: 'all' } | { kind: 'state'; id: string } | { kind: 'tag'; id: string } | { kind: 'archived' }
+export type Scope =
+  | { kind: 'all' }
+  | { kind: 'state'; id: string }
+  | { kind: 'project'; id: string }
+  | { kind: 'tag'; id: string }
+  | { kind: 'archived' }
 
 export const scope = computed<Scope>(() => {
   const f = filter.value
   if (f.archived) return { kind: 'archived' }
   if (f.stateId) return { kind: 'state', id: f.stateId }
+  if (f.project) return { kind: 'project', id: f.project }
   if (f.tags[0]) return { kind: 'tag', id: f.tags[0] }
   return { kind: 'all' }
 })
@@ -129,6 +150,7 @@ export function setScope(s: Scope): void {
     ...f,
     archived: s.kind === 'archived',
     stateId: s.kind === 'state' ? s.id : '',
+    project: s.kind === 'project' ? s.id : '',
     tags: s.kind === 'tag' ? [s.id] : []
   }
   composer.value = null
@@ -140,10 +162,13 @@ const live = computed(() => todos.value.filter((t) => !t.archived))
 export const stateById = computed(() => new Map(states.value.map((s) => [s.id, s])))
 export const visible = computed(() =>
   sortTodos(
-    todos.value.filter((t) => matches(t, filter.value)),
+    todos.value.filter((t) => matches(t, filter.value, now.value)),
     sort.value
   )
 )
+
+/** Open, live to-dos past their due, whatever the filters: the header's "overdue" count. */
+export const overdueCount = computed(() => live.value.filter((t) => inDueFilter(t, 'overdue', now.value)).length)
 export const summary = computed(() => stats(todos.value, states.value))
 
 export const tagCounts = computed(() => {
@@ -153,10 +178,18 @@ export const tagCounts = computed(() => {
 })
 export const archivedCount = computed(() => todos.value.length - live.value.length)
 
+/** Projects with live to-dos and how many, by name. */
+export const projectCounts = computed(() => {
+  const counts = new Map<string, number>()
+  for (const t of live.value) if (t.project) counts.set(t.project, (counts.get(t.project) ?? 0) + 1)
+  return [...counts].sort(([a], [b]) => a.localeCompare(b))
+})
+
 /** Every scope in rail order, for `[` and `]`. */
 export const scopes = computed<Scope[]>(() => [
   { kind: 'all' },
   ...states.value.map((s) => ({ kind: 'state' as const, id: s.id })),
+  ...projectCounts.value.map(([id]) => ({ kind: 'project' as const, id })),
   ...tagCounts.value.map(([id]) => ({ kind: 'tag' as const, id })),
   { kind: 'archived' }
 ])
@@ -164,7 +197,7 @@ export const scopes = computed<Scope[]>(() => [
 /** Todos grouped by state, in state order. Empty groups hide while searching or filtering. */
 export const groups = computed(() => {
   const f = filter.value
-  const narrowed = Boolean(f.text.trim() || f.priority || f.archived)
+  const narrowed = Boolean(f.text.trim() || f.priority || f.due || f.archived)
   return states.value
     .filter((s) => !f.stateId || s.id === f.stateId)
     .map((state) => ({ state, items: visible.value.filter((t) => t.stateId === state.id) }))
@@ -247,15 +280,27 @@ async function onStorageChange(key: string): Promise<void> {
 
 let subscription: { dispose(): void } | null = null
 
+/** The default states, named in the interface language: a first run stores these. */
+function localDefaultStates(): State[] {
+  const names: Record<string, string> = {
+    backlog: t.stateBacklog,
+    todo: t.stateTodo,
+    doing: t.stateDoing,
+    done: t.stateDone
+  }
+  return DEFAULT_STATES.map((s) => ({ ...s, name: names[s.id] ?? s.name }))
+}
+
 /** Reads every todo and the state list, then follows changes. Safe to call again to retry. */
 export async function load(): Promise<void> {
   loadError.value = null
   try {
     const keys = await storage.keys()
     const saved = await readStates()
-    if (!saved) persist('write', STATES_KEY, storage.set(STATES_KEY, DEFAULT_STATES))
+    const fresh = saved ? null : localDefaultStates()
+    if (fresh) persist('write', STATES_KEY, storage.set(STATES_KEY, fresh))
     const list = await Promise.all(keys.filter((k) => k.startsWith(TODO_KEY)).map(readTodo))
-    states.value = saved ?? DEFAULT_STATES
+    states.value = saved ?? fresh ?? DEFAULT_STATES
     todos.value = list.filter((t): t is Todo => t !== null)
   } catch (cause) {
     const error = new StorageError('load', undefined, { cause })
@@ -354,7 +399,7 @@ export function deleteTodo(id: string): void {
   const todo = todos.value.find((t) => t.id === id)
   if (!todo) return
   selectNeighbour(id)
-  lastUndoable.value = { text: `Deleted “${todo.title}”`, before: [todo] }
+  lastUndoable.value = { text: t.deleted(todo.title), before: [todo] }
   todos.value = todos.value.filter((t) => t.id !== id)
   persist('delete', TODO_KEY + id, storage.delete(TODO_KEY + id))
 }
@@ -364,7 +409,10 @@ export function toggleArchived(id: string): void {
   const todo = todos.value.find((t) => t.id === id)
   if (!todo) return
   selectNeighbour(id)
-  lastUndoable.value = { text: `${todo.archived ? 'Restored' : 'Archived'} “${todo.title}”`, before: [todo] }
+  lastUndoable.value = {
+    text: todo.archived ? t.restoredTodo(todo.title) : t.archivedTodo(todo.title),
+    before: [todo]
+  }
   updateTodo(id, { archived: !todo.archived })
 }
 
@@ -388,11 +436,11 @@ export function copyPrompt(id: string, text?: string): void {
   const todo = todos.value.find((t) => t.id === id)
   if (!todo) return
   if (copyText(text ?? buildPrompt(todo))) {
-    notice.value = { text: 'Copied as an agent prompt' }
+    notice.value = { text: t.copiedPrompt }
     return
   }
   log.warn('The clipboard refused the copy', { op: 'copyPrompt', id })
-  notice.value = { text: 'Could not copy. Orca did not allow the clipboard.', error: true }
+  notice.value = { text: t.clipboardRefused, error: true }
 }
 
 // --- handing a to-do to an agent ---
@@ -431,9 +479,9 @@ export type WorkspaceList =
 /** The workspaces the agent dialog offers, fetched from the worker each time it opens. */
 export const workspaceList = signal<WorkspaceList>({ status: 'loading' })
 
-const errorMessage = (op: string, error: unknown, what?: string): string => {
+const errorMessage = (op: string, error: unknown, what?: 'start' | 'open'): string => {
   log.error('Agent request failed', { op }, error)
-  return agentErrorText(error instanceof AgentError ? error.code : 'action_failed', what)
+  return agentErrorText(error instanceof AgentError ? error.code : 'action_failed', t, what)
 }
 
 /** Fetches the workspaces and picks one: the remembered one, else the focused one, else the first. */
@@ -453,7 +501,46 @@ export async function loadWorkspaces(): Promise<void> {
 export function openAgentDialog(id: string): void {
   select(id)
   sheet.value = 'agent'
-  void loadWorkspaces()
+  void loadWorkspaces().then(() => preferProject(id))
+}
+
+/** Picks a workspace in the to-do's project, unless the chosen one is already there. */
+function preferProject(id: string): void {
+  const project = todos.value.find((t) => t.id === id)?.project
+  const list = workspaceList.value
+  if (!project || list.status !== 'ready') return
+  const chosen = list.answer.workspaces.find((w) => w.id === agentChoice.value.workspaceId)
+  if (chosen && projectName(chosen) === project) return
+  const workspace = projectWorkspace(list.answer.workspaces, project)
+  if (workspace) agentChoice.value = { ...agentChoice.value, workspaceId: workspace.id }
+}
+
+/** Fetches the workspaces unless they are already here. */
+export async function ensureWorkspaces(): Promise<void> {
+  if (workspaceList.value.status !== 'ready') await loadWorkspaces()
+}
+
+/** Project names to offer: those of Orca's workspaces, then any only to-dos still name. */
+export const projectNames = computed(() => {
+  const list = workspaceList.value
+  const fromOrca = list.status === 'ready' ? list.answer.workspaces.map(projectName) : []
+  return [...new Set([...fromOrca, ...projectCounts.value.map(([name]) => name)])]
+})
+
+/** Shows a project's main workspace in Orca. */
+export async function openProject(project: string): Promise<void> {
+  await ensureWorkspaces()
+  const list = workspaceList.value
+  const workspace = list.status === 'ready' ? projectWorkspace(list.answer.workspaces, project) : null
+  if (!workspace) {
+    notice.value = { text: t.projectNotFound(project), error: true }
+    return
+  }
+  try {
+    await openWorkspace(workspace.id)
+  } catch (error) {
+    notice.value = { text: errorMessage('openProject', error, 'open'), error: true }
+  }
 }
 
 /**
@@ -464,7 +551,7 @@ export async function sendToAgent(id: string, prompt: string): Promise<string | 
   const { agent, workspaceId } = agentChoice.value
   const list = workspaceList.value
   const workspace = list.status === 'ready' ? list.answer.workspaces.find((w) => w.id === workspaceId) : undefined
-  if (!workspace || !prompt.trim()) return agentErrorText('invalid_params')
+  if (!workspace || !prompt.trim()) return agentErrorText('invalid_params', t)
   let launched: LaunchAnswer
   try {
     launched = await launchAgent({ todoId: id, workspaceId, agent, prompt })
@@ -489,14 +576,14 @@ export async function sendToAgent(id: string, prompt: string): Promise<string | 
     const others = todos.value.filter((t) => t.id !== id)
     updateTodo(id, {
       runs: addRun(todo.runs, run),
+      // The first agent's workspace says which project the to-do is about.
+      ...(!todo.project && { project: projectName(workspace) }),
       ...(stateId && { stateId, order: orderBefore(others, stateId, null) })
     })
   }
-  const started = `Started ${agentLabel(agent)} in ${workspaceTitle(workspace)}`
+  const started = t.startedAgent(agentLabel(agent), workspaceTitle(workspace))
   // Orca types the prompt in for CLIs that take none on their command line, and that can miss.
-  notice.value = {
-    text: launched.prompt === 'typed' ? `${started}. If the prompt does not show up there, copy it with Y.` : started
-  }
+  notice.value = { text: launched.prompt === 'typed' ? t.promptMayMiss(started) : started }
   return null
 }
 
@@ -505,7 +592,7 @@ export async function openRun(run: AgentRun): Promise<void> {
   try {
     await openWorkspace(run.workspaceId)
   } catch (error) {
-    notice.value = { text: errorMessage('openRun', error, 'open the workspace'), error: true }
+    notice.value = { text: errorMessage('openRun', error, 'open'), error: true }
   }
 }
 
@@ -514,7 +601,7 @@ export function archiveClosed(): number {
   const list = live.value.filter((t) => closed.has(t.stateId))
   if (!list.length) return 0
   const n = list.length
-  lastUndoable.value = { text: `Archived ${n} closed to-do${n === 1 ? '' : 's'}`, before: list }
+  lastUndoable.value = { text: t.archivedClosed(n), before: list }
   for (const t of list) updateTodo(t.id, { archived: true })
   return n
 }

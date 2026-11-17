@@ -11,6 +11,7 @@ import { Progress, Rail } from './components/Rail'
 import { AgentDialog } from './components/AgentDialog'
 import { Sheets } from './components/Sheets'
 import { IconButton, Kbd, MOD, Sheet } from './components/ui'
+import { t } from './i18n/t'
 import { onKeyDown } from './keys'
 import {
   detailOpen,
@@ -55,11 +56,11 @@ export function App() {
       </main>
       {todo &&
         (wide.value ? (
-          <aside class="app__detail-pane" aria-label="To-do details">
+          <aside class="app__detail-pane" aria-label={t.todoDetails}>
             <Detail key={todo.id} todo={todo} />
           </aside>
         ) : (
-          <Sheet label="To-do details" onClose={() => select(todo.id, false)}>
+          <Sheet label={t.todoDetails} onClose={() => select(todo.id, false)}>
             <Detail key={todo.id} todo={todo} />
           </Sheet>
         ))}
@@ -79,11 +80,11 @@ function Body() {
 function LoadError() {
   return (
     <div class="empty" role="alert">
-      <p class="empty__title">Could not load your to-dos</p>
-      <p>Orca plugin storage did not answer. Nothing was changed.</p>
+      <p class="empty__title">{t.loadErrorTitle}</p>
+      <p>{t.loadErrorBody}</p>
       <p>
         <button type="button" class="btn btn--outline btn--sm" onClick={() => void load()}>
-          Try again
+          {t.tryAgain}
         </button>
       </p>
     </div>
@@ -106,30 +107,27 @@ function Empty() {
   if (!todos.value.length)
     return (
       <div class="empty">
-        <p class="empty__title">No to-dos yet</p>
-        <p>
-          Press <Kbd>N</Kbd> to add one, type a title, then <Kbd>↵</Kbd>. Move it between states with <Kbd>1</Kbd>–
-          <Kbd>{Math.min(9, states.value.length)}</Kbd>.
-        </p>
+        <p class="empty__title">{t.emptyTitle}</p>
+        <p>{t.emptyBody(<Kbd>N</Kbd>, <Kbd>↵</Kbd>, <Kbd>1</Kbd>, <Kbd>{Math.min(9, states.value.length)}</Kbd>)}</p>
         <p>
           <button type="button" class="btn btn--outline btn--sm" onClick={() => openComposer()}>
-            Add a to-do
+            {t.addATodo}
           </button>
         </p>
       </div>
     )
-  if (f.text.trim() || f.priority)
+  if (f.text.trim() || f.priority || f.due)
     return (
       <div class="empty">
-        <p class="empty__title">No matches</p>
-        <p>Nothing here matches the search or priority filter.</p>
+        <p class="empty__title">{t.noMatchesTitle}</p>
+        <p>{t.noMatchesBody}</p>
         <p>
           <button
             type="button"
             class="btn btn--outline btn--sm"
-            onClick={() => (filter.value = { ...f, text: '', priority: '' })}
+            onClick={() => (filter.value = { ...f, text: '', priority: '', due: '' })}
           >
-            Clear search and filter
+            {t.clearSearchAndFilter}
           </button>
         </p>
       </div>
@@ -137,19 +135,17 @@ function Empty() {
   if (f.archived)
     return (
       <div class="empty">
-        <p class="empty__title">Nothing archived</p>
-        <p>
-          Archive a to-do with <Kbd>A</Kbd>, or archive every closed one from the display menu.
-        </p>
+        <p class="empty__title">{t.nothingArchivedTitle}</p>
+        <p>{t.nothingArchivedBody(<Kbd>A</Kbd>)}</p>
       </div>
     )
   if (f.tags.length)
     return (
       <div class="empty">
-        <p>No open to-dos tagged #{f.tags[0]}.</p>
+        <p>{t.noOpenTagged(f.tags[0])}</p>
         <p>
           <button type="button" class="btn btn--ghost btn--sm" onClick={() => setScope({ kind: 'all' })}>
-            Show all to-dos
+            {t.showAllTodos}
           </button>
         </p>
       </div>
@@ -159,7 +155,7 @@ function Empty() {
 
 function Skeleton() {
   return (
-    <div class="skeleton" aria-busy="true" aria-label="Loading">
+    <div class="skeleton" aria-busy="true" aria-label={t.loading}>
       {[62, 48, 71, 40, 55].map((w, i) => (
         <div key={i} class="skeleton__row">
           <span class="skeleton__dot" />
@@ -185,9 +181,9 @@ function UndoToast() {
       <span class="toast__text">{last.text}</span>
       <button type="button" class="btn btn--outline btn--xs" onClick={undo}>
         <Undo2 />
-        Undo <Kbd small>{MOD}Z</Kbd>
+        {t.undo} <Kbd small>{MOD}Z</Kbd>
       </button>
-      <IconButton label="Dismiss" class="btn--icon-xs" onClick={() => (lastUndoable.value = null)}>
+      <IconButton label={t.dismiss} class="btn--icon-xs" onClick={() => (lastUndoable.value = null)}>
         <X />
       </IconButton>
     </div>
@@ -209,7 +205,7 @@ function NoticeToast() {
     <div class={current.error ? 'toast toast--error' : 'toast'} role={current.error ? 'alert' : 'status'}>
       {current.error && <CircleAlert />}
       <span class="toast__text">{current.text}</span>
-      <IconButton label="Dismiss" class="btn--icon-xs" onClick={() => (notice.value = null)}>
+      <IconButton label={t.dismiss} class="btn--icon-xs" onClick={() => (notice.value = null)}>
         <X />
       </IconButton>
     </div>
@@ -221,8 +217,8 @@ function SaveErrorToast() {
   return (
     <div class="toast toast--error" role="alert">
       <CircleAlert />
-      <span class="toast__text">Could not save the last change. It may be lost when Orca reloads.</span>
-      <IconButton label="Dismiss" class="btn--icon-xs" onClick={() => (saveError.value = null)}>
+      <span class="toast__text">{t.saveFailed}</span>
+      <IconButton label={t.dismiss} class="btn--icon-xs" onClick={() => (saveError.value = null)}>
         <X />
       </IconButton>
     </div>

@@ -1,5 +1,7 @@
 // Pure data logic: no Orca, no DOM, so it is unit-tested directly.
 
+import { compareDue, daysUntil, dueAt, parseDue, quickDue } from './due'
+
 export type Priority = 'none' | 'low' | 'med' | 'high'
 export type State = { id: string; name: string; color: string; closed: boolean }
 export type Todo = {
@@ -14,6 +16,10 @@ export type Todo = {
   createdAt: number
   updatedAt: number
   closedAt?: number
+  /** When it is due, local time: `2026-03-04` or `2026-03-04T15:30`. See src/due.ts. */
+  due?: string
+  /** The Orca project (repository) it belongs to, by name. */
+  project?: string
   /** Agents this to-do was sent to, oldest first. */
   runs: AgentRun[]
 }
@@ -40,14 +46,21 @@ export type AgentRun = {
   stateAt: number
 }
 
+/** Open to-dos by due: past due, due by the end of today, or due within 7 days. */
+export type DueFilter = '' | 'overdue' | 'today' | 'week'
+export const DUE_FILTERS: DueFilter[] = ['', 'overdue', 'today', 'week']
+
 export type Filter = {
   text: string
   tags: string[]
   stateId: string
   priority: Priority | ''
+  due: DueFilter
+  /** An Orca project name; '' for any. */
+  project: string
   archived: boolean
 }
-export type Sort = 'manual' | 'priority' | 'updated' | 'created'
+export type Sort = 'manual' | 'priority' | 'due' | 'updated' | 'created'
 
 export const PRIORITIES: Priority[] = ['high', 'med', 'low', 'none']
 export const PRIORITY_LABEL: Record<Priority, string> = { none: 'No priority', low: 'Low', med: 'Medium', high: 'High' }
@@ -60,7 +73,15 @@ export const DEFAULT_STATES: State[] = [
   { id: 'done', name: 'Done', color: '#22c55e', closed: true }
 ]
 
-export const EMPTY_FILTER: Filter = { text: '', tags: [], stateId: '', priority: '', archived: false }
+export const EMPTY_FILTER: Filter = {
+  text: '',
+  tags: [],
+  stateId: '',
+  priority: '',
+  due: '',
+  project: '',
+  archived: false
+}
 
 export const uid = (): string => crypto.randomUUID()
 
@@ -79,24 +100,31 @@ const QUICK_PRIORITY = new Map<string, Priority>([
 ])
 
 /**
- * Reads a composer line such as `Fix login #auth !high`: each `#tag` word becomes a tag and one
- * `!high` / `!med` / `!low` (or `!h` / `!m` / `!l`) the priority; the other words are the title.
- * A number such as `#123` is not a tag.
+ * Reads a composer line such as `Fix login #auth !high @fri`: each `#tag` word becomes a tag, one
+ * `!high` / `!med` / `!low` (or `!h` / `!m` / `!l`) the priority, and one `@today`, `@tomorrow`,
+ * `@fri` or `@2026-03-04` the due date; the other words are the title. A number such as `#123` is
+ * not a tag, and `@alex` is not a date.
  * A line made only of these keeps its whole text as the title, so nothing typed is lost.
  */
-export function parseQuickAdd(line: string): { title: string; tags: string[]; priority?: Priority } {
+export function parseQuickAdd(
+  line: string,
+  now = Date.now()
+): { title: string; tags: string[]; priority?: Priority; due?: string } {
   const tags: string[] = []
   const rest: string[] = []
   let priority: Priority | undefined
+  let due: string | undefined
   for (const word of line.trim().split(/\s+/)) {
     const quick = word.startsWith('!') ? QUICK_PRIORITY.get(word.slice(1).toLowerCase()) : undefined
+    const day = word.startsWith('@') && !due ? quickDue(word.slice(1), now) : null
     // `#123` stays in the title: it is an issue number, not a tag.
     if (/^#(?!\d+$)[^#]+$/.test(word)) tags.push(...normalizeTags(word))
     else if (quick && !priority) priority = quick
+    else if (day) due = day
     else rest.push(word)
   }
   if (!rest.length) return { title: line.trim(), tags: [] }
-  return { title: rest.join(' '), tags: [...new Set(tags)], ...(priority && { priority }) }
+  return { title: rest.join(' '), tags: [...new Set(tags)], ...(priority && { priority }), ...(due && { due }) }
 }
 
 // A GFM task item: `- [ ] text`, `* [x] text` or `1. [ ] text`, also inside a blockquote. An item
@@ -144,10 +172,20 @@ export function patchTodo(todo: Todo, patch: Partial<Todo>, states: State[], now
   return next
 }
 
-export function matches(todo: Todo, f: Filter): boolean {
+/** Whether an open to-do's due falls in a due filter. A closed to-do (it has `closedAt`) never does. */
+export function inDueFilter(todo: Todo, due: DueFilter, now: number): boolean {
+  if (!due) return true
+  if (!todo.due || todo.closedAt !== undefined) return false
+  if (due === 'overdue') return dueAt(todo.due) < now
+  return daysUntil(todo.due, now) < (due === 'today' ? 1 : 7)
+}
+
+export function matches(todo: Todo, f: Filter, now = Date.now()): boolean {
   if (todo.archived !== f.archived) return false
   if (f.stateId && todo.stateId !== f.stateId) return false
   if (f.priority && todo.priority !== f.priority) return false
+  if (f.project && todo.project !== f.project) return false
+  if (!inDueFilter(todo, f.due, now)) return false
   if (f.tags.length && !f.tags.every((t) => todo.tags.includes(t))) return false
   const q = f.text.trim().toLowerCase()
   return !q || `${todo.title}\n${todo.description}`.toLowerCase().includes(q)
@@ -157,6 +195,7 @@ export function sortTodos(todos: Todo[], sort: Sort): Todo[] {
   const list = [...todos]
   if (sort === 'priority')
     return list.sort((a, b) => PRIORITY_RANK[a.priority] - PRIORITY_RANK[b.priority] || a.order - b.order)
+  if (sort === 'due') return list.sort((a, b) => compareDue(a.due, b.due) || a.order - b.order)
   if (sort === 'updated') return list.sort((a, b) => b.updatedAt - a.updatedAt)
   if (sort === 'created') return list.sort((a, b) => b.createdAt - a.createdAt)
   return list.sort((a, b) => a.order - b.order)
@@ -198,6 +237,19 @@ export function stats(todos: Todo[], states: State[], now = Date.now()): Stats {
   }
 }
 
+const DAY_MS = 24 * 60 * 60 * 1000
+
+/**
+ * The live to-dos in a closed state that were closed at least `days` days before `now`: the ones
+ * auto-archive moves. None when `days` is 0 (auto-archive off).
+ */
+export function staleClosed(todos: Todo[], states: State[], days: number, now: number): Todo[] {
+  if (days <= 0) return []
+  const closed = new Set(states.filter((s) => s.closed).map((s) => s.id))
+  const cutoff = now - days * DAY_MS
+  return todos.filter((t) => !t.archived && closed.has(t.stateId) && t.closedAt !== undefined && t.closedAt <= cutoff)
+}
+
 export function allTags(todos: Todo[]): string[] {
   return [...new Set(todos.flatMap((t) => t.tags))].sort()
 }
@@ -229,6 +281,9 @@ export function parseTodo(value: unknown): Todo | null {
     runs: Array.isArray(value.runs) ? value.runs.map(parseRun).filter((r): r is AgentRun => r !== null) : []
   }
   if (isNumber(value.closedAt)) todo.closedAt = value.closedAt
+  const due = parseDue(value.due)
+  if (due) todo.due = due
+  if (isString(value.project) && value.project.trim()) todo.project = value.project.trim().slice(0, 200)
   return todo
 }
 

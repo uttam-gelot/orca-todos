@@ -8,6 +8,7 @@ import {
   parseRunIndex,
   workspaceLabel,
   groupWorkspaces,
+  projectWorkspace,
   workspaceTitle,
   addRun,
   agentLabel,
@@ -40,6 +41,7 @@ describe('buildPrompt', () => {
       todo({ title: 'Fix login', description: ' Steps\n', tags: ['api', 'bug'], priority: 'med' })
     )
     expect(prompt).toBe('# Fix login\n\nSteps\n\nTags: #api #bug\nPriority: Medium')
+    expect(buildPrompt(todo({ due: '2026-03-04T15:30' }))).toEndWith('\nDue: 2026-03-04 15:30')
   })
   test('leaves out empty notes and no priority', () => {
     expect(buildPrompt(todo({ title: 'Ship it', description: '' }))).toBe('# Ship it')
@@ -111,6 +113,24 @@ describe('groupWorkspaces', () => {
   test('falls back to the folder, then the name, when Orca sends no project', () => {
     expect(groupWorkspaces([ws('a', null, 'backup')])[0].name).toBe('backup')
     expect(groupWorkspaces([ws('a', null, '', 'Notes')])[0].name).toBe('Notes')
+  })
+})
+
+describe('projectWorkspace', () => {
+  const ws = (id: string, project: string, folder: string): WorkspaceOption => ({
+    id,
+    kind: 'worktree',
+    name: id,
+    branch: id,
+    folder,
+    project
+  })
+  const list = [ws('feat', 'web', 'web-feat'), ws('main', 'web', 'web'), ws('api', 'api', 'api-x')]
+
+  test("prefers the project's own folder, else its first workspace", () => {
+    expect(projectWorkspace(list, 'web')?.id).toBe('main')
+    expect(projectWorkspace(list, 'api')?.id).toBe('api')
+    expect(projectWorkspace(list, 'gone')).toBeNull()
   })
 })
 

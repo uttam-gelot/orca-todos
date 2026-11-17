@@ -1,10 +1,11 @@
-// Inline capture: a title and Enter. Stays open for the next one; Esc closes. `#tag` and `!high`
-// words in the title set tags and the priority.
+// Inline capture: a title and Enter. Stays open for the next one; Esc closes. `#tag`, `!high` and
+// `@fri` words in the title set tags, the priority and the due date.
 
 import { useSignal } from '@preact/signals'
 import { Plus } from 'lucide-preact'
 import { parseQuickAdd } from '../model'
 import { composer, createTodo, filter, openComposer, select, stateById } from '../store'
+import { t } from '../i18n/t'
 import { Kbd, StateIcon } from './ui'
 import './Composer.css'
 
@@ -18,12 +19,14 @@ export function Composer({ stateId, variant }: { stateId: string; variant: 'row'
         e.preventDefault()
         const text = title.value.trim()
         if (!text) return
-        const { title: name, tags, priority } = parseQuickAdd(text)
+        const { title: name, tags, priority, due } = parseQuickAdd(text)
         const todo = createTodo({
           title: name,
           stateId,
           tags: [...new Set([...filter.value.tags, ...tags])],
-          ...(priority && { priority })
+          ...(filter.value.project && { project: filter.value.project }),
+          ...(priority && { priority }),
+          ...(due && { due })
         })
         select(todo.id, false)
         title.value = ''
@@ -33,8 +36,8 @@ export function Composer({ stateId, variant }: { stateId: string; variant: 'row'
       <input
         class="composer__input"
         autoFocus
-        aria-label={`New to-do in ${state?.name ?? 'state'}`}
-        placeholder="To-do title (#tag !high)"
+        aria-label={t.newTodoIn(state?.name ?? t.state)}
+        placeholder={t.composerPlaceholder}
         value={title.value}
         onInput={(e) => (title.value = e.currentTarget.value)}
         onBlur={() => !title.value.trim() && (composer.value = null)}
@@ -59,7 +62,7 @@ export function AddSlot({ stateId, variant }: { stateId: string; variant: 'row' 
   return (
     <button type="button" class={`add-slot add-slot--${variant}`} onClick={() => openComposer(stateId)}>
       <Plus aria-hidden="true" />
-      Add to-do
+      {t.addTodo}
     </button>
   )
 }

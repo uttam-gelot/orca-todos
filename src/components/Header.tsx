@@ -3,7 +3,9 @@
 import { useEffect, useRef } from 'preact/hooks'
 import {
   Archive,
+  CalendarClock,
   Columns3,
+  FolderGit2,
   Hash,
   Inbox,
   Keyboard,
@@ -15,12 +17,14 @@ import {
   SlidersHorizontal,
   X
 } from 'lucide-preact'
-import { EMPTY_FILTER, PRIORITIES, PRIORITY_LABEL, type Priority, type Sort } from '../model'
+import { t } from '../i18n/t'
+import { EMPTY_FILTER, PRIORITIES, type DueFilter, type Priority, type Sort } from '../model'
 import {
   archiveClosed,
   filter,
   menuOpen,
   openComposer,
+  overdueCount,
   scope,
   sheet,
   sort,
@@ -39,12 +43,14 @@ function ScopeTitle() {
   const state = s.kind === 'state' ? stateById.value.get(s.id) : undefined
   const [icon, name] =
     s.kind === 'state'
-      ? [<StateIcon state={state} />, state?.name ?? 'State']
-      : s.kind === 'tag'
-        ? [<Hash />, s.id]
-        : s.kind === 'archived'
-          ? [<Archive />, 'Archived']
-          : [<Inbox />, 'All to-dos']
+      ? [<StateIcon state={state} />, state?.name ?? t.state]
+      : s.kind === 'project'
+        ? [<FolderGit2 />, s.id]
+        : s.kind === 'tag'
+          ? [<Hash />, s.id]
+          : s.kind === 'archived'
+            ? [<Archive />, t.archived]
+            : [<Inbox />, t.allTodos]
   return (
     <h1 class="scope-title">
       {icon}
@@ -67,12 +73,32 @@ function HighCount() {
       type="button"
       class="btn btn--ghost btn--xs header__high"
       aria-pressed={on}
-      title={on ? 'Show every priority' : 'Show only high priority'}
+      title={on ? t.showEveryPriority : t.showOnlyHigh}
       onClick={() => (filter.value = { ...filter.value, priority: on ? '' : 'high' })}
     >
       <PriorityIcon priority="high" />
       {count}
-      <span class="header__high-label">high</span>
+      <span class="header__high-label">{t.highWord}</span>
+    </button>
+  )
+}
+
+/** "1 overdue": open to-dos past their due, as a toggle for the due filter. Shown only when any are. */
+function OverdueCount() {
+  const on = filter.value.due === 'overdue'
+  const count = overdueCount.value
+  if (!count && !on) return null
+  return (
+    <button
+      type="button"
+      class="btn btn--ghost btn--xs header__overdue"
+      aria-pressed={on}
+      title={on ? t.showEveryDue : t.showOnlyOverdue}
+      onClick={() => (filter.value = { ...filter.value, due: on ? '' : 'overdue' })}
+    >
+      <CalendarClock />
+      {count}
+      <span class="header__high-label">{t.overdueWord}</span>
     </button>
   )
 }
@@ -88,31 +114,32 @@ export function Header() {
           <ScopeSelect />
         </div>
         <HighCount />
+        <OverdueCount />
         <span class="spacer" />
-        <div class="seg" role="group" aria-label="View">
+        <div class="seg" role="group" aria-label={t.view}>
           <button
             type="button"
             class="seg__btn"
             aria-pressed={view.value === 'list'}
-            title="List (V)"
+            title={`${t.list} (V)`}
             onClick={() => (view.value = 'list')}
           >
             <List />
-            <span class="seg__label">List</span>
+            <span class="seg__label">{t.list}</span>
           </button>
           <button
             type="button"
             class="seg__btn"
             aria-pressed={view.value === 'board'}
-            title="Board (V)"
+            title={`${t.board} (V)`}
             onClick={() => (view.value = 'board')}
           >
             <Columns3 />
-            <span class="seg__label">Board</span>
+            <span class="seg__label">{t.board}</span>
           </button>
         </div>
         {searchFolded() && (
-          <IconButton label="Search (/)" class="header__search" onClick={focusSearch}>
+          <IconButton label={`${t.search} (/)`} class="header__search" onClick={focusSearch}>
             <Search />
           </IconButton>
         )}
@@ -120,11 +147,11 @@ export function Header() {
         <button
           type="button"
           class="btn btn--primary btn--sm header__new"
-          title="New to-do (N)"
+          title={`${t.newTodo} (N)`}
           onClick={() => openComposer()}
         >
           <Plus />
-          <span class="header__new-label">New</span>
+          <span class="header__new-label">{t.new}</span>
         </button>
       </div>
       <SearchBox />
@@ -148,8 +175,8 @@ function SearchBox() {
         ref={ref}
         class="search__input"
         type="search"
-        aria-label="Search to-dos"
-        placeholder="Search titles and notes"
+        aria-label={t.searchTodos}
+        placeholder={t.searchPlaceholder}
         value={text}
         onInput={(e) => (filter.value = { ...filter.value, text: e.currentTarget.value })}
         onBlur={() => (searchOpen.value = false)}
@@ -164,7 +191,7 @@ function SearchBox() {
       />
       {text ? (
         <IconButton
-          label="Clear search"
+          label={t.clearSearch}
           class="btn--icon-xs"
           onClick={() => (filter.value = { ...filter.value, text: '' })}
         >
@@ -180,9 +207,10 @@ function SearchBox() {
 function DisplayMenu() {
   const ref = useRef<HTMLDivElement>(null)
   const open = menuOpen.value
-  const changed = filter.value.priority !== EMPTY_FILTER.priority || sort.value !== 'manual'
+  const changed =
+    filter.value.priority !== EMPTY_FILTER.priority || filter.value.due !== EMPTY_FILTER.due || sort.value !== 'manual'
   const reset = () => {
-    filter.value = { ...filter.value, priority: EMPTY_FILTER.priority }
+    filter.value = { ...filter.value, priority: EMPTY_FILTER.priority, due: EMPTY_FILTER.due }
     sort.value = 'manual'
   }
   useEffect(() => {
@@ -201,7 +229,7 @@ function DisplayMenu() {
   return (
     <div class="menu" ref={ref}>
       <IconButton
-        label={changed ? 'Display options (filter or order on)' : 'Display options'}
+        label={changed ? t.displayOptionsOn : t.displayOptions}
         aria-expanded={open}
         aria-haspopup="true"
         class={changed ? 'btn--dot' : ''}
@@ -220,52 +248,66 @@ function DisplayMenu() {
           }}
         >
           <label class="menu__field">
-            <span>Priority</span>
+            <span>{t.priority}</span>
             <select
               class="select menu__select"
               value={filter.value.priority}
               onChange={(e) => (filter.value = { ...filter.value, priority: e.currentTarget.value as Priority | '' })}
             >
-              <option value="">Any</option>
+              <option value="">{t.anyPriority}</option>
               {PRIORITIES.map((p) => (
                 <option key={p} value={p}>
-                  {PRIORITY_LABEL[p]}
+                  {t.priorities[p]}
                 </option>
               ))}
             </select>
           </label>
           <label class="menu__field">
-            <span>Order</span>
+            <span>{t.dueFilter}</span>
+            <select
+              class="select menu__select"
+              value={filter.value.due}
+              onChange={(e) => (filter.value = { ...filter.value, due: e.currentTarget.value as DueFilter })}
+            >
+              <option value="">{t.dueAny}</option>
+              <option value="overdue">{t.dueOverdue}</option>
+              <option value="today">{t.dueByToday}</option>
+              <option value="week">{t.dueWeek}</option>
+            </select>
+          </label>
+          <label class="menu__field">
+            <span>{t.order}</span>
             <select
               class="select menu__select"
               value={sort.value}
               onChange={(e) => (sort.value = e.currentTarget.value as Sort)}
             >
-              <option value="manual">Manual</option>
-              <option value="priority">Priority</option>
-              <option value="updated">Recently updated</option>
-              <option value="created">Newest</option>
+              <option value="manual">{t.orderManual}</option>
+              <option value="priority">{t.orderPriority}</option>
+              <option value="due">{t.orderDue}</option>
+              <option value="updated">{t.orderUpdated}</option>
+              <option value="created">{t.orderCreated}</option>
             </select>
           </label>
           {changed && (
             <button type="button" class="menu__item" onClick={pick(reset)}>
               <RotateCcw />
-              Reset priority and order
+              {t.resetDisplay}
             </button>
           )}
           <div class="menu__sep" />
           <button type="button" class="menu__item" disabled={!closedCount} onClick={pick(archiveClosed)}>
             <Archive />
-            Archive closed to-dos
+            {t.archiveClosed}
             <span class="menu__meta count">{closedCount || ''}</span>
           </button>
           <button type="button" class="menu__item" onClick={pick(() => (sheet.value = 'states'))}>
             <Settings2 />
-            Edit states
+            {t.editStates}
           </button>
           <button type="button" class="menu__item" onClick={pick(() => (sheet.value = 'shortcuts'))}>
             <Keyboard />
-            Keyboard shortcuts
+            {t.keyboardShortcuts}
             <Kbd class="menu__kbd">?</Kbd>
           </button>
         </div>

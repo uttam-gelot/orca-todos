@@ -4,8 +4,8 @@
   "execution": "trusted-worker",
   "id": "todos",
   "name": "ToDos Board",
-  "version": "0.2.0",
-  "description": "Personal to-dos with custom states, tags, priorities, markdown notes, list and board views, and coding agents you start from a to-do.",
+  "version": "0.3.0",
+  "description": "Personal to-dos with custom states, tags, priorities, due dates with reminders, projects, markdown notes, list and board views, and coding agents you start from a to-do.",
   "author": {
     "name": "Uttam Gelot",
     "url": "https://github.com/uttam-gelot"
@@ -96,6 +96,42 @@
         "tooltip": "ToDos: open to-dos. Press to show or hide the right sidebar.",
         "command": "todos.toggleSidebar"
       }
+    ],
+    "settings": [
+      {
+        "key": "language",
+        "title": "Language",
+        "description": "The language of the board, the panel, the status bar item and reminders.",
+        "type": "string",
+        "default": "auto",
+        "enum": ["auto", "en", "es", "fr", "de", "ja", "zh-CN"],
+        "enumLabels": ["Same as Orca", "English", "Español", "Français", "Deutsch", "日本語", "简体中文"]
+      },
+      {
+        "key": "autoArchiveDays",
+        "title": "Archive closed to-dos",
+        "description": "Move a to-do to the archive this many days after it was closed. Archived to-dos stay searchable under Archived, and you can restore them.",
+        "type": "integer",
+        "default": 0,
+        "enum": [0, 1, 3, 7, 14, 30],
+        "enumLabels": ["Never", "After 1 day", "After 3 days", "After 7 days", "After 14 days", "After 30 days"]
+      },
+      {
+        "key": "dueReminders",
+        "title": "Due date reminders",
+        "description": "Show a notification when an open to-do comes due.",
+        "type": "boolean",
+        "default": true
+      },
+      {
+        "key": "reminderTime",
+        "title": "Reminder time for all-day to-dos",
+        "description": "When to remind about a to-do due on a day with no time set. To-dos with a time are reminded at that time.",
+        "type": "string",
+        "default": "09:00",
+        "enum": ["07:00", "08:00", "09:00", "10:00", "12:00", "17:00"],
+        "enumLabels": ["7:00", "8:00", "9:00", "10:00", "12:00", "17:00"]
+      }
     ]
   },
   "capabilities": [
@@ -116,6 +152,12 @@
     },
     {
       "kind": "terminal:send"
+    },
+    {
+      "kind": "settings:own"
+    },
+    {
+      "kind": "notifications:show"
     }
   ]
 }

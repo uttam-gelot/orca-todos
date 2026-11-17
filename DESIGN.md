@@ -14,7 +14,8 @@ in a frame.
   working, amber needs you, green finished, gray otherwise). Only "Needs you" also colors its text,
   mixed toward the foreground for contrast. High priority is the one priority with a color
   (`--prio-high`, red-orange mixed toward the foreground); medium is the foreground and low is
-  muted. Everything else is monochrome.
+  muted. A due date is the one other color: `--due-overdue` (destructive) when late, `--due-today`
+  (amber) when due today; later dues are muted. Everything else is monochrome.
 - **Type:** Geist (bundled, OFL) at 13px for rows and items, 12px for secondary text, 14px semibold
   for titles, and 18px semibold for the detail title. Section labels are 11px uppercase semibold
   with 0.05em tracking. Numbers use tabular figures.
@@ -38,18 +39,25 @@ in a frame.
 - **760–1039px:** rail and main. Details open as a right sheet.
 - **Below 760px (the sidebar):** the rail becomes a scope `<select>` with counts, the stats become a
   28px status bar, and details open as a full-width sheet. Below 520px, the view and New buttons
-  show icons only. Below 420px, row tags hide.
+  show icons only. Below 420px, row tags hide, and row due chips show only the icon, and only when
+  overdue or due today. Below 400px, the header's high-priority toggle hides unless it is on, so
+  the scope menu keeps its room.
 
 ## Patterns
 
 - **Rows:** 34px.
   - Hover is a 60% accent tint; selected is full accent.
-  - Columns: priority, state toggle, title, notes hint, tags, age.
+  - Columns: priority, state toggle, title, notes hint, due, project, tags, age.
 - **Notes hint:** checklist progress (`ListChecks` + `2/5`, success-tinted when all are done) when
   the notes hold task items, else a note icon (`NotepadText`). Nothing for empty notes.
 - **Search:** a full-width field under the header row. Below 520px it folds into a header icon while
   empty, so the first to-do moves up a row; the icon or `/` opens it, and it folds again on blur.
-- **Header:** "N high" (open high-priority to-dos in view) toggles the priority filter. The display
+- **Due chip:** `CalendarClock` and a short label ("Today", "Fri", "Mar 4 15:30"), tinted by
+  urgency; the tooltip has the full date. Closed to-dos keep the chip muted.
+- **Project chip:** `FolderGit2` and the project name, a quiet button that opens the project's
+  workspace in Orca. Hidden while that project is the scope.
+- **Header:** "N high" (open high-priority to-dos in view) toggles the priority filter, and
+  "N overdue" (in the overdue color) toggles the overdue filter. The display
   options icon gets a dot while a filter or order is on, and the menu offers a reset.
 - **Columns:** flex from 260px to 360px, so a wide tab fills; more states scroll sideways. Each
   column has a 2px top edge in its state color. A column collapses to a 40px strip (icon, count, vertical
@@ -64,7 +72,8 @@ in a frame.
   adds.
 - **Composer:** inline, at the end of the target group or column. Enter adds and keeps it open; Esc
   closes it.
-  `#tag` and `!high` words in the title set tags and the priority; the placeholder says so.
+  `#tag`, `!high` and `@fri` words in the title set tags, the priority and the due date; the
+  placeholder says so.
 - **Editing in place:**
   - Title: Enter or blur saves; Esc reverts.
   - Tags: Enter or comma adds; Backspace removes the last one.
@@ -86,6 +95,10 @@ in a frame.
     **Edit**. An edited prompt is kept per to-do until it starts. The footer names the side
     effects ("New terminal · moves to In Progress"). Without the worker, Copy prompt is the
     primary action.
+- **Details rows:** State, Priority, Project (a picker of Orca's projects), Due (native date and
+  time inputs at fixed widths, with a clear button), Tags.
+- **Language:** every string comes from `src/i18n`; layouts must hold German and Japanese without
+  wrapping controls. Dates and times use `Intl` in the interface language.
 - **Empty states teach:** they name the key to press (N, ↵, 1–9, A) and offer a single action.
 - **Keyboard:** see `src/keys.ts` and the shortcut sheet (`?`). Esc backs out one layer at a time:
   sheet → menu → composer → details → selection → search.

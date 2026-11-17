@@ -28,6 +28,13 @@ describe('statusFor', () => {
   test('leaves out the high count when there is none', () => {
     expect(statusFor([makeTodo()], DEFAULT_STATES).text).toBe('1 open')
   })
+
+  test('counts open to-dos past their due', () => {
+    const todos = [makeTodo({ id: 'a', due: '2020-01-01' }), makeTodo({ id: 'b', due: '2020-01-01', stateId: 'done' })]
+    const status = statusFor(todos, DEFAULT_STATES)
+    expect(status.text).toBe('1 open · 1 overdue')
+    expect(status.tooltip).toStartWith('ToDos: 1 open to-do, 1 overdue.')
+  })
 })
 
 describe('updateStatus', () => {
@@ -63,5 +70,22 @@ describe('followStatus', () => {
     followStatus(orca, 5)
     await Bun.sleep(1)
     expect(orca.logs).toEqual(['Could not update the status bar item (not_permitted)'])
+  })
+})
+
+describe('the status language', () => {
+  test('follows the language setting', async () => {
+    const orca = withStatusBar()
+    orca.setting.set('language', 'de')
+    orca.stored.set(TODO_KEY + 'a', makeTodo({ id: 'a' }))
+    await updateStatus(orca)
+    expect(updates(orca)[0]).toMatchObject({ text: '1 offen' })
+  })
+
+  test('follows the locale a panel stored when the setting is auto', async () => {
+    const orca = withStatusBar()
+    orca.stored.set('locale', 'es-ES')
+    await updateStatus(orca)
+    expect(updates(orca)[0]).toMatchObject({ text: 'No hay tareas abiertas' })
   })
 })

@@ -8,8 +8,10 @@ import {
   ArchiveArrowUp,
   ArrowLeft,
   Bold,
+  CalendarClock,
   Code,
   Copy,
+  FolderGit2,
   Italic,
   Link,
   List,
@@ -19,13 +21,18 @@ import {
   X
 } from 'lucide-preact'
 import { focusRequest } from '../focus'
-import { checklist, normalizeTags, PRIORITIES, PRIORITY_LABEL, toggleTask, type Todo } from '../model'
+import { dueDay, dueState, dueTime, joinDue } from '../due'
+import { formatDate, t } from '../i18n/t'
+import { checklist, normalizeTags, PRIORITIES, toggleTask, type Todo } from '../model'
 import { continueList } from '../editing'
 import { onMarkdownClick, renderMarkdown, taskIndex } from '../markdown'
 import {
   copyPrompt,
   deleteTodo,
+  ensureWorkspaces,
   moveTodo,
+  now,
+  projectNames,
   select,
   setScope,
   stateById,
@@ -36,7 +43,7 @@ import {
   wide
 } from '../store'
 import { AgentButton, RunList } from './AgentRun'
-import { formatDate, IconButton, Kbd, MOD, PriorityIcon, StateIcon } from './ui'
+import { IconButton, Kbd, MOD, PriorityIcon, StateIcon } from './ui'
 import './Detail.css'
 
 export function Detail({ todo }: { todo: Todo }) {
@@ -46,7 +53,7 @@ export function Detail({ todo }: { todo: Todo }) {
     <div class={wide.value ? 'detail' : 'detail detail--sheet'}>
       <header class="detail__bar">
         {!wide.value && (
-          <IconButton label="Back" onClick={close}>
+          <IconButton label={t.back} onClick={close}>
             <ArrowLeft />
           </IconButton>
         )}
@@ -56,17 +63,17 @@ export function Detail({ todo }: { todo: Todo }) {
         </span>
         <span class="spacer" />
         <AgentButton todo={todo} class="detail__agent" />
-        <IconButton label="Copy as agent prompt (Y)" onClick={() => copyPrompt(todo.id)}>
+        <IconButton label={`${t.copyAsPrompt} (Y)`} onClick={() => copyPrompt(todo.id)}>
           <Copy />
         </IconButton>
-        <IconButton label={todo.archived ? 'Unarchive (A)' : 'Archive (A)'} onClick={() => toggleArchived(todo.id)}>
+        <IconButton label={`${todo.archived ? t.unarchive : t.archive} (A)`} onClick={() => toggleArchived(todo.id)}>
           {todo.archived ? <ArchiveArrowUp /> : <Archive />}
         </IconButton>
-        <IconButton label="Delete (Delete)" class="btn--danger" onClick={() => deleteTodo(todo.id)}>
+        <IconButton label={`${t.delete} (Delete)`} class="btn--danger" onClick={() => deleteTodo(todo.id)}>
           <Trash />
         </IconButton>
         {wide.value && (
-          <IconButton label="Close (Esc)" onClick={close}>
+          <IconButton label={`${t.close} (Esc)`} onClick={close}>
             <X />
           </IconButton>
         )}
@@ -74,16 +81,16 @@ export function Detail({ todo }: { todo: Todo }) {
 
       <div class="detail__body">
         <Title todo={todo} />
-        {todo.archived && <p class="detail__notice">Archived. It is hidden from every scope except Archived.</p>}
+        {todo.archived && <p class="detail__notice">{t.archivedNotice}</p>}
 
         <dl class="detail__props">
-          <dt class="detail__prop-term">State</dt>
+          <dt class="detail__prop-term">{t.state}</dt>
           <dd class="detail__prop-value">
             <label class="picker">
               <StateIcon state={state} />
               <select
                 class="picker__select"
-                aria-label="State"
+                aria-label={t.state}
                 value={todo.stateId}
                 onChange={(e) => moveTodo(todo.id, e.currentTarget.value)}
               >
@@ -96,25 +103,33 @@ export function Detail({ todo }: { todo: Todo }) {
               </select>
             </label>
           </dd>
-          <dt class="detail__prop-term">Priority</dt>
+          <dt class="detail__prop-term">{t.priority}</dt>
           <dd class="detail__prop-value">
             <label class="picker">
               <PriorityIcon priority={todo.priority} />
               <select
                 class="picker__select"
-                aria-label="Priority"
+                aria-label={t.priority}
                 value={todo.priority}
                 onChange={(e) => updateTodo(todo.id, { priority: e.currentTarget.value as Todo['priority'] })}
               >
                 {PRIORITIES.map((p) => (
                   <option key={p} value={p}>
-                    {PRIORITY_LABEL[p]}
+                    {t.priorities[p]}
                   </option>
                 ))}
               </select>
             </label>
           </dd>
-          <dt class="detail__prop-term">Tags</dt>
+          <dt class="detail__prop-term">{t.project}</dt>
+          <dd class="detail__prop-value">
+            <ProjectPicker todo={todo} />
+          </dd>
+          <dt class="detail__prop-term">{t.due}</dt>
+          <dd class="detail__prop-value">
+            <DueEditor todo={todo} closed={Boolean(state?.closed)} />
+          </dd>
+          <dt class="detail__prop-term">{t.tags}</dt>
           <dd class="detail__prop-value">
             <TagEditor todo={todo} />
           </dd>
@@ -125,10 +140,77 @@ export function Detail({ todo }: { todo: Todo }) {
         <RunList todo={todo} />
 
         <p class="detail__meta count">
-          Created {formatDate(todo.createdAt)} · Updated {formatDate(todo.updatedAt)}
-          {todo.closedAt ? ` · Closed ${formatDate(todo.closedAt)}` : ''}
+          {t.dates(
+            formatDate(todo.createdAt),
+            formatDate(todo.updatedAt),
+            todo.closedAt ? formatDate(todo.closedAt) : undefined
+          )}
         </p>
       </div>
+    </div>
+  )
+}
+
+/** The project: Orca's projects (fetched on first use), plus the to-do's own if Orca lacks it. */
+function ProjectPicker({ todo }: { todo: Todo }) {
+  useEffect(() => void ensureWorkspaces(), [])
+  const names = [...new Set([...projectNames.value, ...(todo.project ? [todo.project] : [])])]
+  return (
+    <label class={todo.project ? 'picker' : 'picker picker--empty'}>
+      <FolderGit2 />
+      <select
+        class="picker__select"
+        aria-label={t.project}
+        value={todo.project ?? ''}
+        onChange={(e) => updateTodo(todo.id, { project: e.currentTarget.value || undefined })}
+      >
+        <option value="">{t.noProject}</option>
+        {names.map((name) => (
+          <option key={name} value={name}>
+            {name}
+          </option>
+        ))}
+      </select>
+    </label>
+  )
+}
+
+/**
+ * The due date: a date field, then a time field once there is a date. Clearing the date clears the
+ * due; clearing the time leaves a whole-day due. Native fields, so the picker and the date format
+ * are the platform's and keyboard entry works.
+ */
+function DueEditor({ todo, closed }: { todo: Todo; closed: boolean }) {
+  const due = todo.due
+  const tone = due && !closed ? dueState(due, now.value) : 'later'
+  const set = (next: string | undefined) => updateTodo(todo.id, { due: next })
+  return (
+    <div class={`due-editor due-editor--${tone}`}>
+      <CalendarClock class="due-editor__icon" aria-hidden="true" />
+      <input
+        type="date"
+        class="due-editor__field"
+        aria-label={t.dueDate}
+        value={due ? dueDay(due) : ''}
+        onChange={(e) => {
+          const day = e.currentTarget.value
+          set(day ? joinDue(day, due ? dueTime(due) : '') : undefined)
+        }}
+      />
+      {due && (
+        <>
+          <input
+            type="time"
+            class="due-editor__field"
+            aria-label={t.dueTime}
+            value={dueTime(due)}
+            onChange={(e) => set(joinDue(dueDay(due), e.currentTarget.value))}
+          />
+          <IconButton label={t.clearDue} class="btn--icon-xs" onClick={() => set(undefined)}>
+            <X />
+          </IconButton>
+        </>
+      )}
     </div>
   )
 }
@@ -152,7 +234,7 @@ function Title({ todo }: { todo: Todo }) {
       ref={ref}
       class="detail__title"
       rows={1}
-      aria-label="Title"
+      aria-label={t.title}
       value={draft.value}
       onInput={(e) => (draft.value = e.currentTarget.value)}
       onBlur={commit}
@@ -187,20 +269,20 @@ function TagEditor({ todo }: { todo: Todo }) {
           <button
             type="button"
             class="chip__label"
-            title={`Show #${tag}`}
+            title={t.showTag(tag)}
             onClick={() => setScope({ kind: 'tag', id: tag })}
           >
             #{tag}
           </button>
-          <button type="button" class="chip__remove" aria-label={`Remove #${tag}`} onClick={() => remove(tag)}>
+          <button type="button" class="chip__remove" aria-label={t.removeTag(tag)} onClick={() => remove(tag)}>
             <X />
           </button>
         </span>
       ))}
       <input
         class="tag-editor__input"
-        aria-label="Add tag"
-        placeholder={todo.tags.length ? 'Add' : 'Add tags'}
+        aria-label={t.addTag}
+        placeholder={todo.tags.length ? t.add : t.addTags}
         list={listId}
         value={draft.value}
         onInput={(e) => (draft.value = e.currentTarget.value)}
@@ -230,13 +312,14 @@ function TagEditor({ todo }: { todo: Todo }) {
 }
 
 // [before, after, placeholder] wrapped around the selection.
+// `label` names a message, so the toolbar follows the interface language.
 const FORMATS = [
-  { icon: Bold, label: 'Bold', key: 'b', wrap: ['**', '**', 'bold'] },
-  { icon: Italic, label: 'Italic', key: 'i', wrap: ['_', '_', 'italic'] },
-  { icon: Code, label: 'Code', key: 'e', wrap: ['`', '`', 'code'] },
-  { icon: Link, label: 'Link', key: 'k', wrap: ['[', '](https://)', 'text'] },
-  { icon: List, label: 'Bulleted list', key: '', wrap: ['\n- ', '', 'item'] },
-  { icon: ListChecks, label: 'Checklist', key: '', wrap: ['\n- [ ] ', '', 'item'] }
+  { icon: Bold, label: 'bold', key: 'b', wrap: ['**', '**', 'bold'] },
+  { icon: Italic, label: 'italic', key: 'i', wrap: ['_', '_', 'italic'] },
+  { icon: Code, label: 'code', key: 'e', wrap: ['`', '`', 'code'] },
+  { icon: Link, label: 'link', key: 'k', wrap: ['[', '](https://)', 'text'] },
+  { icon: List, label: 'bulletedList', key: '', wrap: ['\n- ', '', 'item'] },
+  { icon: ListChecks, label: 'checklist', key: '', wrap: ['\n- [ ] ', '', 'item'] }
 ] as const
 
 function Description({ todo }: { todo: Todo }) {
@@ -298,7 +381,7 @@ function Description({ todo }: { todo: Todo }) {
               dangerouslySetInnerHTML={{ __html: renderMarkdown(todo.description, { tasks: true }) }}
             />
             <IconButton
-              label="Edit description (E)"
+              label={`${t.editDescription} (E)`}
               class="description__edit btn--icon-xs"
               onClick={() => (editing.value = true)}
             >
@@ -307,7 +390,7 @@ function Description({ todo }: { todo: Todo }) {
           </div>
         ) : (
           <button type="button" class="description__empty" onClick={() => (editing.value = true)}>
-            Add notes, links or a checklist. Markdown works.
+            {t.notesEmpty}
             <Kbd>E</Kbd>
           </button>
         )}
@@ -320,7 +403,7 @@ function Description({ todo }: { todo: Todo }) {
         {FORMATS.map(({ icon: Icon, label, key, wrap }) => (
           <IconButton
             key={label}
-            label={key ? `${label} (${MOD}${key.toUpperCase()})` : label}
+            label={key ? `${t[label]} (${MOD}${key.toUpperCase()})` : t[label]}
             class="btn--icon-xs"
             onMouseDown={(e: MouseEvent) => e.preventDefault()}
             onClick={() => format(wrap)}
@@ -330,14 +413,14 @@ function Description({ todo }: { todo: Todo }) {
         ))}
         <span class="spacer" />
         <button type="button" class="btn btn--outline btn--xs" onClick={done}>
-          Done <Kbd small>{MOD}↵</Kbd>
+          {t.done} <Kbd small>{MOD}↵</Kbd>
         </button>
       </div>
       <textarea
         ref={area}
         class="description__input"
-        aria-label="Description (markdown)"
-        placeholder="Markdown: **bold**, - lists, - [ ] tasks, [links](https://…)"
+        aria-label={t.notesLabel}
+        placeholder={t.notesPlaceholder}
         value={draft.value}
         onInput={(e) => {
           draft.value = e.currentTarget.value

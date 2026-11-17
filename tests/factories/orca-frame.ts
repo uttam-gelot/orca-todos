@@ -21,6 +21,10 @@ export type FakeOrcaFrame = OrcaFrame & {
   handlers: Map<string, RequestHandler>
   /** Every worker request sent, in order. */
   requests: { name: string; input: unknown }[]
+  /** The plugin's settings as Orca would answer them. Change with `setSetting`. */
+  settingValues: Record<string, unknown>
+  /** Changes a setting as the person would in Orca's Settings, and notifies. */
+  setSetting(key: string, value: unknown): void
 }
 
 export function createFakeOrcaFrame(): FakeOrcaFrame {
@@ -30,6 +34,8 @@ export function createFakeOrcaFrame(): FakeOrcaFrame {
   const opened: string[] = []
   const handlers = new Map<string, RequestHandler>()
   const requests: { name: string; input: unknown }[] = []
+  const settingValues: Record<string, unknown> = {}
+  const settingListeners = new Set<Listener>()
 
   const check = (op: Failure): void => {
     if (!failures.delete(op)) return
@@ -75,6 +81,20 @@ export function createFakeOrcaFrame(): FakeOrcaFrame {
       }
     },
     host: { has: () => true },
+    settingValues,
+    settings: {
+      async get() {
+        return structuredClone(settingValues)
+      },
+      onDidChange(fn) {
+        settingListeners.add(fn)
+        return { dispose: () => settingListeners.delete(fn) }
+      }
+    },
+    setSetting(key, value) {
+      settingValues[key] = value
+      for (const fn of settingListeners) fn({ key })
+    },
     plugin: {
       async request(name, input) {
         requests.push({ name, input: structuredClone(input) })
@@ -95,6 +115,8 @@ export function createFakeOrcaFrame(): FakeOrcaFrame {
       opened.length = 0
       handlers.clear()
       requests.length = 0
+      for (const key of Object.keys(settingValues)) delete settingValues[key]
+      settingListeners.clear()
     }
   }
 }

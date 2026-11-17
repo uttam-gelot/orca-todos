@@ -17,7 +17,8 @@ import { latestRun } from '../agents'
 import { isUnseen, seen } from '../seen'
 import { AgentButton, RunBadge } from './AgentRun'
 import { AddSlot } from './Composer'
-import { ago, DoneToggle, IconButton, NotesHint, PriorityIcon, StateIcon } from './ui'
+import { formatLong, t } from '../i18n/t'
+import { ago, DoneToggle, DueChip, IconButton, ProjectChip, NotesHint, PriorityIcon, StateIcon } from './ui'
 import './ListView.css'
 
 export function ListView() {
@@ -26,7 +27,7 @@ export function ListView() {
     <div
       class="list"
       role="listbox"
-      aria-label="To-dos"
+      aria-label={t.todos}
       aria-activedescendant={selectedId.value ? `todo-${selectedId.value}` : undefined}
     >
       {groups.value.map(({ state, items }) => (
@@ -51,7 +52,7 @@ function Group({ state, items, single }: { state: State; items: Todo[]; single: 
           </button>
           {!archived && (
             <IconButton
-              label={`Add to ${state.name}`}
+              label={t.addTo(state.name)}
               class="btn--icon-xs group__add"
               onClick={() => openComposer(state.id)}
             >
@@ -89,7 +90,9 @@ function Row({ todo }: { todo: Todo }) {
       <DoneToggle state={state} onToggle={() => toggleDone(todo.id)} />
       <span class="row__title">{todo.title}</span>
       <NotesHint description={todo.description} />
+      {todo.due && <DueChip due={todo.due} closed={state?.closed} />}
       <span class="row__tags">
+        <ProjectChip project={todo.project} />
         {todo.tags.map((tag) => (
           <span key={tag} class="tag">
             #{tag}
@@ -98,7 +101,7 @@ function Row({ todo }: { todo: Todo }) {
       </span>
       {run && <RunBadge run={run} unseen={!current && isUnseen(todo, seen.value)} class="row__run" />}
       <AgentButton todo={todo} class="row__agent" />
-      <span class="row__age count" title={`Updated ${new Date(todo.updatedAt).toLocaleString()}`}>
+      <span class="row__age count" title={t.updatedOn(formatLong(todo.updatedAt))}>
         {ago(todo.updatedAt)}
       </span>
     </div>

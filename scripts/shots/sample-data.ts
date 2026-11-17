@@ -1,6 +1,7 @@
 // Sample to-dos for screenshots. Dates are relative to now, so "done this week" and the update
 // times in the shots always look current.
 
+import { dayText } from '../../src/due'
 import type { AgentRun, Priority, RunState, State, Todo } from '../../src/model'
 
 const HOUR = 3_600_000
@@ -24,6 +25,9 @@ type Sample = {
   age: number
   description?: string
   archived?: boolean
+  project?: string
+  /** Due this many days from today (negative: past due). */
+  dueIn?: number
   /** The newest agent run's state and how long ago it changed. */
   run?: { agent: string; state: RunState; ago: number }
 }
@@ -32,6 +36,8 @@ const SAMPLES: Sample[] = [
   {
     id: 'a',
     title: 'Rate limit the agent launch endpoint',
+    dueIn: 0,
+    project: 'orca',
     stateId: 'doing',
     tags: ['api'],
     priority: 'high',
@@ -54,6 +60,8 @@ const SAMPLES: Sample[] = [
   {
     id: 'c',
     title: 'Write release notes for 1.4.247',
+    dueIn: 2,
+    project: 'website',
     stateId: 'todo',
     tags: ['docs'],
     priority: 'med',
@@ -63,6 +71,8 @@ const SAMPLES: Sample[] = [
   {
     id: 'd',
     title: 'Flaky worktree cleanup test on CI',
+    dueIn: -1,
+    project: 'orca',
     stateId: 'todo',
     tags: ['ci', 'bug'],
     priority: 'high',
@@ -72,7 +82,15 @@ const SAMPLES: Sample[] = [
     description: 'Fails about 1 in 20 runs on macOS runners.'
   },
   { id: 'e', title: 'Try the new terminal split shortcuts', stateId: 'todo', priority: 'low', order: 3, age: 4 * DAY },
-  { id: 'f', title: 'Plugin settings page polish', stateId: 'backlog', tags: ['ui'], order: 1, age: 6 * DAY },
+  {
+    id: 'f',
+    title: 'Plugin settings page polish',
+    stateId: 'backlog',
+    tags: ['ui'],
+    order: 1,
+    age: 6 * DAY,
+    dueIn: 12
+  },
   {
     id: 'g',
     title: 'Benchmark Bun vs pnpm install in CI',
@@ -115,15 +133,22 @@ export function sampleTodos(now: number = Date.now()): Todo[] {
     state: run.state,
     stateAt: now - run.ago
   })
-  return SAMPLES.map(({ age, tags = [], priority = 'none', description = '', archived = false, run, ...rest }) => ({
-    ...rest,
-    tags,
-    priority,
-    description,
-    archived,
-    runs: run ? [runOf(rest.id, run)] : [],
-    createdAt: now - age - 2 * DAY,
-    updatedAt: now - age,
-    ...(rest.stateId === 'done' ? { closedAt: now - age } : {})
-  }))
+  const day = (n: number) => {
+    const d = new Date(now)
+    return dayText(new Date(d.getFullYear(), d.getMonth(), d.getDate() + n))
+  }
+  return SAMPLES.map(
+    ({ age, tags = [], priority = 'none', description = '', archived = false, run, dueIn, ...rest }) => ({
+      ...rest,
+      ...(dueIn !== undefined && { due: day(dueIn) }),
+      tags,
+      priority,
+      description,
+      archived,
+      runs: run ? [runOf(rest.id, run)] : [],
+      createdAt: now - age - 2 * DAY,
+      updatedAt: now - age,
+      ...(rest.stateId === 'done' ? { closedAt: now - age } : {})
+    })
+  )
 }

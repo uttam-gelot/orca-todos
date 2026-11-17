@@ -20,7 +20,8 @@ import { latestRun } from '../agents'
 import { isUnseen, seen } from '../seen'
 import { AgentButton, RunBadge } from './AgentRun'
 import { AddSlot } from './Composer'
-import { ago, DoneToggle, IconButton, NotesHint, PriorityIcon, StateIcon } from './ui'
+import { formatLong, t } from '../i18n/t'
+import { ago, DoneToggle, DueChip, IconButton, ProjectChip, NotesHint, PriorityIcon, StateIcon } from './ui'
 import './BoardView.css'
 
 const dragging = signal<string | null>(null)
@@ -68,7 +69,7 @@ function Column({ state, items }: { state: State; items: Todo[] }) {
           type="button"
           class="column__strip"
           aria-expanded="false"
-          title={`Expand ${state.name}`}
+          title={t.expand(state.name)}
           onClick={() => toggleCollapsed(state.id)}
         >
           <StateIcon state={state} />
@@ -90,7 +91,7 @@ function ColumnBody({ state, items }: { state: State; items: Todo[] }) {
         <span class="column__name">{state.name}</span>
         <span class="count">{items.length}</span>
         <IconButton
-          label={`Collapse ${state.name}`}
+          label={t.collapse(state.name)}
           class="btn--icon-xs column__collapse"
           aria-expanded="true"
           onClick={() => toggleCollapsed(state.id)}
@@ -99,7 +100,7 @@ function ColumnBody({ state, items }: { state: State; items: Todo[] }) {
         </IconButton>
         {!filter.value.archived && (
           <IconButton
-            label={`Add to ${state.name}`}
+            label={t.addTo(state.name)}
             class="btn--icon-xs column__add"
             onClick={() => openComposer(state.id)}
           >
@@ -149,7 +150,9 @@ function Card({ todo }: { todo: Todo }) {
       </div>
       <div class="card__meta">
         {todo.priority !== 'none' && <PriorityIcon priority={todo.priority} />}
+        {todo.due && <DueChip due={todo.due} closed={state?.closed} />}
         <NotesHint description={todo.description} />
+        <ProjectChip project={todo.project} />
         {todo.tags.length > 0 && (
           <span class="card__tags" title={todo.tags.map((t) => `#${t}`).join(' ')}>
             {todo.tags.map((tag) => (
@@ -161,7 +164,7 @@ function Card({ todo }: { todo: Todo }) {
         )}
         <span class="card__end">
           {!run && <AgentButton todo={todo} class="card__agent" />}
-          <span class="count" title={`Updated ${new Date(todo.updatedAt).toLocaleString()}`}>
+          <span class="count" title={t.updatedOn(formatLong(todo.updatedAt))}>
             {ago(todo.updatedAt)}
           </span>
         </span>

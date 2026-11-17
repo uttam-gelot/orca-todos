@@ -21,12 +21,16 @@ src/main.tsx      entry: styles.css, <App />, load()
 src/App.tsx/.css  shell, empty and error states, toasts
 src/components/   one .tsx + its own .css each; ui.tsx/.css hold shared primitives
 src/model.ts      types, pure rules, parseTodo/parseStates
+src/due.ts        pure due-date rules (parse, compare, label, quick-add words, reminder time)
+src/settings.ts   the plugin settings (manifest `contributes.settings`) and parseSettings
+src/i18n/         en.ts (source catalog) + one catalog per language; index.ts resolves the language; t.ts is the panel's `t`
 src/store.ts      signals, actions, persistence, cross-surface sync
 src/orca.ts       the only window.orca access (localStorage fallback for previews)
 src/agents.ts     pure agent rules: agents, prompt, run bookkeeping, workspace labels
 src/protocol.ts   panel ↔ worker requests and their parsers (both sides import it)
 src/clipboard.ts  copy from a frame (execCommand: frames refuse navigator.clipboard)
-src/worker/       the trusted worker (dist/worker.js): workspaces, launches, status events
+src/worker/       the trusted worker (dist/worker.js): workspaces, launches, status events, status bar
+                  (status.ts), due reminders (reminders.ts), automatic archive (archive.ts), storage reads (data.ts)
 src/keys.ts       keyboard map; src/focus.ts shared focus requests
 src/log.ts        logger; src/errors.ts typed errors
 src/styles.css    global tokens and resets only

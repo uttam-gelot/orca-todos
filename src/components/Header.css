@@ -54,17 +54,29 @@
 .scope-title__count {
   font-weight: 400;
 }
-.header__high {
+.header__high,
+.header__overdue {
   --icon-size: var(--icon-sm);
   flex: none;
   color: var(--muted-fg);
+}
+.header__overdue {
+  --icon-color: var(--due-overdue);
 }
 @media (max-width: 420px) {
   .header__high-label {
     display: none;
   }
 }
-.header__high[aria-pressed='true'] {
+/* A narrow panel keeps room for the scope menu: the high count goes (the display menu and the
+   status bar still have it) unless it is on, so it can be turned off here. */
+@media (max-width: 400px) {
+  .header__high[aria-pressed='false'] {
+    display: none;
+  }
+}
+.header__high[aria-pressed='true'],
+.header__overdue[aria-pressed='true'] {
   background: var(--accent);
   color: var(--fg);
 }
