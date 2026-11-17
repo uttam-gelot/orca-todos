@@ -19,7 +19,7 @@ compact list in the sidebar. No account, no sync service, no network.
 
 <picture>
   <source media="(prefers-color-scheme: dark)" srcset="docs/screenshots/tab-board-dark.png" />
-  <img src="docs/screenshots/tab-board-light.png" alt="The board in the center tab: a column for each state, cards with priority, checklist progress, tags, age and agent status" />
+  <img src="docs/screenshots/tab-board-light.png" alt="The board in the center tab: a column for each state, cards with priority, due date, project, checklist progress, tags, age and agent status" />
 </picture>
 
 </div>
@@ -92,9 +92,9 @@ the Orca theme, fonts, and control sizes, so it looks like a part of Orca.
 
 Orca draws these screenshots. To take them again, run `bun run shots` (see [Screenshots](#screenshots-1) under Develop).
 
-| List view (dark)                                                                                             | Sidebar panel (dark)                                                      |
-| ------------------------------------------------------------------------------------------------------------ | ------------------------------------------------------------------------- |
-| ![The center tab in dark mode: navigator, grouped list and details pane](docs/screenshots/tab-list-dark.png) | ![The compact list in the right sidebar](docs/screenshots/panel-dark.png) |
+| List view (dark)                                                                                                                            | Sidebar panel (dark)                                                      |
+| ------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------- |
+| ![The center tab in dark mode: navigator with states, projects and tags, grouped list and details pane](docs/screenshots/tab-list-dark.png) | ![The compact list in the right sidebar](docs/screenshots/panel-dark.png) |
 
 ## Requirements
 
