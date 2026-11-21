@@ -16,7 +16,8 @@ in a frame.
   (`--prio-high`, red-orange mixed toward the foreground); medium is the foreground and low is
   muted. A due date is the one other color: `--due-overdue` (destructive) when late, `--due-today`
   (amber) when due today; later dues are muted. Everything else is monochrome.
-- **Type:** Geist (bundled, OFL) at 13px for rows and items, 12px for secondary text, 14px semibold
+- **Type:** Orca's interface and code fonts (`--orca-font-sans`, `--orca-font-mono`), so a font
+  chosen in Orca applies here too. The default is Geist (bundled, OFL), at 13px for rows and items, 12px for secondary text, 14px semibold
   for titles, and 18px semibold for the detail title. Section labels are 11px uppercase semibold
   with 0.05em tracking. Numbers use tabular figures.
 - **Icons:** Lucide at 16px (14px inside 24px buttons). No unicode glyphs or emoji as icons.
